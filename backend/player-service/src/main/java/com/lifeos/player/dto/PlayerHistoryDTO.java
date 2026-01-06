@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class PlayerHistoryDTO {
     private LocalDateTime lastEgoBreakerAt;
-    private String completedQuestsJson;
-    private String failedQuestsJson;
-    private String notableEventsJson;
+    private java.util.List<String> completedQuests;
+    private java.util.List<String> failedQuests;
+    private java.util.List<String> notableEvents;
 }
