@@ -101,9 +101,9 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         PlayerHistory history = PlayerHistory.builder()
                 .player(identity)
                 .lastEgoBreakerAt(null)
-                .completedQuestsJson("[]")
-                .failedQuestsJson("[]")
-                .notableEventsJson("[]")
+                .completedQuests(new ArrayList<>())
+                .failedQuests(new ArrayList<>())
+                .notableEvents(new ArrayList<>())
                 .build();
         historyRepository.save(history);
 
@@ -226,9 +226,9 @@ public class PlayerStateServiceImpl implements PlayerStateService {
 
         var historyDto = PlayerHistoryDTO.builder()
                 .lastEgoBreakerAt(history.getLastEgoBreakerAt())
-                .completedQuestsJson(history.getCompletedQuestsJson())
-                .failedQuestsJson(history.getFailedQuestsJson())
-                .notableEventsJson(history.getNotableEventsJson())
+                .completedQuests(history.getCompletedQuests())
+                .failedQuests(history.getFailedQuests())
+                .notableEvents(history.getNotableEvents())
                 .build();
 
         return PlayerStateResponse.builder()

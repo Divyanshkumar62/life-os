@@ -27,12 +27,15 @@ public class PlayerHistory {
     @Column(name = "last_ego_breaker_at")
     private LocalDateTime lastEgoBreakerAt;
 
-    @Column(name = "completed_quests_json", columnDefinition = "TEXT")
-    private String completedQuestsJson;
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "completed_quests_json")
+    private java.util.List<String> completedQuests; // Changed from String to List
 
-    @Column(name = "failed_quests_json", columnDefinition = "TEXT")
-    private String failedQuestsJson;
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "failed_quests_json")
+    private java.util.List<String> failedQuests;
 
-    @Column(name = "notable_events_json", columnDefinition = "TEXT")
-    private String notableEventsJson;
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "notable_events_json")
+    private java.util.List<String> notableEvents;
 }
