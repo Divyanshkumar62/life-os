@@ -1,2 +1,3 @@
+com\lifeos\quest\service\QuestLifecycleServiceTest.class
 com\lifeos\player\service\PlayerStateServiceTest.class
 com\lifeos\player\service\PlayerVerificationTest.class
