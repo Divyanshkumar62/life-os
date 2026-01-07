@@ -1,6 +1,5 @@
 package com.lifeos.player.service;
 
-import com.lifeos.player.domain.PlayerPsychState;
 import com.lifeos.player.domain.enums.PlayerRank;
 import com.lifeos.player.repository.PlayerIdentityRepository;
 import com.lifeos.player.repository.PlayerPsychStateRepository;
@@ -35,12 +34,6 @@ public class PlayerVerificationTest {
     }
 
     @Test
-    public void checklist_circularDependencies() {
-        // Spring Boot fails startup on circular dependencies by default.
-        // Successful context load implies passing this check.
-    }
-
-    @Test
     public void checklist_enumsMappedCorrectly() {
         var response = playerStateService.initializePlayer("enumTester");
         Assertions.assertEquals(PlayerRank.F, response.getProgression().getRank(), "Enum Rank.F should be persisted and retrieved");
@@ -52,15 +45,38 @@ public class PlayerVerificationTest {
         var identity = identityRepository.findByUsername("constraintTester").orElseThrow();
         var psychState = psychStateRepository.findByPlayerPlayerId(identity.getPlayerId()).orElseThrow();
 
-        // Try to set invalid values
+        // Try to set invalid values directly via Repository (JPA Validation)
         psychState.setMomentum(150); // Max is 100
-
-        // Save should fail IF validation is triggered.
-        // Note: JPA save() usually requires a Validator to be configured or flush to DB to trigger constraints if defined in DB.
-        // Spring Boot Validator is on classpath.
-        
         assertThrows(ConstraintViolationException.class, () -> {
             psychStateRepository.saveAndFlush(psychState);
         }, "Should throw ConstraintViolationException for momentum > 100");
+    }
+
+    @Test
+    public void guard_xpCannotBeNegative() {
+        var response = playerStateService.initializePlayer("xpGuardTester");
+        UUID playerId = response.getIdentity().getPlayerId();
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            playerStateService.addXp(playerId, -50);
+        }, "Should check for negative XP");
+    }
+
+    @Test
+    public void guard_psychStateClamped() {
+        var response = playerStateService.initializePlayer("psychGuardTester");
+        UUID playerId = response.getIdentity().getPlayerId();
+
+        // 1. Try to boost Momentum above 100
+        // Default is 50. Add 100. Should be clamped to 100.
+        playerStateService.updatePsychMetric(playerId, "MOMENTUM", 100.0);
+        var newState = playerStateService.getPlayerState(playerId);
+        Assertions.assertEquals(100, newState.getPsychState().getMomentum(), "Momentum should be clamped at 100");
+
+        // 2. Try to drop Stress below 0
+        // Default is 0. Subtract 50. Should be clamped to 0.
+        playerStateService.updatePsychMetric(playerId, "STRESS", -50.0);
+        newState = playerStateService.getPlayerState(playerId);
+        Assertions.assertEquals(0, newState.getPsychState().getStressLoad(), "Stress should be clamped at 0");
     }
 }
