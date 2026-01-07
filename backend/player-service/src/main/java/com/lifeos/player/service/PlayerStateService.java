@@ -10,5 +10,6 @@ public interface PlayerStateService {
     PlayerStateResponse getPlayerState(UUID playerId);
     void addXp(UUID playerId, long xpAmount);
     void updateAttribute(UUID playerId, AttributeType type, double valueChange);
+    void updatePsychMetric(UUID playerId, String metricName, double valueChange); // metricName: MOMENTUM, STRESS, COMPLACENCY, CONFIDENCE
     // Add more methods as logic expands
 }

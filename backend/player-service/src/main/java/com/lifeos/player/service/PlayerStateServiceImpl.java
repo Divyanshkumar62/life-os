@@ -122,6 +122,11 @@ public class PlayerStateServiceImpl implements PlayerStateService {
     @Override
     @Transactional
     public void addXp(UUID playerId, long xpAmount) {
+        // Invariant: XP must be positive
+        if (xpAmount < 0) {
+            throw new IllegalArgumentException("XP amount cannot be negative");
+        }
+
         var progression = progressionRepository.findByPlayerPlayerId(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
 
@@ -158,6 +163,40 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         }
         attribute.setCurrentValue(newValue);
         attributeRepository.save(attribute);
+    }
+
+    @Override
+    @Transactional
+    public void updatePsychMetric(UUID playerId, String metricName, double valueChange) {
+        var psychState = psychStateRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+
+        // Helper to clamp values between 0 and 100
+        // INVARIANT: Psych values clamped [0, 100]
+        switch (metricName.toUpperCase()) {
+            case "MOMENTUM" -> {
+                double newVal = clamp(psychState.getMomentum() + valueChange, 0, 100);
+                psychState.setMomentum((int) newVal);
+            }
+            case "STRESS" -> {
+                double newVal = clamp(psychState.getStressLoad() + valueChange, 0, 100);
+                psychState.setStressLoad((int) newVal);
+            }
+            case "COMPLACENCY" -> {
+                double newVal = clamp(psychState.getComplacency() + valueChange, 0, 100);
+                psychState.setComplacency((int) newVal);
+            }
+            case "CONFIDENCE" -> {
+                double newVal = clamp(psychState.getConfidenceBias() + valueChange, 0, 100);
+                psychState.setConfidenceBias((int) newVal);
+            }
+            default -> throw new IllegalArgumentException("Unknown psych metric: " + metricName);
+        }
+        psychStateRepository.save(psychState);
+    }
+
+    private double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     private PlayerStateResponse buildResponse(PlayerIdentity identity) {

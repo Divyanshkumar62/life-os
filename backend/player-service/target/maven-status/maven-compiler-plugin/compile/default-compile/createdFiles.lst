@@ -41,6 +41,7 @@ com\lifeos\player\domain\PlayerMetrics$PlayerMetricsBuilder.class
 com\lifeos\player\dto\PlayerProgressionDTO$PlayerProgressionDTOBuilder.class
 com\lifeos\player\domain\PlayerHistory.class
 com\lifeos\player\dto\PlayerStatusFlagDTO$PlayerStatusFlagDTOBuilder.class
+com\lifeos\player\controller\PlayerStateController.class
 com\lifeos\player\dto\PlayerProgressionDTO.class
 com\lifeos\player\dto\PlayerStateResponse$PlayerStateResponseBuilder.class
 com\lifeos\player\dto\PlayerTemporalStateDTO.class
