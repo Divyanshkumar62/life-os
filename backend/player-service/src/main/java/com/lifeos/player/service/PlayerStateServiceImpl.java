@@ -247,6 +247,24 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         // We might log or send a notification.
     }
 
+    @Override
+    @Transactional
+    public void extendStreak(UUID playerId) {
+        var temporal = temporalStateRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        
+        temporal.setActiveStreakDays(temporal.getActiveStreakDays() + 1);
+        // Also update lastQuestCompletedAt? Yes, logically.
+        temporal.setLastQuestCompletedAt(java.time.LocalDateTime.now());
+        temporalStateRepository.save(temporal);
+    }
+
+    @Override
+    @Transactional
+    public void adjustMomentum(UUID playerId, int delta) {
+        updatePsychMetric(playerId, "MOMENTUM", delta);
+    }
+
     private PlayerStateResponse buildResponse(PlayerIdentity identity) {
         // Fetch all components
         var progression = progressionRepository.findByPlayerPlayerId(identity.getPlayerId()).orElseThrow();
