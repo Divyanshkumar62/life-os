@@ -53,6 +53,7 @@ com\lifeos\quest\domain\QuestOutcomeProfile.class
 com\lifeos\player\dto\PlayerHistoryDTO$PlayerHistoryDTOBuilder.class
 com\lifeos\reward\domain\RewardRecord$RewardRecordBuilder.class
 com\lifeos\quest\repository\QuestMutationLogRepository.class
+com\lifeos\progression\service\ProgressionService.class
 com\lifeos\player\dto\PlayerIdentityDTO.class
 com\lifeos\quest\domain\enums\ConstraintType.class
 com\lifeos\penalty\domain\enums\PenaltySeverity.class

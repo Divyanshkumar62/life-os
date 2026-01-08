@@ -25,6 +25,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pl
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerHistory.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\repository\QuestOutcomeProfileRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\PenaltyRecord.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\service\ProgressionService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\DifficultyTier.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\service\PenaltyService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\controller\PlayerStateController.java

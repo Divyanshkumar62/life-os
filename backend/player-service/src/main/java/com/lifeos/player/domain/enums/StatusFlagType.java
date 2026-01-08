@@ -6,5 +6,6 @@ public enum StatusFlagType {
     STALLED,
     RECOVERING,
     HIGH_RISK,
-    EGO_EXPOSED
+    EGO_EXPOSED,
+    PENALTY_ZONE
 }

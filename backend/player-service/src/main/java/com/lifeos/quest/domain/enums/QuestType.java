@@ -7,5 +7,6 @@ public enum QuestType {
     CAREER,
     REFLECTION,
     RECOVERY,
-    EGO_BREAKER
+    EGO_BREAKER,
+    PROMOTION
 }

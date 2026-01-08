@@ -131,16 +131,50 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         var progression = progressionRepository.findByPlayerPlayerId(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
 
+        // Rank-Gate Logic: Check if at Level Cap
+        // If (currentLevel >= rank.levelCap) -> XP Freeze.
+        if (progression.getLevel() >= progression.getRank().getLevelCap()) {
+            // Cap reached. XP is FROZEN.
+            // Emit "Rank Gate Reached" event? (Log for now)
+            System.out.println("Rank Gate Reached for player " + playerId + ". XP Frozen.");
+            return;
+        }
+
         long newXp = progression.getCurrentXp() + xpAmount;
         progression.setCurrentXp(newXp);
 
         // Simple Level Up Logic: Threshold = Level * 100
-        // Loop in case of multiple level ups
+        // Loop in case of multiple level ups, but also check CAP inside loop
         while (true) {
             long xpRequired = progression.getLevel() * 100L;
             if (progression.getCurrentXp() >= xpRequired) {
-                progression.setCurrentXp(progression.getCurrentXp() - xpRequired);
-                progression.setLevel(progression.getLevel() + 1);
+                // Check if next level exceeds cap
+                if (progression.getLevel() + 1 > progression.getRank().getLevelCap()) {
+                    // Cannot level up further. Cap XP? Or just let it sit?
+                    // "XP gain halts completely".
+                    // If we are here, we had enough XP to level up.
+                    // But we shouldn't have exceeded cap.
+                    // Let's enforce cap:
+                    // If we hit cap, we stay at max XP for current level or 0 XP of max level?
+                    // Usually: Level = Cap, XP = 0 (or some buffer).
+                    // Logic above: `if (level >= cap) return`. 
+                    // So we can't be here unless we started below cap.
+                    
+                    // But what if this single addXp pushes us OVER the cap?
+                    // e.g. Level 9, Cap 10. addXp(Massive).
+                    // Level 9 -> 10. Now at 10. Stop.
+                    
+                    progression.setCurrentXp(progression.getCurrentXp() - xpRequired);
+                    progression.setLevel(progression.getLevel() + 1);
+                    
+                    if (progression.getLevel() >= progression.getRank().getLevelCap()) {
+                        // Reached Cap. Stop further leveling.
+                        break;
+                    }
+                } else {
+                    progression.setCurrentXp(progression.getCurrentXp() - xpRequired);
+                    progression.setLevel(progression.getLevel() + 1);
+                }
                 // TODO: Trigger level up event/notification
             } else {
                 break;
@@ -263,6 +297,27 @@ public class PlayerStateServiceImpl implements PlayerStateService {
     @Transactional
     public void adjustMomentum(UUID playerId, int delta) {
         updatePsychMetric(playerId, "MOMENTUM", delta);
+    }
+
+    @Override
+    @Transactional
+    public void promoteRank(UUID playerId) {
+        var progression = progressionRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        
+        PlayerRank currentRank = progression.getRank();
+        PlayerRank nextRank = currentRank.next();
+        
+        if (currentRank == nextRank) {
+            // Already at max rank (SS) or logic fail
+            return;
+        }
+        
+        progression.setRank(nextRank);
+        // XP is implicitly unfrozen because level < newRank.cap (assuming newRank.cap > oldRank.cap)
+        // Level stays same.
+        
+        progressionRepository.save(progression);
     }
 
     private PlayerStateResponse buildResponse(PlayerIdentity identity) {
