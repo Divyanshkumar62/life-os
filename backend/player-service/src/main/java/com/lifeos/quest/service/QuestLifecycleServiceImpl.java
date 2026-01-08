@@ -28,6 +28,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     // However, for rewards/penalties we MUST use the Service to ensure invariants.
     private final PenaltyService penaltyService;
     private final com.lifeos.reward.service.RewardService rewardService;
+    private final com.lifeos.progression.service.ProgressionService progressionService;
     private final PlayerStateService playerStateService;
     // Assuming we can access PlayerIdentityRepository to verify player exists or use PlayerService
     // For now, let's rely on PlayerStateService or just assume ID is valid and let FK Constraint fail if not?
@@ -155,6 +156,11 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
 
         // 3. Apply Rewards (via Reward Engine)
         rewardService.applyReward(questId, quest.getPlayer().getPlayerId());
+        
+        // 4. Progression Check (Promotion)
+        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION) {
+            progressionService.processPromotionOutcome(quest.getPlayer().getPlayerId(), true);
+        }
     }
 
     @Override
@@ -173,6 +179,11 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
 
         // Apply Penalties
         penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.FAILED);
+        
+        // Progression Check (Promotion Fail)
+        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION) {
+            progressionService.processPromotionOutcome(quest.getPlayer().getPlayerId(), false);
+        }
 
         // Update Link
         var link = linkRepository.findByPlayerIdAndQuestId(quest.getPlayer().getPlayerId(), questId)

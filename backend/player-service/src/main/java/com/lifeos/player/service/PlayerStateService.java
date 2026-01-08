@@ -19,4 +19,7 @@ public interface PlayerStateService {
     // Reward Methods
     void extendStreak(UUID playerId);
     void adjustMomentum(UUID playerId, int delta);
+    
+    // Progression Methods
+    void promoteRank(UUID playerId);
 }
