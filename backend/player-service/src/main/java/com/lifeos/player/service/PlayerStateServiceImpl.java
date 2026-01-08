@@ -27,6 +27,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
     private final PlayerStatusFlagRepository flagRepository;
     private final PlayerTemporalStateRepository temporalStateRepository;
     private final PlayerHistoryRepository historyRepository;
+    private final com.lifeos.penalty.repository.PenaltyRecordRepository penaltyRepository;
 
     @Override
     @Transactional
@@ -199,6 +200,53 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         return Math.max(min, Math.min(max, value));
     }
 
+    @Override
+    @Transactional
+    public void applyXpDeduction(UUID playerId, long amount) {
+        var progression = progressionRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+
+        long currentXp = progression.getCurrentXp();
+        // XP Floor Logic: Never go below 0
+        long newXp = Math.max(0, currentXp - amount);
+        
+        progression.setCurrentXp(newXp);
+        progressionRepository.save(progression);
+    }
+
+    @Override
+    @Transactional
+    public void resetStreak(UUID playerId) {
+        var temporal = temporalStateRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        
+        temporal.setActiveStreakDays(0);
+        temporalStateRepository.save(temporal);
+    }
+    
+    @Override
+    @Transactional
+    public void applyStatDebuff(UUID playerId, AttributeType type, double amount, java.time.LocalDateTime expiresAt) {
+        // Debuffs are effective via check-on-read in getPlayerState, but we need to record them?
+        // Ah, the design is: PenaltyService stores the record. PlayerService "applies" it?
+        // If "Check-on-Read" reads from PenaltyRepo, then PlayerService explicitly "applying" it might be redundant 
+        // OR it's a hook to persist specific flags or notify.
+        // But wait, the plan said: "Call PlayerStateService to apply effects... Add active debuff".
+        // And we implemented check-on-read reading from PenaltyRepo.
+        // So this method might just be for logging or if we decided to store debuffs in a separate Player table.
+        // For V1 "Check-on-Read" relies on PenaltyRecords. 
+        // So this method effectively does nothing if records are already saved by PenaltyService?
+        // WRONG: PenaltyService saves the record. PlayerService calculates effective stats.
+        // So `applyStatDebuff` here is likely a NO-OP or just a validation hook if persistence is handled by PenaltyService.
+        // BUT, if PenaltyService calls this, it expects something.
+        // Let's make it a NO-OP for now since the Record IS the state, 
+        // OR we can use it to maybe set a "HAS_DEBUFF" flag for quick lookup.
+        // Let's set a Flag.
+        
+        // Actually, let's keep it simple. It exists to satisfy the interface.
+        // We might log or send a notification.
+    }
+
     private PlayerStateResponse buildResponse(PlayerIdentity identity) {
         // Fetch all components
         var progression = progressionRepository.findByPlayerPlayerId(identity.getPlayerId()).orElseThrow();
@@ -208,7 +256,10 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         var flags = flagRepository.findByPlayerPlayerId(identity.getPlayerId());
         var temporal = temporalStateRepository.findByPlayerPlayerId(identity.getPlayerId()).orElseThrow();
         var history = historyRepository.findByPlayerPlayerId(identity.getPlayerId()).orElseThrow();
-
+        
+        // Fetch Active Debuffs (Check-on-Read)
+        List<com.lifeos.penalty.domain.PenaltyRecord> activeDebuffs = penaltyRepository.findActiveDebuffs(identity.getPlayerId());
+        
         // Convert to DTOs
         var identityDto = PlayerIdentityDTO.builder()
                 .playerId(identity.getPlayerId())
@@ -225,13 +276,34 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .build();
 
         var attributeDtos = attributes.stream()
-                .map(attr -> PlayerAttributeDTO.builder()
+                .map(attr -> {
+                    // Calculate debuff
+                    double debuffAmount = activeDebuffs.stream()
+                            .filter(p -> p.getValuePayload() != null 
+                                      && attr.getAttributeType().name().equals(p.getValuePayload().get("debuffAttr")))
+                            .mapToDouble(p -> (Double) p.getValuePayload().get("debuffAmount"))
+                            .sum();
+
+                    // Apply debuff (percentage reduction usually, but here model says "amount")
+                    // If amount is a percentage (e.g. 5.0 for 5%), calculation differs.
+                    // Plan said: "Debuff range: 5%–15%". "10%".
+                    // Code stored "10.0".
+                    // Let's assume percentage reduction from CURRENT value.
+                    // effective = current - (current * (amount / 100))
+                    
+                    double effectiveValue = attr.getCurrentValue();
+                    if (debuffAmount > 0) {
+                        effectiveValue = effectiveValue * (1.0 - (debuffAmount / 100.0));
+                    }
+
+                    return PlayerAttributeDTO.builder()
                         .attributeType(attr.getAttributeType())
                         .baseValue(attr.getBaseValue())
-                        .currentValue(attr.getCurrentValue())
+                        .currentValue(effectiveValue) 
                         .growthVelocity(attr.getGrowthVelocity())
                         .decayRate(attr.getDecayRate())
-                        .build())
+                        .build();
+                })
                 .collect(Collectors.toList());
 
         var psychStateDto = PlayerPsychStateDTO.builder()

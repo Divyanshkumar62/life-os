@@ -11,5 +11,10 @@ public interface PlayerStateService {
     void addXp(UUID playerId, long xpAmount);
     void updateAttribute(UUID playerId, AttributeType type, double valueChange);
     void updatePsychMetric(UUID playerId, String metricName, double valueChange); // metricName: MOMENTUM, STRESS, COMPLACENCY, CONFIDENCE
+
+    // Penalty Methods
+    void applyXpDeduction(UUID playerId, long amount);
+    void resetStreak(UUID playerId);
+    void applyStatDebuff(UUID playerId, AttributeType type, double amount, java.time.LocalDateTime expiresAt);
     // Add more methods as logic expands
 }

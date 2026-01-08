@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
+import com.lifeos.penalty.service.PenaltyService;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     
     // We need to fetch Player identity to link it, but Repositories are better than linking services if just for fetching.
     // However, for rewards/penalties we MUST use the Service to ensure invariants.
+    private final PenaltyService penaltyService;
     private final PlayerStateService playerStateService;
     // Assuming we can access PlayerIdentityRepository to verify player exists or use PlayerService
     // For now, let's rely on PlayerStateService or just assume ID is valid and let FK Constraint fail if not?
@@ -185,20 +187,15 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         quest.setState(QuestState.FAILED);
         questRepository.save(quest);
 
+        // Apply Penalties
+        penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.FAILED);
+
+        // Update Link
         var link = linkRepository.findByPlayerIdAndQuestId(quest.getPlayer().getPlayerId(), questId)
-                .orElse(new PlayerQuestLink());
+                .orElseThrow(() -> new IllegalStateException("Link missing"));
         link.setState(QuestState.FAILED);
         link.setFailedAt(LocalDateTime.now());
         linkRepository.save(link);
-
-        // Apply Penalties
-        var outcome = outcomeRepository.findByQuestQuestId(questId).orElse(null);
-        if (outcome != null) {
-            // XP Penalty? (Usually failure doesn't deduct XP, but maybe? Spec says failureXP exists)
-            // If failureXP is meant to be logic for penalty, let's assume it's negative or we subtract it.
-            // Spec: "failureXP (long)". Maybe 0.
-            // Attributes penalty?
-        }
     }
 
     @Override
@@ -214,16 +211,12 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         quest.setState(QuestState.EXPIRED);
         questRepository.save(quest);
         
-        // Treat expiration as failure essentially?
-        // Or distinct state.
+        // Apply Penalties (Expiration)
+        penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.EXPIRED);
         
         var link = linkRepository.findByPlayerIdAndQuestId(quest.getPlayer().getPlayerId(), questId)
                 .orElse(new PlayerQuestLink());
         link.setState(QuestState.EXPIRED);
         linkRepository.save(link);
-        
-        // Trigger penalties same as fail?
-        // Reuse fail logic or separate?
-        // Let's call failQuest logic or similar. For now just state change.
     }
 }
