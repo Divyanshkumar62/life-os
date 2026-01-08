@@ -16,5 +16,7 @@ public interface PlayerStateService {
     void applyXpDeduction(UUID playerId, long amount);
     void resetStreak(UUID playerId);
     void applyStatDebuff(UUID playerId, AttributeType type, double amount, java.time.LocalDateTime expiresAt);
-    // Add more methods as logic expands
+    // Reward Methods
+    void extendStreak(UUID playerId);
+    void adjustMomentum(UUID playerId, int delta);
 }

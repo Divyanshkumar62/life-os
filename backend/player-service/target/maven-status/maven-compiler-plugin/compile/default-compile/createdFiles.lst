@@ -8,9 +8,11 @@ com\lifeos\player\dto\PlayerIdentityDTO$PlayerIdentityDTOBuilder.class
 com\lifeos\player\dto\PlayerTemporalStateDTO$PlayerTemporalStateDTOBuilder.class
 com\lifeos\player\domain\PlayerProgression$PlayerProgressionBuilder.class
 com\lifeos\player\domain\PlayerPsychState$PlayerPsychStateBuilder.class
+com\lifeos\reward\service\RewardService.class
 com\lifeos\player\repository\PlayerHistoryRepository.class
 com\lifeos\player\repository\PlayerMetricsRepository.class
 com\lifeos\player\repository\PlayerTemporalStateRepository.class
+com\lifeos\reward\domain\RewardRecord.class
 com\lifeos\player\repository\PlayerStatusFlagRepository.class
 com\lifeos\player\dto\PlayerHistoryDTO.class
 com\lifeos\penalty\domain\enums\PenaltyType.class
@@ -28,6 +30,7 @@ com\lifeos\quest\domain\QuestMutationLog$QuestMutationLogBuilder.class
 com\lifeos\player\domain\PlayerAttribute$PlayerAttributeBuilder.class
 com\lifeos\player\dto\PlayerMetricsDTO.class
 com\lifeos\quest\domain\QuestConstraint.class
+com\lifeos\reward\service\RewardCalculationService.class
 com\lifeos\player\domain\enums\StatusFlagType.class
 com\lifeos\player\repository\PlayerPsychStateRepository.class
 com\lifeos\player\repository\PlayerProgressionRepository.class
@@ -48,6 +51,7 @@ com\lifeos\player\dto\PlayerPsychStateDTO.class
 com\lifeos\player\domain\enums\AttributeType.class
 com\lifeos\quest\domain\QuestOutcomeProfile.class
 com\lifeos\player\dto\PlayerHistoryDTO$PlayerHistoryDTOBuilder.class
+com\lifeos\reward\domain\RewardRecord$RewardRecordBuilder.class
 com\lifeos\quest\repository\QuestMutationLogRepository.class
 com\lifeos\player\dto\PlayerIdentityDTO.class
 com\lifeos\quest\domain\enums\ConstraintType.class
@@ -65,6 +69,7 @@ com\lifeos\player\domain\PlayerTemporalState.class
 com\lifeos\quest\domain\enums\DifficultyTier.class
 com\lifeos\quest\domain\Quest$QuestBuilder.class
 com\lifeos\player\domain\PlayerMetrics$PlayerMetricsBuilder.class
+com\lifeos\reward\dto\RewardDefinition.class
 com\lifeos\penalty\domain\PenaltyDefinition.class
 com\lifeos\player\dto\PlayerProgressionDTO$PlayerProgressionDTOBuilder.class
 com\lifeos\quest\domain\PlayerQuestLink$PlayerQuestLinkBuilder.class
@@ -79,7 +84,10 @@ com\lifeos\player\controller\PlayerStateController.class
 com\lifeos\player\dto\PlayerProgressionDTO.class
 com\lifeos\player\dto\PlayerStateResponse$PlayerStateResponseBuilder.class
 com\lifeos\player\dto\PlayerTemporalStateDTO.class
+com\lifeos\reward\dto\RewardDefinition$RewardDefinitionBuilder.class
 com\lifeos\player\service\PlayerStateServiceImpl.class
 com\lifeos\penalty\domain\PenaltyRecord.class
 com\lifeos\quest\repository\QuestRepository.class
+com\lifeos\reward\domain\enums\RewardComponentType.class
+com\lifeos\reward\repository\RewardRecordRepository.class
 com\lifeos\player\dto\PlayerStateResponse.class

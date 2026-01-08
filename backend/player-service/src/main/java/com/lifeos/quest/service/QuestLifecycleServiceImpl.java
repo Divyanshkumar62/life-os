@@ -27,6 +27,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     // We need to fetch Player identity to link it, but Repositories are better than linking services if just for fetching.
     // However, for rewards/penalties we MUST use the Service to ensure invariants.
     private final PenaltyService penaltyService;
+    private final com.lifeos.reward.service.RewardService rewardService;
     private final PlayerStateService playerStateService;
     // Assuming we can access PlayerIdentityRepository to verify player exists or use PlayerService
     // For now, let's rely on PlayerStateService or just assume ID is valid and let FK Constraint fail if not?
@@ -152,25 +153,8 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         link.setCompletedAt(LocalDateTime.now());
         linkRepository.save(link);
 
-        // 3. Apply Rewards (Player Service)
-        var outcome = outcomeRepository.findByQuestQuestId(questId).orElse(null);
-        if (outcome != null) {
-            // Apply XP
-            if (outcome.getSuccessXp() > 0) {
-                playerStateService.addXp(quest.getPlayer().getPlayerId(), outcome.getSuccessXp());
-            }
-            // Apply Attributes
-            if (outcome.getAttributeDeltaJson() != null) {
-                outcome.getAttributeDeltaJson().forEach((attrName, val) -> {
-                    try {
-                        AttributeType type = AttributeType.valueOf(attrName);
-                        playerStateService.updateAttribute(quest.getPlayer().getPlayerId(), type, val);
-                    } catch (IllegalArgumentException e) {
-                        // Log or ignore invalid attributes
-                    }
-                });
-            }
-        }
+        // 3. Apply Rewards (via Reward Engine)
+        rewardService.applyReward(questId, quest.getPlayer().getPlayerId());
     }
 
     @Override
