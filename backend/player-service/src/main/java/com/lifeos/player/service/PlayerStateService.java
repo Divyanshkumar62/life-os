@@ -16,11 +16,11 @@ public interface PlayerStateService {
     void applyXpDeduction(UUID playerId, long amount);
     void resetStreak(UUID playerId);
     void applyStatDebuff(UUID playerId, AttributeType type, double amount, java.time.LocalDateTime expiresAt);
+    void applyStatusFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flag, java.time.LocalDateTime expiresAt);
     // Reward Methods
     void extendStreak(UUID playerId);
     void adjustMomentum(UUID playerId, int delta);
     
     // Progression Methods
     void promoteRank(UUID playerId);
-    void consumeBossKeys(UUID playerId, int amount);
 }
