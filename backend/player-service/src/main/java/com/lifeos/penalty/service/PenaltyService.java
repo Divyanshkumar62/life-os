@@ -83,4 +83,31 @@ public class PenaltyService {
         penaltyRepository.save(record);
         log.info("Applied penalty {} to player {} for quest {}", def.getSeverity(), playerId, questId);
     }
+
+    @Transactional
+    public void enterPenaltyZone(UUID playerId, String reason) {
+        // Idempotency: Check if player is already in Penalty Zone
+        var state = playerStateService.getPlayerState(playerId);
+        boolean alreadyInPenalty = state.getActiveFlags().stream()
+                .anyMatch(f -> f.getFlag() == com.lifeos.player.domain.enums.StatusFlagType.PENALTY_ZONE);
+                
+        if (alreadyInPenalty) {
+            log.warn("Player {} already in Penalty Zone. Trigger ignored.", playerId);
+            return;
+        }
+
+        log.info("ENTERING PENALTY ZONE: Player {} Reason: {}", playerId, reason);
+        
+        // Apply Penalty Zone Flag
+        // Use a long duration (e.g. 100 years) or until manually cleared
+        playerStateService.applyStatusFlag(
+            playerId, 
+            com.lifeos.player.domain.enums.StatusFlagType.PENALTY_ZONE, 
+            LocalDateTime.now().plusYears(100) 
+        );
+        
+        // Zero out XP gain? (Handled by xpFrozen or status checks in addXp)
+        // Reset Streaks? (Design choice: DQE says "No streak forgiveness")
+        playerStateService.resetStreak(playerId);
+    }
 }

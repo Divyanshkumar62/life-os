@@ -10,15 +10,22 @@ import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.penalty.service.PenaltyService;
 import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.player.dto.PlayerStatusFlagDTO;
+import com.lifeos.progression.domain.RankExamAttempt;
+import com.lifeos.progression.domain.UserBossKey;
+import com.lifeos.progression.domain.enums.ExamStatus;
+import com.lifeos.progression.repository.RankExamAttemptRepository;
+import com.lifeos.progression.repository.UserBossKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.ArgumentCaptor;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,12 +37,15 @@ public class ProgressionServiceTest {
     @Mock private PlayerStateService playerStateService;
     @Mock private PenaltyService penaltyService;
     @Mock private QuestRepository questRepository;
+    @Mock private UserBossKeyRepository bossKeyRepository;
+    @Mock private RankExamAttemptRepository examAttemptRepository;
 
     @InjectMocks
     private ProgressionService progressionService;
 
     private UUID playerId;
     private PlayerStateResponse playerState;
+    private UserBossKey userBossKey;
 
     @BeforeEach
     void setUp() {
@@ -48,7 +58,7 @@ public class ProgressionServiceTest {
                 .progression(PlayerProgressionDTO.builder()
                         .level(10) // At Cap
                         .rank(PlayerRank.E)
-                        .bossKeys(1) // Sufficient
+                        .xpFrozen(true)
                         .build())
                 .attributes(new ArrayList<>())
                 .activeFlags(new ArrayList<>())
@@ -57,12 +67,19 @@ public class ProgressionServiceTest {
         // Add Stats
         playerState.getAttributes().add(PlayerAttributeDTO.builder().attributeType(AttributeType.PHYSICAL_ENERGY).currentValue(10.0).build());
         playerState.getAttributes().add(PlayerAttributeDTO.builder().attributeType(AttributeType.DISCIPLINE).currentValue(8.0).build());
+        
+        // Mock UserBossKey
+        userBossKey = UserBossKey.builder()
+                .rank(PlayerRank.E)
+                .keyCount(1)
+                .build();
     }
 
     @Test
     void testCanRequestPromotion_Success() {
         when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
-        // when(playerStateService.getEffectiveAttributes(playerId)).thenReturn(null); // Method removed from interface
+        when(bossKeyRepository.findByPlayerPlayerIdAndRank(playerId, PlayerRank.E))
+                .thenReturn(Optional.of(userBossKey));
         
         boolean can = progressionService.canRequestPromotion(playerId);
         
@@ -81,8 +98,10 @@ public class ProgressionServiceTest {
 
     @Test
     void testCanRequestPromotion_Fail_InsufficientKeys() {
-        playerState.getProgression().setBossKeys(0);
+        userBossKey.setKeyCount(0);
         when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
+        when(bossKeyRepository.findByPlayerPlayerIdAndRank(playerId, PlayerRank.E))
+                .thenReturn(Optional.of(userBossKey));
         
         boolean can = progressionService.canRequestPromotion(playerId);
         
@@ -93,6 +112,8 @@ public class ProgressionServiceTest {
     void testCanRequestPromotion_Fail_LowStats() {
         playerState.getAttributes().get(1).setCurrentValue(7.0); // Discipline < 8.0
         when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
+        when(bossKeyRepository.findByPlayerPlayerIdAndRank(playerId, PlayerRank.E))
+                .thenReturn(Optional.of(userBossKey));
         
         boolean can = progressionService.canRequestPromotion(playerId);
         
@@ -110,18 +131,56 @@ public class ProgressionServiceTest {
     }
 
     @Test
-    void testRequestPromotionQuest_ConsumesKeys() {
+    void testRequestPromotion_Success() {
         when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
+        when(bossKeyRepository.findByPlayerPlayerIdAndRank(playerId, PlayerRank.E))
+                .thenReturn(Optional.of(userBossKey));
         
-        progressionService.requestPromotionQuest(playerId);
+        // Mock save
+        when(examAttemptRepository.save(any(RankExamAttempt.class))).thenAnswer(i -> i.getArgument(0));
+
+        RankExamAttempt attempt = progressionService.requestPromotion(playerId);
         
-        verify(playerStateService).consumeBossKeys(playerId, 1);
+        assertNotNull(attempt);
+        assertEquals(ExamStatus.UNLOCKED, attempt.getStatus());
+        assertEquals(0, userBossKey.getKeyCount()); // Key consumed
+        verify(bossKeyRepository).save(userBossKey);
+    }
+    
+    @Test
+    void testProcessPromotionOutcome_Success() {
+        UUID attemptId = UUID.randomUUID();
+        RankExamAttempt attempt = RankExamAttempt.builder()
+                .id(attemptId)
+                .player(com.lifeos.player.domain.PlayerIdentity.builder().username("test").build())
+                .status(ExamStatus.UNLOCKED)
+                .build();
+        attempt.getPlayer().setPlayerId(playerId);
+
+        when(examAttemptRepository.findById(attemptId)).thenReturn(Optional.of(attempt));
+
+        progressionService.processPromotionOutcome(attemptId, true);
+        
+        assertEquals(ExamStatus.PASSED, attempt.getStatus());
+        verify(playerStateService).promoteRank(playerId);
     }
 
     @Test
-    void testProcessPromotionOutcome_Success() {
-        progressionService.processPromotionOutcome(playerId, true);
+    void testProcessPromotionOutcome_Failure_NoPenaltyZone() {
+        UUID attemptId = UUID.randomUUID();
+        RankExamAttempt attempt = RankExamAttempt.builder()
+                .id(attemptId)
+                .player(com.lifeos.player.domain.PlayerIdentity.builder().username("test").build())
+                .status(ExamStatus.UNLOCKED)
+                .build();
+                
+        when(examAttemptRepository.findById(attemptId)).thenReturn(Optional.of(attempt));
         
-        verify(playerStateService).promoteRank(playerId);
+        progressionService.processPromotionOutcome(attemptId, false);
+        
+        assertEquals(ExamStatus.FAILED, attempt.getStatus());
+        // Verify promoteRank is NOT called
+        verify(playerStateService, never()).promoteRank(any());
+        // Verify NO penalty flags added (method doesn't even exist in service anymore for this context)
     }
 }

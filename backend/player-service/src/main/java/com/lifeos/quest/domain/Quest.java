@@ -40,6 +40,10 @@ public class Quest {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    private QuestCategory category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private DifficultyTier difficultyTier;
 
     @Enumerated(EnumType.STRING)
@@ -66,6 +70,7 @@ public class Quest {
     protected void onCreate() {
         if (assignedAt == null) assignedAt = LocalDateTime.now();
         if (lastModifiedAt == null) lastModifiedAt = LocalDateTime.now();
+        if (category == null) category = QuestCategory.NORMAL;
         // Invariant: RED difficulty implies egoBreaker
         if (difficultyTier == DifficultyTier.RED) {
             egoBreakerFlag = true;

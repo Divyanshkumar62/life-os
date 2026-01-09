@@ -7,5 +7,6 @@ public enum StatusFlagType {
     RECOVERING,
     HIGH_RISK,
     EGO_EXPOSED,
-    PENALTY_ZONE
+    PENALTY_ZONE,
+    DAILY_FAILED_TODAY
 }

@@ -287,6 +287,37 @@ public class PlayerStateServiceImpl implements PlayerStateService {
 
     @Override
     @Transactional
+    public void applyStatusFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flagType, java.time.LocalDateTime expiresAt) {
+        List<PlayerStatusFlag> flags = flagRepository.findByPlayerPlayerId(playerId);
+        
+        // Check for existing flag of same type
+        PlayerStatusFlag existing = flags.stream()
+            .filter(f -> f.getFlag() == flagType)
+            .findFirst()
+            .orElse(null);
+            
+        if (existing != null) {
+            // Extend expiration if new one is longer
+            if (expiresAt.isAfter(existing.getExpiresAt())) {
+                existing.setExpiresAt(expiresAt);
+                flagRepository.save(existing);
+            }
+        } else {
+             PlayerIdentity identity = identityRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+                
+             PlayerStatusFlag newFlag = PlayerStatusFlag.builder()
+                .player(identity)
+                .flag(flagType)
+                .acquiredAt(java.time.LocalDateTime.now())
+                .expiresAt(expiresAt)
+                .build();
+             flagRepository.save(newFlag);
+        }
+    }
+
+    @Override
+    @Transactional
     public void extendStreak(UUID playerId) {
         var temporal = temporalStateRepository.findByPlayerPlayerId(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
@@ -323,20 +354,6 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         
         progressionRepository.save(progression);
     }
-    
-    @Override
-    @Transactional
-    public void consumeBossKeys(UUID playerId, int amount) {
-        var progression = progressionRepository.findByPlayerPlayerId(playerId)
-                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
-        
-        if (progression.getBossKeys() < amount) {
-            throw new IllegalArgumentException("Insufficient Boss Keys");
-        }
-        
-        progression.setBossKeys(progression.getBossKeys() - amount);
-        progressionRepository.save(progression);
-    }
 
     private PlayerStateResponse buildResponse(PlayerIdentity identity) {
         // Fetch all components
@@ -364,7 +381,6 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .currentXp(progression.getCurrentXp())
                 .rank(progression.getRank())
                 .rankProgressScore(progression.getRankProgressScore())
-                .bossKeys(progression.getBossKeys())
                 .xpFrozen(progression.isXpFrozen())
                 .build();
 
