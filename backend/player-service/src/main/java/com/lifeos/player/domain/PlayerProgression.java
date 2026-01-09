@@ -35,4 +35,12 @@ public class PlayerProgression {
 
     @Column(name = "rank_progress_score")
     private double rankProgressScore;
+
+    @Column(name = "boss_keys", nullable = false)
+    @Builder.Default
+    private int bossKeys = 0;
+
+    @Column(name = "xp_frozen", nullable = false)
+    @Builder.Default
+    private boolean xpFrozen = false;
 }

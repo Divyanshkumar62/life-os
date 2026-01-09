@@ -22,4 +22,5 @@ public interface PlayerStateService {
     
     // Progression Methods
     void promoteRank(UUID playerId);
+    void consumeBossKeys(UUID playerId, int amount);
 }

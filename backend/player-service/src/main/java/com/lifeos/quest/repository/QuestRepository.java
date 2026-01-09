@@ -13,6 +13,8 @@ import java.util.UUID;
 public interface QuestRepository extends JpaRepository<Quest, UUID> {
     List<Quest> findByPlayerPlayerIdAndState(UUID playerId, QuestState state);
     
+    long countByProjectIdAndState(UUID projectId, QuestState state);
+    
     // Find active quests that have passed their deadline
     List<Quest> findByStateAndDeadlineAtBefore(QuestState state, LocalDateTime now);
 }

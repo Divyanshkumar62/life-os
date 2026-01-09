@@ -15,4 +15,6 @@ public class PlayerProgressionDTO {
     private long currentXp;
     private PlayerRank rank;
     private double rankProgressScore;
+    private int bossKeys;
+    private boolean xpFrozen;
 }
