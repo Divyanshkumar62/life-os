@@ -25,6 +25,9 @@ public class Quest {
     @JoinColumn(name = "player_id", nullable = false)
     private PlayerIdentity player;
 
+    @Column(name = "project_id")
+    private UUID projectId;
+
     @Column(nullable = false)
     private String title;
 

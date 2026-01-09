@@ -24,6 +24,7 @@ public class ProgressionService {
     // Assuming for V1 we create the entity directly? Or usage of QuestLifecycleService?
     // Plan: "Request creation... from QGI (Mocked/Wrapped)".
 
+
     /**
      * Checks if player is at Rank Gate (Level == Cap).
      */
@@ -35,25 +36,78 @@ public class ProgressionService {
     }
 
     /**
+     * Validates if a player is eligible to request a Promotion Quest.
+     * Criteria:
+     * 1. At Rank Gate (Level >= Cap)
+     * 2. Has sufficient Boss Keys
+     * 3. Meets minimum Stat Requirements from Template
+     * 4. NOT in Penalty Zone (Status Flag check)
+     */
+    public boolean canRequestPromotion(UUID playerId) {
+        if (!checkRankGate(playerId)) return false;
+
+        var state = playerStateService.getPlayerState(playerId);
+        var currentRank = state.getProgression().getRank();
+        var template = com.lifeos.progression.domain.RankTransitionTemplate.from(currentRank);
+        
+        if (template == null) return false; // S Rank or maxed
+
+        // Check Keys
+        if (state.getProgression().getBossKeys() < template.getBossKeyCost()) {
+            return false;
+        }
+
+        // Check Stats
+        // var effectiveStats = playerStateService.getEffectiveAttributes(playerId); 
+        // Note: getEffectiveAttributes returns Map<AttributeType, Double>? 
+        // Need to ensure playerStateService exposes this or we look at `state.getAttributes()`
+        // Assuming state.getAttributes() is available in response.
+        
+        for (var entry : template.getStatRequirements().entrySet()) {
+            var type = entry.getKey();
+            var requiredVal = entry.getValue();
+            
+            // Find attribute in list
+            var attr = state.getAttributes().stream()
+                    .filter(a -> a.getAttributeType() == type)
+                    .findFirst();
+            
+            if (attr.isEmpty() || attr.get().getCurrentValue() < requiredVal) {
+                return false;
+            }
+        }
+        
+        // Check Penalty Zone
+        boolean inPenaltyZone = state.getActiveFlags().stream()
+                .anyMatch(f -> f.getFlag() == StatusFlagType.PENALTY_ZONE);
+                
+        if (inPenaltyZone) return false;
+
+        return true;
+    }
+
+    /**
      * Requests a Promotion Quest.
-     * In a real system, this sends a signal to QGI.
-     * Here, we'll assume QGI listens/polls or we just return "true" that it was requested,
-     * OR we check if one already exists.
-     * For V1 integration, we might need to actually CREATE the quest entity so the user can see it.
+     * Consumes Boss Keys immediately.
      */
     @Transactional
     public void requestPromotionQuest(UUID playerId) {
-        if (!checkRankGate(playerId)) {
-            throw new IllegalStateException("Player is not at Rank Gate.");
+         if (!canRequestPromotion(playerId)) {
+            throw new IllegalStateException("Player is not eligible for promotion.");
         }
         
-        // TODO: Call QGI.createQuest(...)
-        // Since QGI isn't fully separate yet, we assume a Quest is generated.
-        // We'll log it for now as "Event Emitted".
-        System.out.println("Promotion Quest Requested for Player " + playerId);
+        var state = playerStateService.getPlayerState(playerId);
+        var template = com.lifeos.progression.domain.RankTransitionTemplate.from(state.getProgression().getRank());
         
-        // For testing/verification without QGI:
-        // logic should stop here. The 'request' is an event.
+        // Consume Keys
+        // Need method in PlayerStateService to deduct keys OR use repo directly here?
+        // Ideally PlayerStateService.
+        // Assuming we add `consumeBossKeys` to PlayerStateService.
+        playerStateService.consumeBossKeys(playerId, template.getBossKeyCost());
+        
+        // Create Quest (Mocked/Simulated)
+        // TODO: Call QGI.createQuest(...) with DIFFICULTY = FIXED_BY_RANK
+        System.out.println("Promotion Quest Requested for Player " + playerId + ". Keys Consumed: " + template.getBossKeyCost());
     }
 
     /**
@@ -62,33 +116,20 @@ public class ProgressionService {
     @Transactional
     public void processPromotionOutcome(UUID playerId, boolean success) {
         if (success) {
-            // Success: Promote Rank
+            // Success: Promote Rank (Unfreezes XP internally in promoteRank)
             playerStateService.promoteRank(playerId);
-            // Event: RankAdvanced
             System.out.println("Rank Advanced for player " + playerId);
         } else {
             // Failure: Penalty Zone, XP stays frozen.
+            // Keys are NOT refunded.
+            
             // 1. Set Status Flag: PENALTY_ZONE
-            // Use PlayerStateService to add flag? We don't have addFlag method exposed yet.
-            // We'll skip adding the Flag record strictly for now if method missing, 
-            // OR assumes PenaltyService handles "effects".
-            // But PENALTY_ZONE is a specific player state.
-            // Let's assume we need to add `addStatusFlag` to PlayerStateService later or now.
-            // For now, let's trigger a standard Penalty first.
+            // TODO: Add addStatusFlag to PlayerStateService
+            // playerStateService.addStatusFlag(playerId, StatusFlagType.PENALTY_ZONE);
+            System.out.println("Promotion Failed. Player enters PENALTY_ZONE.");
             
-            // 2. Apply Penalty (Severity HIGH/CRITICAL)
-            // PenaltyService is usually triggered by QuestLifecycle automatically on Fail.
-            // But Promotion Failure is distinct.
-            // If QuestLifecycle calls this method, it ALSO calls PenaltyService?
-            // "In failQuest(): If type == PROMOTION -> progressionService.processOutcome".
-            // QuestLifecycle ALSO calls `penaltyService.applyPenalty`.
-            // So we don't need to call penaltyService here manually if QuestLifecycle does it.
-            // Wait, does QuestLifecycle know to use HIGH severity? 
-            // PenaltyCalculationService determines severity. We should ensure it maps PROMOTION to HIGH.
-            
-            // 3. Mark Penalty Zone (if not covered by PenaltyService)
-            // System.out.println("Enters Penalty Zone.");
-            // We should ideally persist this.
+            // 2. Ensure XP Frozen (Redundant check, but good for safety)
+            // playerStateService.setXpFrozen(playerId, true);
         }
     }
 }

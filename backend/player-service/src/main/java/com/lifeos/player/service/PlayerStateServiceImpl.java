@@ -131,13 +131,17 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         var progression = progressionRepository.findByPlayerPlayerId(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
 
-        // Rank-Gate Logic: Check if at Level Cap
-        // If (currentLevel >= rank.levelCap) -> XP Freeze.
+        // Rank-Gate Logic: Check XP Freeze
+        if (progression.isXpFrozen()) {
+             System.out.println("XP is Frozen for player " + playerId);
+             return;
+        }
+
+        // Legacy check for safety (or implicit/fallback)
         if (progression.getLevel() >= progression.getRank().getLevelCap()) {
-            // Cap reached. XP is FROZEN.
-            // Emit "Rank Gate Reached" event? (Log for now)
-            System.out.println("Rank Gate Reached for player " + playerId + ". XP Frozen.");
-            return;
+             progression.setXpFrozen(true);
+             progressionRepository.save(progression);
+             return;
         }
 
         long newXp = progression.getCurrentXp() + xpAmount;
@@ -314,9 +318,23 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         }
         
         progression.setRank(nextRank);
-        // XP is implicitly unfrozen because level < newRank.cap (assuming newRank.cap > oldRank.cap)
-        // Level stays same.
+        // implicit unfreeze
+        progression.setXpFrozen(false);
         
+        progressionRepository.save(progression);
+    }
+    
+    @Override
+    @Transactional
+    public void consumeBossKeys(UUID playerId, int amount) {
+        var progression = progressionRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        
+        if (progression.getBossKeys() < amount) {
+            throw new IllegalArgumentException("Insufficient Boss Keys");
+        }
+        
+        progression.setBossKeys(progression.getBossKeys() - amount);
         progressionRepository.save(progression);
     }
 
@@ -346,6 +364,8 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .currentXp(progression.getCurrentXp())
                 .rank(progression.getRank())
                 .rankProgressScore(progression.getRankProgressScore())
+                .bossKeys(progression.getBossKeys())
+                .xpFrozen(progression.isXpFrozen())
                 .build();
 
         var attributeDtos = attributes.stream()
