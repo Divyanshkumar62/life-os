@@ -2,6 +2,7 @@ package com.lifeos.quest.domain;
 
 import com.lifeos.quest.domain.enums.*;
 import com.lifeos.player.domain.PlayerIdentity;
+import com.lifeos.player.domain.enums.AttributeType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,6 +42,10 @@ public class Quest {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private QuestCategory category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "primary_attribute")
+    private AttributeType primaryAttribute;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
