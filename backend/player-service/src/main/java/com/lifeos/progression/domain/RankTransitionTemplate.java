@@ -12,19 +12,19 @@ import java.util.Map;
 public enum RankTransitionTemplate {
 
     E_TO_D(PlayerRank.E, PlayerRank.D, 1, 
-           Map.of(AttributeType.PHYSICAL_ENERGY, 10.0, AttributeType.DISCIPLINE, 8.0)),
+           Map.of(AttributeType.STR, 5.0, AttributeType.INT, 5.0)),
            
     D_TO_C(PlayerRank.D, PlayerRank.C, 2, 
-           Map.of(AttributeType.DISCIPLINE, 15.0, AttributeType.FOCUS, 12.0)),
+           Map.of(AttributeType.STR, 10.0, AttributeType.INT, 10.0, AttributeType.VIT, 5.0)),
            
     C_TO_B(PlayerRank.C, PlayerRank.B, 3, 
-           Map.of(AttributeType.DISCIPLINE, 25.0, AttributeType.FOCUS, 20.0, AttributeType.MENTAL_RESILIENCE, 15.0)), // Willpower mapped to Mental Resilience? Or need new Type? Assuming mapped for now.
+           Map.of(AttributeType.STR, 20.0, AttributeType.INT, 20.0, AttributeType.VIT, 10.0, AttributeType.SEN, 10.0)),
            
     B_TO_A(PlayerRank.B, PlayerRank.A, 5, 
-           Map.of(AttributeType.DISCIPLINE, 40.0, AttributeType.FOCUS, 35.0, AttributeType.EMOTIONAL_CONTROL, 25.0)),
+           Map.of(AttributeType.STR, 30.0, AttributeType.INT, 30.0, AttributeType.VIT, 20.0, AttributeType.SEN, 20.0)),
            
     A_TO_S(PlayerRank.A, PlayerRank.S, 8, 
-           Map.of(AttributeType.DISCIPLINE, 60.0)); // Placeholder for full "All Core Stats >= 60" check which requires custom logic.
+           Map.of(AttributeType.STR, 50.0, AttributeType.INT, 50.0, AttributeType.VIT, 40.0, AttributeType.SEN, 40.0));
     
     private final PlayerRank fromRank;
     private final PlayerRank toRank;

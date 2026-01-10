@@ -4,5 +4,7 @@ com\lifeos\penalty\service\PenaltyServiceTest.class
 com\lifeos\quest\service\DailyQuestServiceTest.class
 com\lifeos\progression\service\ProgressionServiceTest.class
 com\lifeos\player\service\PlayerVerificationTest.class
+com\lifeos\progression\service\StatGateTest.class
+com\lifeos\quest\service\StatSystemTest.class
 com\lifeos\project\service\ProjectServiceTest.class
 com\lifeos\reward\service\RewardServiceTest.class

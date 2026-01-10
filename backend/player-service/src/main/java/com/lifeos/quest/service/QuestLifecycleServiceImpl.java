@@ -157,7 +157,21 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         // 3. Apply Rewards (via Reward Engine)
         rewardService.applyReward(questId, quest.getPlayer().getPlayerId());
         
-        // 4. Progression Check (Promotion)
+        // 4. Stat Growth (Core Stats v1)
+        // Guard: Only grant stats if NOT a promotion exam and has a primary attribute
+        if (quest.getQuestType() != com.lifeos.quest.domain.enums.QuestType.PROMOTION 
+                && quest.getPrimaryAttribute() != null) {
+            boolean isCoreStat = quest.getPrimaryAttribute() == AttributeType.STR 
+                    || quest.getPrimaryAttribute() == AttributeType.INT 
+                    || quest.getPrimaryAttribute() == AttributeType.VIT 
+                    || quest.getPrimaryAttribute() == AttributeType.SEN;
+            
+            if (isCoreStat) {
+                playerStateService.incrementStat(quest.getPlayer().getPlayerId(), quest.getPrimaryAttribute(), 1);
+            }
+        }
+        
+        // 5. Progression Check (Promotion)
         if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION) {
             progressionService.processPromotionOutcome(quest.getPlayer().getPlayerId(), true);
         }

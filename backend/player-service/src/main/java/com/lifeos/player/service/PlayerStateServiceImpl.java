@@ -57,13 +57,17 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         // Create Attributes (Default set)
         List<PlayerAttribute> attributes = new ArrayList<>();
         for (AttributeType type : AttributeType.values()) {
+            boolean isCoreStat = type == AttributeType.STR || type == AttributeType.INT || type == AttributeType.VIT || type == AttributeType.SEN;
+            double startValue = isCoreStat ? 0.0 : 10.0;
+            double decay = isCoreStat ? 0.0 : 0.01;
+
             attributes.add(PlayerAttribute.builder()
                     .player(identity)
                     .attributeType(type)
-                    .baseValue(10.0)
-                    .currentValue(10.0)
+                    .baseValue(startValue)
+                    .currentValue(startValue)
                     .growthVelocity(0.1)
-                    .decayRate(0.01)
+                    .decayRate(decay)
                     .build());
         }
         attributeRepository.saveAll(attributes);
@@ -232,6 +236,19 @@ public class PlayerStateServiceImpl implements PlayerStateService {
             default -> throw new IllegalArgumentException("Unknown psych metric: " + metricName);
         }
         psychStateRepository.save(psychState);
+    }
+
+    @Override
+    @Transactional
+    public void incrementStat(UUID playerId, AttributeType type, int amount) {
+        var attribute = attributeRepository.findByPlayerPlayerIdAndAttributeType(playerId, type)
+                .orElseThrow(() -> new IllegalArgumentException("Attribute not found: " + type));
+
+        double newValue = attribute.getCurrentValue() + amount;
+        if (newValue < 0) newValue = 0;
+        
+        attribute.setCurrentValue(newValue);
+        attributeRepository.save(attribute);
     }
 
     private double clamp(double value, double min, double max) {
