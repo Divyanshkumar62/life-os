@@ -2,6 +2,7 @@ package com.lifeos.reward.domain.enums;
 
 public enum RewardComponentType {
     XP_GAIN,
+    GOLD_GAIN,
     ATTRIBUTE_GROWTH,
     MOMENTUM_BOOST,
     STREAK_EXTENSION,

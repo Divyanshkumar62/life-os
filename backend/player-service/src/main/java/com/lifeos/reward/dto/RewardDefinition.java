@@ -12,6 +12,7 @@ import java.util.Map;
 public class RewardDefinition {
     // Defines the calculated rewards to be applied
     private long xpGain;
+    private long goldGain;
     private Map<AttributeType, Double> attributeGrowth;
     private int momentumBoost;
     private boolean streakExtended;
@@ -21,6 +22,7 @@ public class RewardDefinition {
     public Map<String, Object> toPayloadMap() {
         return Map.of(
             RewardComponentType.XP_GAIN.name(), xpGain,
+            RewardComponentType.GOLD_GAIN.name(), goldGain,
             RewardComponentType.ATTRIBUTE_GROWTH.name(), attributeGrowth,
             RewardComponentType.MOMENTUM_BOOST.name(), momentumBoost,
             RewardComponentType.STREAK_EXTENSION.name(), streakExtended,
