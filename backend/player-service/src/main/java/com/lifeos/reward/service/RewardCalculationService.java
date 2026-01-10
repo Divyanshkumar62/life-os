@@ -91,18 +91,20 @@ public class RewardCalculationService {
         // Confidence Correction
         // Rule: HARD+ difficulty AND (High Bias (>80) OR High Complacency (>70))
         boolean confidenceCorrection = false;
-        if (quest.getDifficultyTier().ordinal() >= DifficultyTier.B.ordinal()) { // Assuming B/A/S/SS/RED are Harder? 
-            // Tier order: F, E, D, C, B, A, S, SS, RED? 
-            // We need to check Tier Enum ordinal or logic.
-            // Let's assume Ordinal increases with difficulty.
-            // Actually let's check DifficultyTier definition.
+        if (quest.getDifficultyTier().ordinal() >= DifficultyTier.B.ordinal()) { 
             if (confidence > 80 || complacency > 70) {
                 confidenceCorrection = true;
             }
         }
 
+        // 7. Gold Logic
+        long baseGold = outcome.getGoldReward();
+        // V1: Direct pass-through. No logic mapping for now unless Difficulty mapped in Profile creation.
+        // Assuming Profile has correct value.
+        
         return RewardDefinition.builder()
                 .xpGain(finalXp)
+                .goldGain(baseGold)
                 .attributeGrowth(finalAttribs)
                 .momentumBoost(momentumBoost)
                 .streakExtended(extendStreak)

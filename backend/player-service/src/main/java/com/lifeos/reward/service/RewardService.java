@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.lifeos.economy.service.EconomyService;
+
 @Service
 @RequiredArgsConstructor
 public class RewardService {
@@ -22,6 +24,7 @@ public class RewardService {
     private final RewardCalculationService calculationService;
     private final PlayerStateService playerStateService;
     private final QuestRepository questRepository;
+    private final EconomyService economyService;
     // OutcomeRepo needed? CalculationService uses it. RewardService just passes ID/Entity.
     
     @Transactional
@@ -47,6 +50,11 @@ public class RewardService {
         // XP
         if (reward.getXpGain() > 0) {
             playerStateService.addXp(playerId, reward.getXpGain());
+        }
+
+        // GOLD
+        if (reward.getGoldGain() > 0) {
+            economyService.addGold(playerId, reward.getGoldGain(), "Quest Reward: " + quest.getTitle());
         }
 
         // Attributes

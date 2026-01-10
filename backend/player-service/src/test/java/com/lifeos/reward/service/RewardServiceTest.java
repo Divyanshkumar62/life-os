@@ -37,6 +37,7 @@ public class RewardServiceTest {
     @Mock private QuestOutcomeProfileRepository outcomeRepository; // Used by CalculationService
     @Mock private PlayerStateService playerStateService;
     @Mock private QuestRepository questRepository;
+    @Mock private com.lifeos.economy.service.EconomyService economyService; // Mock Economy
     
     @InjectMocks
     private RewardService rewardService;
@@ -62,7 +63,8 @@ public class RewardServiceTest {
         playerId = UUID.randomUUID();
         
         calculationService = new RewardCalculationService(outcomeRepository);
-        rewardService = new RewardService(rewardRepository, calculationService, playerStateService, questRepository);
+        // Update Constructor to include MOCK economyService
+        rewardService = new RewardService(rewardRepository, calculationService, playerStateService, questRepository, economyService);
 
         quest = Quest.builder()
                 .questId(questId)
@@ -164,5 +166,21 @@ public class RewardServiceTest {
         
         // Verify Correction
         verify(playerStateService).updatePsychMetric(eq(playerId), eq("CONFIDENCE"), eq(-5.0));
+    }
+    
+    @Test
+    void testRewardWithGold() {
+        // Given outcome has Gold
+        outcome.setGoldReward(50);
+        
+        when(rewardRepository.existsByQuestId(questId)).thenReturn(false);
+        when(questRepository.findById(questId)).thenReturn(Optional.of(quest));
+        when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
+        when(outcomeRepository.findByQuestQuestId(questId)).thenReturn(Optional.of(outcome));
+
+        rewardService.applyReward(questId, playerId);
+        
+        // Verify Economy Interaction
+        verify(economyService).addGold(eq(playerId), eq(50L), anyString());
     }
 }

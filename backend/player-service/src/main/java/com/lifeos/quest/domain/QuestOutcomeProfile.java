@@ -26,6 +26,7 @@ public class QuestOutcomeProfile {
 
     private long successXp;
     private long failureXp;
+    private long goldReward;
 
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Double> attributeDeltaJson; // e.g. {"STRENGTH": 0.5}
