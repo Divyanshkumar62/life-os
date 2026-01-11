@@ -5,6 +5,7 @@ import com.lifeos.player.domain.PlayerIdentity;
 import com.lifeos.player.dto.PlayerIdentityDTO;
 import com.lifeos.player.dto.PlayerProgressionDTO;
 import com.lifeos.player.dto.PlayerStateResponse;
+import com.lifeos.player.dto.PlayerTemporalStateDTO;
 import com.lifeos.player.domain.enums.PlayerRank;
 import com.lifeos.player.domain.enums.StatusFlagType;
 import com.lifeos.player.dto.PlayerStatusFlagDTO;
@@ -38,6 +39,7 @@ public class DailyQuestServiceTest {
     @Mock private PlayerStateService playerStateService;
     @Mock private PlayerIdentityRepository playerRepository;
     @Mock private PenaltyService penaltyService;
+    @Mock private com.lifeos.streak.service.StreakService streakService;
 
     @InjectMocks
     private DailyQuestService dailyQuestService;
@@ -55,9 +57,15 @@ public class DailyQuestServiceTest {
                 .rank(PlayerRank.E)
                 .build();
                 
+        // Ensure Temporal State is not null
+        PlayerTemporalStateDTO temporal = PlayerTemporalStateDTO.builder()
+                .consecutiveDailyFailures(0)
+                .build();
+
         playerState = PlayerStateResponse.builder()
                 .identity(identity)
                 .progression(progression)
+                .temporalState(temporal)
                 .activeFlags(Collections.emptyList())
                 .build();
     }
@@ -84,6 +92,9 @@ public class DailyQuestServiceTest {
                 .deadlineAt(LocalDateTime.now().minusMinutes(1)) // Expired
                 .build();
                 
+        // Set Failures to 1 so next failure triggers Penalty (Threshold >= 2)
+        playerState.getTemporalState().setConsecutiveDailyFailures(1);
+        
         when(questRepository.findByPlayerPlayerIdAndState(playerId, QuestState.ACTIVE))
                 .thenReturn(List.of(expiredDaily));
         when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
@@ -91,7 +102,7 @@ public class DailyQuestServiceTest {
         dailyQuestService.processPlayerReset(playerId);
         
         assertEquals(QuestState.FAILED, expiredDaily.getState());
-        verify(penaltyService).enterPenaltyZone(eq(playerId), contains("DAILY_FAILURE"));
+        verify(penaltyService).enterPenaltyZone(eq(playerId), contains("Consecutive"));
         verify(questRepository).saveAll(anyList());
     }
 

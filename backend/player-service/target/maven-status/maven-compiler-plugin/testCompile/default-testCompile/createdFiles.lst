@@ -9,5 +9,6 @@ com\lifeos\project\service\ProjectServiceTest.class
 com\lifeos\reward\service\RewardServiceTest.class
 com\lifeos\penalty\service\PenaltyServiceTest.class
 com\lifeos\progression\service\RankExamSystemTest.class
+com\lifeos\streak\service\StreakServiceTest.class
 com\lifeos\player\service\PlayerVerificationTest.class
 com\lifeos\progression\service\StatGateTest.class

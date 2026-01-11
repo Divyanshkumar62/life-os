@@ -29,6 +29,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\ec
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\domain\enums\ExamStatus.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerStatusFlag.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\repository\PenaltyRecordRepository.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\streak\domain\PlayerStreak.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\QuestConstraint.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\reward\domain\enums\RewardComponentType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerHistoryDTO.java
@@ -49,6 +50,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\qu
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\MutationType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\QuestState.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\repository\PlayerQuestLinkRepository.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\streak\repository\PlayerStreakRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerMetrics.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\reward\domain\RewardRecord.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerAttributeDTO.java
@@ -56,6 +58,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pl
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\PlayerQuestLink.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerProgression.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\repository\QuestConstraintRepository.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\streak\service\StreakService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\project\service\ProjectService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\dto\QuestRequest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\domain\RankExamAttempt.java

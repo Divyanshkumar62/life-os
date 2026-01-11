@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.lifeos.reward.service.RewardServiceTest" time="0.738" tests="6" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.lifeos.penalty.service.PenaltyServiceTest" time="2.216" tests="3" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -59,10 +59,16 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="65.0"/>
   </properties>
-  <testcase name="testConfidenceCorrection" classname="com.lifeos.reward.service.RewardServiceTest" time="0.621"/>
-  <testcase name="testElasticity_LowMomentum" classname="com.lifeos.reward.service.RewardServiceTest" time="0.024"/>
-  <testcase name="testApplyReward_Standard" classname="com.lifeos.reward.service.RewardServiceTest" time="0.019"/>
-  <testcase name="testRewardWithGold" classname="com.lifeos.reward.service.RewardServiceTest" time="0.024"/>
-  <testcase name="testApplyReward_Idempotency" classname="com.lifeos.reward.service.RewardServiceTest" time="0.019"/>
-  <testcase name="testElasticity_HighComplacency" classname="com.lifeos.reward.service.RewardServiceTest" time="0.011"/>
+  <testcase name="testApplyPenalty_Idempotency" classname="com.lifeos.penalty.service.PenaltyServiceTest" time="2.068">
+    <system-out><![CDATA[22:00:17.363 [main] INFO com.lifeos.penalty.service.PenaltyService -- Penalty already applied for quest bf46ff88-6b9a-460e-be27-d08bc443a2c5
+]]></system-out>
+  </testcase>
+  <testcase name="testApplyPenalty_CriticalFailure" classname="com.lifeos.penalty.service.PenaltyServiceTest" time="0.042">
+    <system-out><![CDATA[22:00:17.435 [main] INFO com.lifeos.penalty.service.PenaltyService -- Applied penalty CRITICAL to player 2b163078-9073-4d21-a37b-9d112c4d27e6 for quest 9048de6c-0bb5-4451-bb57-342a51e25741
+]]></system-out>
+  </testcase>
+  <testcase name="testApplyPenalty_XpDeduction" classname="com.lifeos.penalty.service.PenaltyServiceTest" time="0.013">
+    <system-out><![CDATA[22:00:17.458 [main] INFO com.lifeos.penalty.service.PenaltyService -- Applied penalty LOW to player 0d96a1a7-f780-4eea-a087-4620db2cbcca for quest 3a5a689b-610c-41f5-8839-3f4d864e9dbd
+]]></system-out>
+  </testcase>
 </testsuite>

@@ -44,6 +44,7 @@ class PenaltyAdvancementTest {
     @Mock private QuestRepository questRepository;
     @Mock private PenaltyService penaltyService; // Mocking for DailyQuestService tests
     @Mock private ProjectService projectService; 
+    @Mock private com.lifeos.streak.service.StreakService streakService;
     
     // We need real instances for logic testing where possible, but here we test interactions mostly.
     @InjectMocks private DailyQuestService dailyQuestService; // To test Hybrid Trigger
@@ -151,7 +152,7 @@ class PenaltyAdvancementTest {
         QuestRepository qRepo = mock(QuestRepository.class);
         PlayerStateService psService = mock(PlayerStateService.class);
         // PenaltyCalculationService - not needed for enter/exit
-        PenaltyService realPenaltyService = new PenaltyService(null, null, psService, qRepo);
+        PenaltyService realPenaltyService = new PenaltyService(null, null, psService, qRepo, streakService);
         
         when(psService.getPlayerState(playerId)).thenReturn(playerState);
 
@@ -175,7 +176,7 @@ class PenaltyAdvancementTest {
     @Test
     void testPenaltyService_ExitZone() {
         PlayerStateService psService = mock(PlayerStateService.class);
-        PenaltyService realPenaltyService = new PenaltyService(null, null, psService, null);
+        PenaltyService realPenaltyService = new PenaltyService(null, null, psService, null, streakService);
 
         // Execute
         realPenaltyService.exitPenaltyZone(playerId);

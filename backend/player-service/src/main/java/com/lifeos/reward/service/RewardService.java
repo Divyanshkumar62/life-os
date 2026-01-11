@@ -7,6 +7,7 @@ import com.lifeos.reward.repository.RewardRecordRepository;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.quest.repository.QuestOutcomeProfileRepository;
+import com.lifeos.streak.service.StreakService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ public class RewardService {
     private final PlayerStateService playerStateService;
     private final QuestRepository questRepository;
     private final EconomyService economyService;
+    private final StreakService streakService;
     // OutcomeRepo needed? CalculationService uses it. RewardService just passes ID/Entity.
     
     @Transactional
@@ -54,7 +56,10 @@ public class RewardService {
 
         // GOLD
         if (reward.getGoldGain() > 0) {
-            economyService.addGold(playerId, reward.getGoldGain(), "Quest Reward: " + quest.getTitle());
+            long baseGold = reward.getGoldGain();
+            double multiplier = streakService.getGoldMultiplier(playerId); 
+            long finalGold = (long) (baseGold * (1 + multiplier));
+            economyService.addGold(playerId, finalGold, "Quest Reward: " + quest.getTitle());
         }
 
         // Attributes

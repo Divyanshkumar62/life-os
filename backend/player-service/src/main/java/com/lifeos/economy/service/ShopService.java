@@ -7,6 +7,7 @@ import com.lifeos.economy.repository.ShopItemRepository;
 import com.lifeos.player.domain.enums.StatusFlagType;
 import com.lifeos.player.dto.PlayerStateResponse;
 import com.lifeos.player.service.PlayerStateService;
+import com.lifeos.streak.service.StreakService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ public class ShopService {
     private final EconomyService economyService;
     private final PurchaseTransactionRepository xactionRepository;
     private final PlayerStateService playerStateService;
+    private final StreakService streakService;
 
     @Transactional(readOnly = true)
     public List<ShopItem> listItems(UUID playerId) {
@@ -52,6 +54,10 @@ public class ShopService {
         xactionRepository.save(xaction);
 
         // Apply Effect
+        if ("STREAK_REPAIR_POTION".equals(item.getCode())) {
+            streakService.applyStreakRepair(playerId);
+        }
+        
         // V1: Simple Console Log or Hook
         System.out.println("Applying effect for " + item.getName() + ": " + item.getEffectPayload());
         

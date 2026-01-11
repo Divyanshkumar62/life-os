@@ -11,6 +11,7 @@ import com.lifeos.player.domain.enums.StatusFlagType;
 import com.lifeos.player.dto.PlayerStateResponse;
 import com.lifeos.player.dto.PlayerStatusFlagDTO;
 import com.lifeos.player.service.PlayerStateService;
+import com.lifeos.streak.service.StreakService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -135,7 +136,8 @@ class EconomySystemTest {
         // Ideally unit tests verify interactions. 
         // Let's rebuild ShopService with MOCK EconomyService for this test.
         EconomyService mockEcon = mock(EconomyService.class);
-        ShopService shopSvc = new ShopService(shopRepository, mockEcon, transactionRepository, playerStateService);
+        StreakService mockStreak = mock(StreakService.class);
+        ShopService shopSvc = new ShopService(shopRepository, mockEcon, transactionRepository, playerStateService, mockStreak);
 
         shopSvc.purchaseItem(playerId, "POTION_FOCUS");
 
