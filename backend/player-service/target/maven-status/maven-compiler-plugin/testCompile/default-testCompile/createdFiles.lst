@@ -1,6 +1,7 @@
 com\lifeos\quest\service\QuestLifecycleServiceTest.class
 com\lifeos\penalty\service\PenaltyAdvancementTest.class
 com\lifeos\player\service\PlayerStateServiceTest.class
+com\lifeos\voice\service\SystemVoiceServiceTest.class
 com\lifeos\quest\service\DailyQuestServiceTest.class
 com\lifeos\progression\service\ProgressionServiceTest.class
 com\lifeos\economy\service\EconomySystemTest.class

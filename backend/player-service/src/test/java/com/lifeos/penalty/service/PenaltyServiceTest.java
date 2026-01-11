@@ -9,6 +9,7 @@ import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.domain.enums.DifficultyTier;
 import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.player.domain.enums.AttributeType;
+import com.lifeos.streak.service.StreakService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,8 +39,9 @@ public class PenaltyServiceTest {
     @Mock
     private PlayerStateService playerStateService;
     
-    @Mock
-    private QuestRepository questRepository;
+    @Mock private QuestRepository questRepository;
+    @Mock private com.lifeos.streak.service.StreakService streakService;
+    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PenaltyService penaltyService;

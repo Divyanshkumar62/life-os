@@ -40,6 +40,7 @@ public class DailyQuestServiceTest {
     @Mock private PlayerIdentityRepository playerRepository;
     @Mock private PenaltyService penaltyService;
     @Mock private com.lifeos.streak.service.StreakService streakService;
+    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private DailyQuestService dailyQuestService;

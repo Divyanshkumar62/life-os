@@ -6,9 +6,13 @@ import com.lifeos.reward.dto.RewardDefinition;
 import com.lifeos.reward.repository.RewardRecordRepository;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.repository.QuestRepository;
+import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.quest.repository.QuestOutcomeProfileRepository;
 import com.lifeos.streak.service.StreakService;
+import com.lifeos.voice.domain.enums.SystemMessageType;
+import com.lifeos.voice.event.VoiceSystemEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,7 @@ public class RewardService {
     private final QuestRepository questRepository;
     private final EconomyService economyService;
     private final StreakService streakService;
+    private final ApplicationEventPublisher eventPublisher;
     // OutcomeRepo needed? CalculationService uses it. RewardService just passes ID/Entity.
     
     @Transactional
@@ -96,5 +101,13 @@ public class RewardService {
                 .build();
         
         rewardRepository.save(record);
+        
+        // VOICE: QUEST_COMPLETED
+        // TODO: Distinguish between Normal and Major
+        eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                .playerId(playerId)
+                .type(SystemMessageType.QUEST_COMPLETED_SIMPLE) // Default logic
+                .payload(java.util.Collections.emptyMap())
+                .build());
     }
 }
