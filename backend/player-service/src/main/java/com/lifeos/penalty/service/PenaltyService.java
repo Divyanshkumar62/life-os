@@ -7,6 +7,7 @@ import com.lifeos.penalty.repository.PenaltyRecordRepository;
 import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.repository.QuestRepository;
+import com.lifeos.streak.service.StreakService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ public class PenaltyService {
     private final PenaltyCalculationService calculationService;
     private final PlayerStateService playerStateService;
     private final QuestRepository questRepository;
+    private final StreakService streakService;
 
     @Transactional
     public void applyPenalty(UUID questId, UUID playerId, FailureReason reason) {
@@ -113,6 +115,7 @@ public class PenaltyService {
         
         // 3. Reset Streaks
         playerStateService.resetStreak(playerId);
+        streakService.resetStreak(playerId); // New Streak Engine Reset
         
         // 4. Generate SURVIVAL PROTOCOL Quest
         Quest survivalQuest = Quest.builder()

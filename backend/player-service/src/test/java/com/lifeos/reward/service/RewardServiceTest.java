@@ -38,6 +38,7 @@ public class RewardServiceTest {
     @Mock private PlayerStateService playerStateService;
     @Mock private QuestRepository questRepository;
     @Mock private com.lifeos.economy.service.EconomyService economyService; // Mock Economy
+    @Mock private com.lifeos.streak.service.StreakService streakService;
     
     @InjectMocks
     private RewardService rewardService;
@@ -64,7 +65,7 @@ public class RewardServiceTest {
         
         calculationService = new RewardCalculationService(outcomeRepository);
         // Update Constructor to include MOCK economyService
-        rewardService = new RewardService(rewardRepository, calculationService, playerStateService, questRepository, economyService);
+        rewardService = new RewardService(rewardRepository, calculationService, playerStateService, questRepository, economyService, streakService);
 
         quest = Quest.builder()
                 .questId(questId)
@@ -73,6 +74,7 @@ public class RewardServiceTest {
 
         outcome = QuestOutcomeProfile.builder()
                 .successXp(100L)
+                .goldReward(0L) // Initialize to avoid NPE
                 .attributeDeltaJson(Map.of("DISCIPLINE", 1.0))
                 .build();
         

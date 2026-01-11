@@ -9,6 +9,7 @@ import com.lifeos.quest.domain.enums.QuestCategory;
 import com.lifeos.quest.domain.enums.QuestState;
 import com.lifeos.quest.domain.enums.SystemDailyTemplate;
 import com.lifeos.quest.repository.QuestRepository;
+import com.lifeos.streak.service.StreakService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,7 @@ public class DailyQuestService {
     private final PlayerStateService playerStateService;
     private final PlayerIdentityRepository playerRepository;
     private final PenaltyService penaltyService;
+    private final StreakService streakService;
 
     /**
      * SYSTEM-WIDE RESET (Scheduled Job would call this)
@@ -71,6 +73,47 @@ public class DailyQuestService {
                 daily.setState(QuestState.FAILED);
                 todayFailed = true;
             }
+        }
+        
+        // 3. Update Streak (Evaluate YESTERDAY's performance, which is `dailies`)
+        // Actually, `dailies` usually refers to TODAY's dailies from perspective of reset time?
+        // Wait, "System-Wide Reset" usually runs at Midnight:00:01
+        // So `dailies` fetched are the ones that just expired (deadlineAt was yesterday midnight/today midnight).
+        // `daily.getDeadlineAt().isBefore(now)` implies they are expired.
+        // So `todayFailed` flag captures if any of them failed.
+        // If !todayFailed => All Success? We need to check if they are COMPLETED.
+        // Wait, loop only checks expiry. We must check status too.
+        
+        boolean allCompleted = true;
+        for (Quest daily : dailies) {
+             if (daily.getState() != QuestState.COMPLETED) {
+                 allCompleted = false;
+                 // If not completed and expired, it fails.
+                 if (daily.getDeadlineAt().isBefore(now)) {
+                     daily.setState(QuestState.FAILED);
+                 }
+                 // If not completed and deadline passed -> Failed.
+             }
+        }
+        
+        // Refinement: `todayFailed` logic above was incomplete.
+        // Let's re-eval: `todayFailed` meant "Did ANY fail?".
+        // Streak requires ALL to be COMPLETED.
+        // If any is FAILED or ACTIVE(expired), Streak breaks.
+        
+        boolean streakSuccess = true;
+        for (Quest daily : dailies) {
+             if (daily.getState() != QuestState.COMPLETED) {
+                 streakSuccess = false;
+             }
+        }
+        
+        // Call Streak Service
+        LocalDate yesterday = LocalDate.now().minusDays(1);
+        try {
+            streakService.processDailyCompletion(playerId, yesterday, streakSuccess);
+        } catch (Exception e) {
+            log.error("Failed to update streak for player {}", playerId, e);
         }
         
         // HYBRID TRIGGER LOGIC
