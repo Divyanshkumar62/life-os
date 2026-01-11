@@ -18,6 +18,9 @@ public interface PlayerStateService {
     void resetStreak(UUID playerId);
     void applyStatDebuff(UUID playerId, AttributeType type, double amount, java.time.LocalDateTime expiresAt);
     void applyStatusFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flag, java.time.LocalDateTime expiresAt);
+    void removeStatusFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flagType);
+    void updateConsecutiveFailures(UUID playerId, int failures);
+
     // Reward Methods
     void extendStreak(UUID playerId);
     void adjustMomentum(UUID playerId, int delta);

@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -55,32 +56,32 @@ class EconomySystemTest {
     @Test
     void testAddGold() {
         // Setup
-        var economy = PlayerEconomy.builder().playerId(playerId).goldBalance(100).totalGoldEarned(100).build();
+        var economy = PlayerEconomy.builder().player(PlayerIdentity.builder().playerId(playerId).build()).goldBalance(BigDecimal.valueOf(100)).totalGoldEarned(BigDecimal.valueOf(100)).build();
         when(economyRepository.findById(playerId)).thenReturn(Optional.of(economy));
 
         // Execute
         economyService.addGold(playerId, 50, "Quest");
 
         // Verify
-        assertEquals(150, economy.getGoldBalance());
-        assertEquals(150, economy.getTotalGoldEarned());
+        assertEquals(BigDecimal.valueOf(150), economy.getGoldBalance());
+        assertEquals(BigDecimal.valueOf(150), economy.getTotalGoldEarned());
         verify(economyRepository).save(economy);
     }
 
     @Test
     void testDeductGold_Success() {
-        var economy = PlayerEconomy.builder().playerId(playerId).goldBalance(100).totalGoldSpent(0).build();
+        var economy = PlayerEconomy.builder().player(PlayerIdentity.builder().playerId(playerId).build()).goldBalance(BigDecimal.valueOf(100)).totalGoldSpent(BigDecimal.ZERO).build();
         when(economyRepository.findById(playerId)).thenReturn(Optional.of(economy));
 
         economyService.deductGold(playerId, 40, "Shop");
 
-        assertEquals(60, economy.getGoldBalance());
-        assertEquals(40, economy.getTotalGoldSpent());
+        assertEquals(BigDecimal.valueOf(60), economy.getGoldBalance());
+        assertEquals(BigDecimal.valueOf(40), economy.getTotalGoldSpent());
     }
 
     @Test
     void testDeductGold_Insufficient() {
-        var economy = PlayerEconomy.builder().playerId(playerId).goldBalance(10).build();
+        var economy = PlayerEconomy.builder().player(PlayerIdentity.builder().playerId(playerId).build()).goldBalance(BigDecimal.valueOf(10)).build();
         when(economyRepository.findById(playerId)).thenReturn(Optional.of(economy));
 
         assertThrows(IllegalStateException.class, () ->

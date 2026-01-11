@@ -335,6 +335,26 @@ public class PlayerStateServiceImpl implements PlayerStateService {
 
     @Override
     @Transactional
+    public void removeStatusFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flagType) {
+        List<PlayerStatusFlag> flags = flagRepository.findByPlayerPlayerId(playerId);
+        flags.stream()
+            .filter(f -> f.getFlag() == flagType)
+            .findFirst()
+            .ifPresent(flagRepository::delete);
+    }
+    
+    @Override
+    @Transactional
+    public void updateConsecutiveFailures(UUID playerId, int failures) {
+        var temporal = temporalStateRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        
+        temporal.setConsecutiveDailyFailures(failures);
+        temporalStateRepository.save(temporal);
+    }
+
+    @Override
+    @Transactional
     public void extendStreak(UUID playerId) {
         var temporal = temporalStateRepository.findByPlayerPlayerId(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
@@ -459,6 +479,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .activeStreakDays(temporal.getActiveStreakDays())
                 .restDebt(temporal.getRestDebt())
                 .burnoutRiskScore(temporal.getBurnoutRiskScore())
+                .consecutiveDailyFailures(temporal.getConsecutiveDailyFailures())
                 .build();
 
         var historyDto = PlayerHistoryDTO.builder()

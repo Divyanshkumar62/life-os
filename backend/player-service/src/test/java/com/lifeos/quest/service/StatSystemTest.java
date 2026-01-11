@@ -75,7 +75,7 @@ class StatSystemTest {
         Quest promoQuest = Quest.builder()
                 .questId(UUID.randomUUID())
                 .player(playerIdentity)
-                .questType(QuestType.PROMOTION) // GUARD TRIGGER
+                .questType(QuestType.PROMOTION_EXAM) // GUARD TRIGGER
                 .state(QuestState.ACTIVE)
                 .primaryAttribute(AttributeType.STR) // Even if tagged
                 .build();

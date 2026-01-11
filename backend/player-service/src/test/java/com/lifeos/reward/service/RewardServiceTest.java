@@ -171,7 +171,7 @@ public class RewardServiceTest {
     @Test
     void testRewardWithGold() {
         // Given outcome has Gold
-        outcome.setGoldReward(50);
+        outcome.setGoldReward(50L);
         
         when(rewardRepository.existsByQuestId(questId)).thenReturn(false);
         when(questRepository.findById(questId)).thenReturn(Optional.of(quest));
