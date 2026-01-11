@@ -11,7 +11,10 @@ import com.lifeos.progression.repository.RankExamAttemptRepository;
 import com.lifeos.progression.repository.UserBossKeyRepository;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.repository.QuestRepository;
+import com.lifeos.voice.domain.enums.SystemMessageType;
+import com.lifeos.voice.event.VoiceSystemEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,7 @@ public class ProgressionService {
     private final QuestRepository questRepository;
     private final UserBossKeyRepository bossKeyRepository;
     private final RankExamAttemptRepository examAttemptRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Checks if player is at Rank Gate (Level == Cap).
@@ -140,6 +144,12 @@ public class ProgressionService {
         
         System.out.println(String.format("Promotion requested: %s -> %s. Keys consumed: %d. Exam Quest Spawned.", 
             currentRank, currentRank.next(), template.getBossKeyCost()));
+            
+        // VOICE: PROMOTION_UNLOCKED (Quest is now Active)
+        eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                .playerId(playerId)
+                .type(SystemMessageType.PROMOTION_UNLOCKED)
+                .build());
         
         return attempt;
     }
@@ -174,6 +184,12 @@ public class ProgressionService {
             playerStateService.promoteRank(playerId);
             
             System.out.println("Rank Advanced for player " + playerId);
+            
+            // VOICE: PROMOTION_PASSED
+            eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                        .playerId(playerId)
+                        .type(SystemMessageType.PROMOTION_PASSED)
+                        .build());
         } else {
             // FAILURE: Mark attempt as failed
             // Keys are LOST (already consumed)
@@ -185,6 +201,12 @@ public class ProgressionService {
             penaltyService.enterPenaltyZone(playerId, "Failed Rank Exam: " + attempt.getFromRank() + " -> " + attempt.getToRank());
             
             System.out.println("Promotion Failed. ENTERING PENALTY ZONE.");
+            
+            // VOICE: PROMOTION_FAILED
+            eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                        .playerId(playerId)
+                        .type(SystemMessageType.PROMOTION_FAILED)
+                        .build());
         }
     }
 }

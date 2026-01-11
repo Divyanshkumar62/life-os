@@ -1,0 +1,238 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.lifeos:player-service >----------------------
+[INFO] Building player-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ player-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ player-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 98 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[32,41] variable bossKeyRepository is already defined in class com.lifeos.progression.service.ProgressionService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[10,20] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[11,27] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[14,21] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[17,23] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[18,20] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[21,22] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[22,23] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[23,21] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[24,21] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[27,18] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[30,18] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[31,31] cannot find symbol
+  symbol:   method getTemplate()
+  location: variable type of type com.lifeos.voice.domain.enums.SystemMessageType
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[34,46] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.voice.domain.SystemMessage
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[37,27] cannot find symbol
+  symbol:   method getDefaultMode()
+  location: variable type of type com.lifeos.voice.domain.enums.SystemMessageType
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[38,44] cannot find symbol
+  symbol:   method getDefaultMode()
+  location: variable type of type com.lifeos.voice.domain.enums.SystemMessageType
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[45,9] cannot find symbol
+  symbol:   variable log
+  location: class com.lifeos.voice.service.SystemVoiceService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[45,47] cannot find symbol
+  symbol:   method getDefaultMode()
+  location: variable type of type com.lifeos.voice.domain.enums.SystemMessageType
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[139,61] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyService.java:[145,53] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/streak/service/StreakService.java:[59,61] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/reward/service/RewardService.java:[107,53] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[150,53] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[190,57] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[207,57] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[22,22] cannot find symbol
+  symbol:   method getPlayerId()
+  location: variable event of type com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[23,22] cannot find symbol
+  symbol:   method getType()
+  location: variable event of type com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[24,22] cannot find symbol
+  symbol:   method getPayload()
+  location: variable event of type com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[27,13] cannot find symbol
+  symbol:   variable log
+  location: class com.lifeos.voice.service.SystemEventListener
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[27,82] cannot find symbol
+  symbol:   method getPlayerId()
+  location: variable event of type com.lifeos.voice.event.VoiceSystemEvent
+[INFO] 30 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  23.670 s
+[INFO] Finished at: 2026-01-11T22:31:01+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project player-service: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[32,41] variable bossKeyRepository is already defined in class com.lifeos.progression.service.ProgressionService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[10,20] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[11,27] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[14,21] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[17,23] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[18,20] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[21,22] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[22,23] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[23,21] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[24,21] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[27,18] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/domain/enums/SystemMessageType.java:[30,18] constructor SystemMessageType in enum com.lifeos.voice.domain.enums.SystemMessageType cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String,com.lifeos.voice.domain.enums.SystemVoiceMode
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[31,31] cannot find symbol
+[ERROR]   symbol:   method getTemplate()
+[ERROR]   location: variable type of type com.lifeos.voice.domain.enums.SystemMessageType
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[34,46] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.voice.domain.SystemMessage
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[37,27] cannot find symbol
+[ERROR]   symbol:   method getDefaultMode()
+[ERROR]   location: variable type of type com.lifeos.voice.domain.enums.SystemMessageType
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[38,44] cannot find symbol
+[ERROR]   symbol:   method getDefaultMode()
+[ERROR]   location: variable type of type com.lifeos.voice.domain.enums.SystemMessageType
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[45,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.lifeos.voice.service.SystemVoiceService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemVoiceService.java:[45,47] cannot find symbol
+[ERROR]   symbol:   method getDefaultMode()
+[ERROR]   location: variable type of type com.lifeos.voice.domain.enums.SystemMessageType
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[139,61] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyService.java:[145,53] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/streak/service/StreakService.java:[59,61] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/reward/service/RewardService.java:[107,53] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[150,53] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[190,57] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[207,57] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[22,22] cannot find symbol
+[ERROR]   symbol:   method getPlayerId()
+[ERROR]   location: variable event of type com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[23,22] cannot find symbol
+[ERROR]   symbol:   method getType()
+[ERROR]   location: variable event of type com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[24,22] cannot find symbol
+[ERROR]   symbol:   method getPayload()
+[ERROR]   location: variable event of type com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[27,13] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.lifeos.voice.service.SystemEventListener
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/voice/service/SystemEventListener.java:[27,82] cannot find symbol
+[ERROR]   symbol:   method getPlayerId()
+[ERROR]   location: variable event of type com.lifeos.voice.event.VoiceSystemEvent
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

@@ -6,7 +6,10 @@ import com.lifeos.progression.repository.RankExamAttemptRepository;
 import com.lifeos.progression.domain.enums.ExamStatus;
 import com.lifeos.streak.domain.PlayerStreak;
 import com.lifeos.streak.repository.PlayerStreakRepository;
+import com.lifeos.voice.domain.enums.SystemMessageType;
+import com.lifeos.voice.event.VoiceSystemEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,7 @@ public class StreakService {
     private final PlayerStreakRepository streakRepository;
     private final PlayerStateService playerStateService;
     private final RankExamAttemptRepository examRepository; // For checking Exam status
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Called at Daily Reset to update streak status for the previous day.
@@ -50,6 +54,12 @@ public class StreakService {
                 streak.setPreviousStreak(streak.getCurrentStreak()); // Save for repair
                 streak.setLastBrokenDate(evaluatedDate);
                 streak.setCurrentStreak(0);
+                
+                // VOICE: STREAK_BROKEN
+                eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                        .playerId(playerId)
+                        .type(SystemMessageType.STREAK_BROKEN)
+                        .build());
             }
         }
         

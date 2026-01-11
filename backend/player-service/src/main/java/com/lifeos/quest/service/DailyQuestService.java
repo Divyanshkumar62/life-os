@@ -10,6 +10,8 @@ import com.lifeos.quest.domain.enums.QuestState;
 import com.lifeos.quest.domain.enums.SystemDailyTemplate;
 import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.streak.service.StreakService;
+import com.lifeos.voice.domain.enums.SystemMessageType;
+import com.lifeos.voice.event.VoiceSystemEvent;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +37,7 @@ public class DailyQuestService {
     private final PlayerIdentityRepository playerRepository;
     private final PenaltyService penaltyService;
     private final StreakService streakService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     /**
      * SYSTEM-WIDE RESET (Scheduled Job would call this)
@@ -132,6 +135,11 @@ public class DailyQuestService {
                 // Apply Warning for 24h
                 playerStateService.applyStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.WARNING, now.plusDays(1));
                 log.info("Player {} missed dailies. Consecutive: 1. Applied WARNING.", playerId);
+                // VOICE: DAILY_INCOMPLETE
+                eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                        .playerId(playerId)
+                        .type(SystemMessageType.DAILY_INCOMPLETE)
+                        .build());
             } else if (newFailures >= 2) {
                 // STRIKE 2+: PENALTY ZONE
                 penaltyService.enterPenaltyZone(playerId, "Consecutive Daily Failures: " + newFailures);

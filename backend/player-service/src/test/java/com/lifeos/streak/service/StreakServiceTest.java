@@ -32,6 +32,7 @@ class StreakServiceTest {
     @Mock private PlayerStreakRepository streakRepository;
     @Mock private PlayerStateService playerStateService;
     @Mock private RankExamAttemptRepository examRepository;
+    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private StreakService streakService;
 

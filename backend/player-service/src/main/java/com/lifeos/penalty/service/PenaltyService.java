@@ -8,6 +8,8 @@ import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.streak.service.StreakService;
+import com.lifeos.voice.domain.enums.SystemMessageType;
+import com.lifeos.voice.event.VoiceSystemEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -31,6 +33,7 @@ public class PenaltyService {
     private final PlayerStateService playerStateService;
     private final QuestRepository questRepository;
     private final StreakService streakService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void applyPenalty(UUID questId, UUID playerId, FailureReason reason) {
@@ -137,6 +140,12 @@ public class PenaltyService {
                 
         questRepository.save(survivalQuest);
         log.info("Generated SURVIVAL PROTOCOL quest for player {}", playerId);
+        
+        // VOICE: PENALTY_ZONE_ENTRY
+        eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                .playerId(playerId)
+                .type(SystemMessageType.PENALTY_ZONE_ENTRY)
+                .build());
     }
 
     @Transactional

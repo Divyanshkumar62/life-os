@@ -21,7 +21,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.context.ApplicationEventPublisher;
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class RewardServiceTest {
     @Mock private QuestRepository questRepository;
     @Mock private com.lifeos.economy.service.EconomyService economyService; // Mock Economy
     @Mock private com.lifeos.streak.service.StreakService streakService;
+    @Mock private ApplicationEventPublisher eventPublisher; // Added for Voice
     
     @InjectMocks
     private RewardService rewardService;
@@ -65,7 +67,15 @@ public class RewardServiceTest {
         
         calculationService = new RewardCalculationService(outcomeRepository);
         // Update Constructor to include MOCK economyService
-        rewardService = new RewardService(rewardRepository, calculationService, playerStateService, questRepository, economyService, streakService);
+        rewardService = new RewardService(
+                rewardRepository, 
+                calculationService, 
+                playerStateService, 
+                questRepository, 
+                economyService,
+                streakService,
+                eventPublisher
+        );
 
         quest = Quest.builder()
                 .questId(questId)
