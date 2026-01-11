@@ -1,10 +1,5 @@
 package com.lifeos.quest.domain.enums;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-@Getter
-@AllArgsConstructor
 public enum SystemDailyTemplate {
     WAKE_UP("Wake Up", DifficultyTier.E),
     MOVEMENT("Movement", DifficultyTier.D),
@@ -13,4 +8,12 @@ public enum SystemDailyTemplate {
 
     private final String defaultTitle;
     private final DifficultyTier difficulty;
+
+    SystemDailyTemplate(String defaultTitle, DifficultyTier difficulty) {
+        this.defaultTitle = defaultTitle;
+        this.difficulty = difficulty;
+    }
+    
+    public String getDefaultTitle() { return defaultTitle; }
+    public DifficultyTier getDifficulty() { return difficulty; }
 }

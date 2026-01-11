@@ -9,6 +9,7 @@ import com.lifeos.progression.domain.UserBossKey;
 import com.lifeos.progression.domain.enums.ExamStatus;
 import com.lifeos.progression.repository.RankExamAttemptRepository;
 import com.lifeos.progression.repository.UserBossKeyRepository;
+import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.repository.QuestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -118,7 +119,26 @@ public class ProgressionService {
         
         attempt = examAttemptRepository.save(attempt);
         
-        System.out.println(String.format("Promotion requested: %s -> %s. Keys consumed: %d", 
+        // SPAWN PROMOTION QUEST
+        Quest examQuest = Quest.builder()
+                .player(state.getIdentity() != null ? com.lifeos.player.domain.PlayerIdentity.builder().playerId(playerId).build() : null)
+                .title("Rank Exam: " + currentRank + " -> " + currentRank.next())
+                .description("Prove your worth. Failure results in immediate Penalty Zone.")
+                .category(com.lifeos.quest.domain.enums.QuestCategory.MAIN) // or SYSTEM_DAILY? MAIN seems appropriate for Exam.
+                .difficultyTier(com.lifeos.quest.domain.enums.DifficultyTier.RED) // Exams are hard
+                .state(com.lifeos.quest.domain.enums.QuestState.ACTIVE)
+                .priority(com.lifeos.quest.domain.enums.Priority.CRITICAL)
+                .questType(com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM)
+                .assignedAt(LocalDateTime.now())
+                .startsAt(LocalDateTime.now())
+                .deadlineAt(LocalDateTime.now().plusDays(7)) // Default 7 days, should come from Template ideally
+                .systemMutable(false)
+                .primaryAttribute(null) // No single stats, holistic
+                .build();
+        
+        questRepository.save(examQuest);
+        
+        System.out.println(String.format("Promotion requested: %s -> %s. Keys consumed: %d. Exam Quest Spawned.", 
             currentRank, currentRank.next(), template.getBossKeyCost()));
         
         return attempt;
@@ -126,15 +146,22 @@ public class ProgressionService {
 
     /**
      * Processes the outcome of a Promotion Quest.
-     * CRITICAL: Does NOT trigger Penalty Zone on failure.
+     * CRITICAL: Triggers Penalty Zone on failure.
      */
+    
+    
     @Transactional
-    public void processPromotionOutcome(UUID attemptId, boolean success) {
-        RankExamAttempt attempt = examAttemptRepository.findById(attemptId)
-                .orElseThrow(() -> new IllegalArgumentException("Exam attempt not found"));
+    public void processPromotionOutcome(UUID playerId, boolean success) {
+        // Find latest UNLOCKED/InProgress attempt for this player
+        // We assume 1 active exam at a time.
+        RankExamAttempt attempt = examAttemptRepository.findLatestByPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("No active exam attempt found for player " + playerId));
         
         if (attempt.getStatus() != ExamStatus.UNLOCKED) {
-            throw new IllegalStateException("Exam attempt is not in UNLOCKED state");
+             // Maybe they clicked it twice? Or concurrency?
+             // If already processed, ignore?
+             // throw new IllegalStateException("Exam attempt is not in UNLOCKED state");
+             return; 
         }
         
         attempt.setCompletedAt(LocalDateTime.now());
@@ -144,7 +171,6 @@ public class ProgressionService {
             attempt.setStatus(ExamStatus.PASSED);
             examAttemptRepository.save(attempt);
             
-            UUID playerId = attempt.getPlayer().getPlayerId();
             playerStateService.promoteRank(playerId);
             
             System.out.println("Rank Advanced for player " + playerId);
@@ -152,11 +178,13 @@ public class ProgressionService {
             // FAILURE: Mark attempt as failed
             // Keys are LOST (already consumed)
             // XP remains FROZEN
-            // NO Penalty Zone (CRITICAL FIX)
+            // STRICT PENALTY: Enter Penalty Zone
             attempt.setStatus(ExamStatus.FAILED);
             examAttemptRepository.save(attempt);
             
-            System.out.println("Promotion Failed. Keys lost. Must earn new key via Project.");
+            penaltyService.enterPenaltyZone(playerId, "Failed Rank Exam: " + attempt.getFromRank() + " -> " + attempt.getToRank());
+            
+            System.out.println("Promotion Failed. ENTERING PENALTY ZONE.");
         }
     }
 }

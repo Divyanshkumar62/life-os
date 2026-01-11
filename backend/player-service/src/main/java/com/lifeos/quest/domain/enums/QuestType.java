@@ -8,5 +8,6 @@ public enum QuestType {
     REFLECTION,
     RECOVERY,
     EGO_BREAKER,
-    PROMOTION
+    PROMOTION_EXAM,
+    PENALTY
 }

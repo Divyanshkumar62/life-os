@@ -1,7 +1,5 @@
 package com.lifeos.player.domain.enums;
 
-@lombok.Getter
-@lombok.AllArgsConstructor
 public enum PlayerRank {
     F(5, 1, 1),
     E(10, 1, 2),
@@ -15,6 +13,16 @@ public enum PlayerRank {
     private final int levelCap;
     private final int projectSlots;
     private final int systemDailyCount;
+    
+    PlayerRank(int levelCap, int projectSlots, int systemDailyCount) {
+        this.levelCap = levelCap;
+        this.projectSlots = projectSlots;
+        this.systemDailyCount = systemDailyCount;
+    }
+    
+    public int getLevelCap() { return levelCap; }
+    public int getProjectSlots() { return projectSlots; }
+    public int getSystemDailyCount() { return systemDailyCount; }
     
     public PlayerRank next() {
         int ordinal = this.ordinal();

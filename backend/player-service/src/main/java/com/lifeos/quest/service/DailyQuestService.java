@@ -10,7 +10,8 @@ import com.lifeos.quest.domain.enums.QuestState;
 import com.lifeos.quest.domain.enums.SystemDailyTemplate;
 import com.lifeos.quest.repository.QuestRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,8 +24,10 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
+//@Slf4j
 public class DailyQuestService {
+
+    private static final Logger log = LoggerFactory.getLogger(DailyQuestService.class);
 
     private final QuestRepository questRepository;
     private final PlayerStateService playerStateService;
@@ -59,20 +62,44 @@ public class DailyQuestService {
                 .collect(Collectors.toList());
         
         // 2. Process Expiry & Penalties
-        boolean penaltyTriggered = false;
+        // 2. Process Expiry & Penalties
+        boolean todayFailed = false;
         
         for (Quest daily : dailies) {
             // Strict check: If deadline passed and not completed
             if (daily.getDeadlineAt().isBefore(now)) {
-                // Warning: Status is ACTIVE but time passed -> FAILED
                 daily.setState(QuestState.FAILED);
-                
-                // Trigger Penalty (System Dailies = Mandatory)
-                // Idempotency handled inside PenaltyService, but we only need to call once per batch really
-                if (!penaltyTriggered) {
-                    penaltyService.enterPenaltyZone(playerId, "DAILY_FAILURE_RESET");
-                    penaltyTriggered = true;
-                }
+                todayFailed = true;
+            }
+        }
+        
+        // HYBRID TRIGGER LOGIC
+        // Fetch current consecutive failures
+        // We need to re-fetch state? Or rely on what we have? 
+        // We didn't fetch state in this method yet.
+        var state = playerStateService.getPlayerState(playerId);
+        int currentFailures = state.getTemporalState().getConsecutiveDailyFailures();
+        
+        if (todayFailed) {
+            int newFailures = currentFailures + 1;
+            playerStateService.updateConsecutiveFailures(playerId, newFailures);
+            
+            if (newFailures == 1) {
+                // STRIKE 1: WARNING
+                // Apply Warning for 24h
+                playerStateService.applyStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.WARNING, now.plusDays(1));
+                log.info("Player {} missed dailies. Consecutive: 1. Applied WARNING.", playerId);
+            } else if (newFailures >= 2) {
+                // STRIKE 2+: PENALTY ZONE
+                penaltyService.enterPenaltyZone(playerId, "Consecutive Daily Failures: " + newFailures);
+            }
+        } else {
+            // SUCCESS (No failures found among active dailies, meaning likely completed)
+            // Reset counter if it was > 0
+            if (currentFailures > 0) {
+                playerStateService.updateConsecutiveFailures(playerId, 0);
+                playerStateService.removeStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.WARNING);
+                log.info("Player {} completed dailies. Reset consecutive failures.", playerId);
             }
         }
         

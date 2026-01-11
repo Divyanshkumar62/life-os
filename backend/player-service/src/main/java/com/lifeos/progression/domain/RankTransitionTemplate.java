@@ -7,8 +7,6 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 
-@Getter
-@RequiredArgsConstructor
 public enum RankTransitionTemplate {
 
     E_TO_D(PlayerRank.E, PlayerRank.D, 1, 
@@ -30,6 +28,18 @@ public enum RankTransitionTemplate {
     private final PlayerRank toRank;
     private final int bossKeyCost;
     private final Map<AttributeType, Double> statRequirements;
+    
+    RankTransitionTemplate(PlayerRank fromRank, PlayerRank toRank, int bossKeyCost, Map<AttributeType, Double> statRequirements) {
+        this.fromRank = fromRank;
+        this.toRank = toRank;
+        this.bossKeyCost = bossKeyCost;
+        this.statRequirements = statRequirements;
+    }
+    
+    public PlayerRank getFromRank() { return fromRank; }
+    public PlayerRank getToRank() { return toRank; }
+    public int getBossKeyCost() { return bossKeyCost; }
+    public Map<AttributeType, Double> getStatRequirements() { return statRequirements; }
 
     public static RankTransitionTemplate from(PlayerRank rank) {
         for (RankTransitionTemplate template : values()) {

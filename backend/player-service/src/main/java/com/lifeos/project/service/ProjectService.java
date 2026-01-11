@@ -25,11 +25,22 @@ public class ProjectService {
     private final QuestRepository questRepository;
     private final PlayerProgressionRepository progressionRepository;
     private final UserBossKeyRepository bossKeyRepository;
+    private final com.lifeos.player.service.PlayerStateService playerStateService;
     
     @Transactional
     public Project createProject(Project project) {
         // STRICT VALIDATION (GA-Ready)
         
+
+        // 0. Penalty Zone Guard
+        var state = playerStateService.getPlayerState(project.getPlayer().getPlayerId());
+        boolean isPenaltyActive = state.getActiveFlags().stream()
+                .anyMatch(f -> f.getFlag() == com.lifeos.player.domain.enums.StatusFlagType.PENALTY_ZONE);
+        
+        if (isPenaltyActive) {
+            throw new IllegalStateException("Project creation is LOCKED while in Penalty Zone.");
+        }
+
         // 1. Duration >= 7 days
         if (project.getDurationDays() < 7) {
             throw new IllegalArgumentException("Project duration must be at least 7 days");

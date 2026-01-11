@@ -159,7 +159,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         
         // 4. Stat Growth (Core Stats v1)
         // Guard: Only grant stats if NOT a promotion exam and has a primary attribute
-        if (quest.getQuestType() != com.lifeos.quest.domain.enums.QuestType.PROMOTION 
+        if (quest.getQuestType() != com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM 
                 && quest.getPrimaryAttribute() != null) {
             boolean isCoreStat = quest.getPrimaryAttribute() == AttributeType.STR 
                     || quest.getPrimaryAttribute() == AttributeType.INT 
@@ -172,8 +172,13 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         }
         
         // 5. Progression Check (Promotion)
-        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION) {
+        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM) {
             progressionService.processPromotionOutcome(quest.getPlayer().getPlayerId(), true);
+        }
+        
+        // 6. Penalty Logic (Exit Protocol)
+        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PENALTY) {
+            penaltyService.exitPenaltyZone(quest.getPlayer().getPlayerId());
         }
     }
 
@@ -195,7 +200,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.FAILED);
         
         // Progression Check (Promotion Fail)
-        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION) {
+        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM) {
             progressionService.processPromotionOutcome(quest.getPlayer().getPlayerId(), false);
         }
 

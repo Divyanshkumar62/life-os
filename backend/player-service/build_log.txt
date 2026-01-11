@@ -1,0 +1,448 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.lifeos:player-service >----------------------
+[INFO] Building player-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ player-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ player-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 88 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[29,26] cannot find symbol
+  symbol:   class Logger
+  location: class com.lifeos.quest.service.DailyQuestService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/domain/enums/PlayerRank.java:[4,1] lombok.Getter is not a repeatable annotation interface
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/domain/enums/SystemDailyTemplate.java:[7,1] lombok.Getter is not a repeatable annotation interface
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/domain/PlayerMetrics.java:[11,1] jakarta.persistence.Entity is not a repeatable annotation interface
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/domain/PlayerMetrics.java:[12,1] jakarta.persistence.Table is not a repeatable annotation interface
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/project/service/ProjectService.java:[68,45] cannot find symbol
+  symbol:   method getProjectSlots()
+  location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyCalculationService.java:[27,17] cannot find symbol
+  symbol:   method severity(com.lifeos.penalty.domain.enums.PenaltySeverity)
+  location: class com.lifeos.penalty.domain.PenaltyDefinition.PenaltyDefinitionBuilder
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[29,39] cannot find symbol
+  symbol:   variable LoggerFactory
+  location: class com.lifeos.quest.service.DailyQuestService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[117,25] cannot find symbol
+  symbol:   method getSystemDailyCount()
+  location: variable rank of type com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[133,72] cannot find symbol
+  symbol:   method getDefaultTitle()
+  location: variable tmpl of type com.lifeos.quest.domain.enums.SystemDailyTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[132,32] cannot find symbol
+  symbol:   method getDefaultTitle()
+  location: variable tmpl of type com.lifeos.quest.domain.enums.SystemDailyTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[135,41] cannot find symbol
+  symbol:   method getDifficulty()
+  location: variable tmpl of type com.lifeos.quest.domain.enums.SystemDailyTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyService.java:[79,26] cannot find symbol
+  symbol:   method getType()
+  location: variable def of type com.lifeos.penalty.domain.PenaltyDefinition
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyService.java:[80,30] cannot find symbol
+  symbol:   method getSeverity()
+  location: variable def of type com.lifeos.penalty.domain.PenaltyDefinition
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyService.java:[87,69] cannot find symbol
+  symbol:   method getSeverity()
+  location: variable def of type com.lifeos.penalty.domain.PenaltyDefinition
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/service/PlayerStateServiceImpl.java:[145,60] cannot find symbol
+  symbol:   method getLevelCap()
+  location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/service/PlayerStateServiceImpl.java:[160,71] cannot find symbol
+  symbol:   method getLevelCap()
+  location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/service/PlayerStateServiceImpl.java:[178,72] cannot find symbol
+  symbol:   method getLevelCap()
+  location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[14,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+  required: no arguments
+  found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[17,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+  required: no arguments
+  found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[20,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+  required: no arguments
+  found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[23,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+  required: no arguments
+  found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[26,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+  required: no arguments
+  found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[44,63] cannot find symbol
+  symbol:   method getPlayerId()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[49,31] cannot find symbol
+  symbol:   method getTitle()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[50,37] cannot find symbol
+  symbol:   method getDescription()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[51,35] cannot find symbol
+  symbol:   method getQuestType()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[52,40] cannot find symbol
+  symbol:   method getDifficultyTier()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[53,34] cannot find symbol
+  symbol:   method getPriority()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[55,36] cannot find symbol
+  symbol:   method getDeadlineAt()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[56,39] cannot find symbol
+  symbol:   method isSystemMutable()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[66,35] cannot find symbol
+  symbol:   method getSuccessXp()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[67,35] cannot find symbol
+  symbol:   method getFailureXp()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[68,44] cannot find symbol
+  symbol:   method getAttributeDeltas()
+  location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[73,47] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[90,17] cannot find symbol
+  symbol:   method setState(com.lifeos.quest.domain.enums.QuestState)
+  location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[91,17] cannot find symbol
+  symbol:   method setActivatedAt(java.time.LocalDateTime)
+  location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[107,48] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.quest.domain.QuestMutationLog
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[120,16] cannot find symbol
+  symbol:   method setMutationType(com.lifeos.quest.domain.enums.MutationType)
+  location: variable log of type com.lifeos.quest.domain.QuestMutationLog
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[153,13] cannot find symbol
+  symbol:   method setState(com.lifeos.quest.domain.enums.QuestState)
+  location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[154,13] cannot find symbol
+  symbol:   method setCompletedAt(java.time.LocalDateTime)
+  location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[210,13] cannot find symbol
+  symbol:   method setState(com.lifeos.quest.domain.enums.QuestState)
+  location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[211,13] cannot find symbol
+  symbol:   method setFailedAt(java.time.LocalDateTime)
+  location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[233,13] cannot find symbol
+  symbol:   method setState(com.lifeos.quest.domain.enums.QuestState)
+  location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[36,51] cannot find symbol
+  symbol:   method getLevelCap()
+  location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[54,78] cannot find symbol
+  symbol:   method getBossKeyCost()
+  location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[59,34] cannot find symbol
+  symbol:   method getStatRequirements()
+  location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[100,45] cannot find symbol
+  symbol:   method getBossKeyCost()
+  location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[104,61] cannot find symbol
+  symbol:   method getBossKeyCost()
+  location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[108,50] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[113,39] cannot find symbol
+  symbol:   method getBossKeyCost()
+  location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[114,39] cannot find symbol
+  symbol:   method getBossKeyCost()
+  location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[122,9] cannot find symbol
+  symbol:   class Quest
+  location: class com.lifeos.progression.service.ProgressionService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[126,70] cannot find symbol
+  symbol:   variable MAIN
+  location: class com.lifeos.quest.domain.enums.QuestCategory
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[122,27] cannot find symbol
+  symbol:   variable Quest
+  location: class com.lifeos.progression.service.ProgressionService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[141,54] cannot find symbol
+  symbol:   method getBossKeyCost()
+  location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[159,20] cannot find symbol
+  symbol:   method getStatus()
+  location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[166,16] cannot find symbol
+  symbol:   method setCompletedAt(java.time.LocalDateTime)
+  location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[170,20] cannot find symbol
+  symbol:   method setStatus(com.lifeos.progression.domain.enums.ExamStatus)
+  location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[181,20] cannot find symbol
+  symbol:   method setStatus(com.lifeos.progression.domain.enums.ExamStatus)
+  location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[184,85] cannot find symbol
+  symbol:   method getFromRank()
+  location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[184,118] cannot find symbol
+  symbol:   method getToRank()
+  location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[44,80] cannot find symbol
+  symbol:   method getName()
+  location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[44,49] cannot find symbol
+  symbol:   method getCost()
+  location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[47,58] cannot find symbol
+  symbol:   method builder()
+  location: class com.lifeos.economy.domain.PurchaseTransaction
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[49,29] cannot find symbol
+  symbol:   method getItemId()
+  location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[50,27] cannot find symbol
+  symbol:   method getCost()
+  location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[56,57] cannot find symbol
+  symbol:   method getName()
+  location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[56,81] cannot find symbol
+  symbol:   method getEffectPayload()
+  location: variable item of type com.lifeos.economy.domain.ShopItem
+[INFO] 69 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  12.156 s
+[INFO] Finished at: 2026-01-11T19:51:51+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project player-service: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[29,26] cannot find symbol
+[ERROR]   symbol:   class Logger
+[ERROR]   location: class com.lifeos.quest.service.DailyQuestService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/domain/enums/PlayerRank.java:[4,1] lombok.Getter is not a repeatable annotation interface
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/domain/enums/SystemDailyTemplate.java:[7,1] lombok.Getter is not a repeatable annotation interface
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/domain/PlayerMetrics.java:[11,1] jakarta.persistence.Entity is not a repeatable annotation interface
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/domain/PlayerMetrics.java:[12,1] jakarta.persistence.Table is not a repeatable annotation interface
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/project/service/ProjectService.java:[68,45] cannot find symbol
+[ERROR]   symbol:   method getProjectSlots()
+[ERROR]   location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyCalculationService.java:[27,17] cannot find symbol
+[ERROR]   symbol:   method severity(com.lifeos.penalty.domain.enums.PenaltySeverity)
+[ERROR]   location: class com.lifeos.penalty.domain.PenaltyDefinition.PenaltyDefinitionBuilder
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[29,39] cannot find symbol
+[ERROR]   symbol:   variable LoggerFactory
+[ERROR]   location: class com.lifeos.quest.service.DailyQuestService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[117,25] cannot find symbol
+[ERROR]   symbol:   method getSystemDailyCount()
+[ERROR]   location: variable rank of type com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[133,72] cannot find symbol
+[ERROR]   symbol:   method getDefaultTitle()
+[ERROR]   location: variable tmpl of type com.lifeos.quest.domain.enums.SystemDailyTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[132,32] cannot find symbol
+[ERROR]   symbol:   method getDefaultTitle()
+[ERROR]   location: variable tmpl of type com.lifeos.quest.domain.enums.SystemDailyTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/DailyQuestService.java:[135,41] cannot find symbol
+[ERROR]   symbol:   method getDifficulty()
+[ERROR]   location: variable tmpl of type com.lifeos.quest.domain.enums.SystemDailyTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyService.java:[79,26] cannot find symbol
+[ERROR]   symbol:   method getType()
+[ERROR]   location: variable def of type com.lifeos.penalty.domain.PenaltyDefinition
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyService.java:[80,30] cannot find symbol
+[ERROR]   symbol:   method getSeverity()
+[ERROR]   location: variable def of type com.lifeos.penalty.domain.PenaltyDefinition
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/penalty/service/PenaltyService.java:[87,69] cannot find symbol
+[ERROR]   symbol:   method getSeverity()
+[ERROR]   location: variable def of type com.lifeos.penalty.domain.PenaltyDefinition
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/service/PlayerStateServiceImpl.java:[145,60] cannot find symbol
+[ERROR]   symbol:   method getLevelCap()
+[ERROR]   location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/service/PlayerStateServiceImpl.java:[160,71] cannot find symbol
+[ERROR]   symbol:   method getLevelCap()
+[ERROR]   location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/player/service/PlayerStateServiceImpl.java:[178,72] cannot find symbol
+[ERROR]   symbol:   method getLevelCap()
+[ERROR]   location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[14,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[17,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[20,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[23,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/domain/RankTransitionTemplate.java:[26,11] constructor RankTransitionTemplate in enum com.lifeos.progression.domain.RankTransitionTemplate cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    com.lifeos.player.domain.enums.PlayerRank,com.lifeos.player.domain.enums.PlayerRank,int,java.util.Map<com.lifeos.player.domain.enums.AttributeType,java.lang.Double>
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[44,63] cannot find symbol
+[ERROR]   symbol:   method getPlayerId()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[49,31] cannot find symbol
+[ERROR]   symbol:   method getTitle()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[50,37] cannot find symbol
+[ERROR]   symbol:   method getDescription()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[51,35] cannot find symbol
+[ERROR]   symbol:   method getQuestType()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[52,40] cannot find symbol
+[ERROR]   symbol:   method getDifficultyTier()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[53,34] cannot find symbol
+[ERROR]   symbol:   method getPriority()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[55,36] cannot find symbol
+[ERROR]   symbol:   method getDeadlineAt()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[56,39] cannot find symbol
+[ERROR]   symbol:   method isSystemMutable()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[66,35] cannot find symbol
+[ERROR]   symbol:   method getSuccessXp()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[67,35] cannot find symbol
+[ERROR]   symbol:   method getFailureXp()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[68,44] cannot find symbol
+[ERROR]   symbol:   method getAttributeDeltas()
+[ERROR]   location: variable request of type com.lifeos.quest.dto.QuestRequest
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[73,47] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[90,17] cannot find symbol
+[ERROR]   symbol:   method setState(com.lifeos.quest.domain.enums.QuestState)
+[ERROR]   location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[91,17] cannot find symbol
+[ERROR]   symbol:   method setActivatedAt(java.time.LocalDateTime)
+[ERROR]   location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[107,48] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.quest.domain.QuestMutationLog
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[120,16] cannot find symbol
+[ERROR]   symbol:   method setMutationType(com.lifeos.quest.domain.enums.MutationType)
+[ERROR]   location: variable log of type com.lifeos.quest.domain.QuestMutationLog
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[153,13] cannot find symbol
+[ERROR]   symbol:   method setState(com.lifeos.quest.domain.enums.QuestState)
+[ERROR]   location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[154,13] cannot find symbol
+[ERROR]   symbol:   method setCompletedAt(java.time.LocalDateTime)
+[ERROR]   location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[210,13] cannot find symbol
+[ERROR]   symbol:   method setState(com.lifeos.quest.domain.enums.QuestState)
+[ERROR]   location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[211,13] cannot find symbol
+[ERROR]   symbol:   method setFailedAt(java.time.LocalDateTime)
+[ERROR]   location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/quest/service/QuestLifecycleServiceImpl.java:[233,13] cannot find symbol
+[ERROR]   symbol:   method setState(com.lifeos.quest.domain.enums.QuestState)
+[ERROR]   location: variable link of type com.lifeos.quest.domain.PlayerQuestLink
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[36,51] cannot find symbol
+[ERROR]   symbol:   method getLevelCap()
+[ERROR]   location: class com.lifeos.player.domain.enums.PlayerRank
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[54,78] cannot find symbol
+[ERROR]   symbol:   method getBossKeyCost()
+[ERROR]   location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[59,34] cannot find symbol
+[ERROR]   symbol:   method getStatRequirements()
+[ERROR]   location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[100,45] cannot find symbol
+[ERROR]   symbol:   method getBossKeyCost()
+[ERROR]   location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[104,61] cannot find symbol
+[ERROR]   symbol:   method getBossKeyCost()
+[ERROR]   location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[108,50] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[113,39] cannot find symbol
+[ERROR]   symbol:   method getBossKeyCost()
+[ERROR]   location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[114,39] cannot find symbol
+[ERROR]   symbol:   method getBossKeyCost()
+[ERROR]   location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[122,9] cannot find symbol
+[ERROR]   symbol:   class Quest
+[ERROR]   location: class com.lifeos.progression.service.ProgressionService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[126,70] cannot find symbol
+[ERROR]   symbol:   variable MAIN
+[ERROR]   location: class com.lifeos.quest.domain.enums.QuestCategory
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[122,27] cannot find symbol
+[ERROR]   symbol:   variable Quest
+[ERROR]   location: class com.lifeos.progression.service.ProgressionService
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[141,54] cannot find symbol
+[ERROR]   symbol:   method getBossKeyCost()
+[ERROR]   location: variable template of type com.lifeos.progression.domain.RankTransitionTemplate
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[159,20] cannot find symbol
+[ERROR]   symbol:   method getStatus()
+[ERROR]   location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[166,16] cannot find symbol
+[ERROR]   symbol:   method setCompletedAt(java.time.LocalDateTime)
+[ERROR]   location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[170,20] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.lifeos.progression.domain.enums.ExamStatus)
+[ERROR]   location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[181,20] cannot find symbol
+[ERROR]   symbol:   method setStatus(com.lifeos.progression.domain.enums.ExamStatus)
+[ERROR]   location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[184,85] cannot find symbol
+[ERROR]   symbol:   method getFromRank()
+[ERROR]   location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/progression/service/ProgressionService.java:[184,118] cannot find symbol
+[ERROR]   symbol:   method getToRank()
+[ERROR]   location: variable attempt of type com.lifeos.progression.domain.RankExamAttempt
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[44,80] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[44,49] cannot find symbol
+[ERROR]   symbol:   method getCost()
+[ERROR]   location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[47,58] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.lifeos.economy.domain.PurchaseTransaction
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[49,29] cannot find symbol
+[ERROR]   symbol:   method getItemId()
+[ERROR]   location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[50,27] cannot find symbol
+[ERROR]   symbol:   method getCost()
+[ERROR]   location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[56,57] cannot find symbol
+[ERROR]   symbol:   method getName()
+[ERROR]   location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/main/java/com/lifeos/economy/service/ShopService.java:[56,81] cannot find symbol
+[ERROR]   symbol:   method getEffectPayload()
+[ERROR]   location: variable item of type com.lifeos.economy.domain.ShopItem
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
