@@ -38,7 +38,7 @@ class SystemVoiceServiceTest {
     @Test
     void testGenerateMessage_SimpleReward() {
         // When
-        voiceService.generateMessage(playerId, SystemMessageType.QUEST_COMPLETED_SIMPLE, Collections.emptyMap());
+        voiceService.generateMessage(playerId, SystemMessageType.QUEST_COMPLETED_SIMPLE, Collections.emptyMap(), UUID.randomUUID());
 
         // Then
         ArgumentCaptor<SystemMessage> captor = ArgumentCaptor.forClass(SystemMessage.class);
@@ -64,7 +64,7 @@ class SystemVoiceServiceTest {
         // For now, let's verify it DOESN'T error on empty payload or unused payload.
         
         Map<String, Object> payload = Map.of("xp", 100);
-        voiceService.generateMessage(playerId, SystemMessageType.QUEST_COMPLETED_SIMPLE, payload);
+        voiceService.generateMessage(playerId, SystemMessageType.QUEST_COMPLETED_SIMPLE, payload, UUID.randomUUID());
         
         // Then
         ArgumentCaptor<SystemMessage> captor = ArgumentCaptor.forClass(SystemMessage.class);
@@ -74,7 +74,7 @@ class SystemVoiceServiceTest {
 
     @Test
     void testGenerateMessage_Penalty() {
-        voiceService.generateMessage(playerId, SystemMessageType.PENALTY_ZONE_ENTRY, Collections.emptyMap());
+        voiceService.generateMessage(playerId, SystemMessageType.PENALTY_ZONE_ENTRY, Collections.emptyMap(), UUID.randomUUID());
 
         ArgumentCaptor<SystemMessage> captor = ArgumentCaptor.forClass(SystemMessage.class);
         verify(messageRepository).save(captor.capture());
@@ -88,7 +88,7 @@ class SystemVoiceServiceTest {
     @Test
     void testTitleLogic() {
         // Check Failure
-        voiceService.generateMessage(playerId, SystemMessageType.PROMOTION_FAILED, Collections.emptyMap());
+        voiceService.generateMessage(playerId, SystemMessageType.PROMOTION_FAILED, Collections.emptyMap(), UUID.randomUUID());
         ArgumentCaptor<SystemMessage> captor = ArgumentCaptor.forClass(SystemMessage.class);
         verify(messageRepository).save(captor.capture());
         assertEquals("SYSTEM FAILURE", captor.getValue().getTitle());

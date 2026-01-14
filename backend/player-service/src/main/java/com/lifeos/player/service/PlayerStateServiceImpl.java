@@ -344,6 +344,14 @@ public class PlayerStateServiceImpl implements PlayerStateService {
     }
     
     @Override
+    @Transactional(readOnly = true)
+    public boolean hasActiveFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flagType) {
+        List<PlayerStatusFlag> flags = flagRepository.findByPlayerPlayerId(playerId);
+        return flags.stream()
+                .anyMatch(f -> f.getFlag() == flagType);
+    }
+    
+    @Override
     @Transactional
     public void updateConsecutiveFailures(UUID playerId, int failures) {
         var temporal = temporalStateRepository.findByPlayerPlayerId(playerId)

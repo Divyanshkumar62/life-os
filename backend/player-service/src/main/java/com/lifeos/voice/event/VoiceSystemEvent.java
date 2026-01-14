@@ -8,11 +8,13 @@ public class VoiceSystemEvent {
     private final UUID playerId;
     private final SystemMessageType type;
     private final Map<String, Object> payload;
+    private final UUID eventId;
 
-    public VoiceSystemEvent(UUID playerId, SystemMessageType type, Map<String, Object> payload) {
+    public VoiceSystemEvent(UUID playerId, SystemMessageType type, Map<String, Object> payload, UUID eventId) {
         this.playerId = playerId;
         this.type = type;
         this.payload = payload;
+        this.eventId = eventId != null ? eventId : UUID.randomUUID();
     }
 
     public UUID getPlayerId() {
@@ -26,6 +28,10 @@ public class VoiceSystemEvent {
     public Map<String, Object> getPayload() {
         return payload;
     }
+    
+    public UUID getEventId() {
+        return eventId;
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -35,6 +41,7 @@ public class VoiceSystemEvent {
         private UUID playerId;
         private SystemMessageType type;
         private Map<String, Object> payload;
+        private UUID eventId;
 
         public Builder playerId(UUID playerId) {
             this.playerId = playerId;
@@ -50,9 +57,14 @@ public class VoiceSystemEvent {
             this.payload = payload;
             return this;
         }
+        
+        public Builder eventId(UUID eventId) {
+            this.eventId = eventId;
+            return this;
+        }
 
         public VoiceSystemEvent build() {
-            return new VoiceSystemEvent(playerId, type, payload);
+            return new VoiceSystemEvent(playerId, type, payload, eventId);
         }
     }
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.lifeos.voice.service.SystemVoiceServiceTest" time="3.856" tests="4" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report-3.0.xsd" version="3.0" name="com.lifeos.voice.service.SystemEventListenerTest" time="4.984" tests="3" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -59,20 +59,16 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="65.0"/>
   </properties>
-  <testcase name="testGenerateMessage_WithPayload" classname="com.lifeos.voice.service.SystemVoiceServiceTest" time="3.635">
-    <system-out><![CDATA[17:10:09.656 [main] INFO com.lifeos.voice.service.SystemVoiceService -- System Voice: [REWARD] Quest completed. Rewards applied.
-]]></system-out>
+  <testcase name="testHandleEvent_NormalState_PassThrough" classname="com.lifeos.voice.service.SystemEventListenerTest" time="4.63">
+    <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (C:\Users\user\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.10\byte-buddy-agent-1.14.10.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
   </testcase>
-  <testcase name="testGenerateMessage_SimpleReward" classname="com.lifeos.voice.service.SystemVoiceServiceTest" time="0.04">
-    <system-out><![CDATA[17:10:09.730 [main] INFO com.lifeos.voice.service.SystemVoiceService -- System Voice: [REWARD] Quest completed. Rewards applied.
-]]></system-out>
-  </testcase>
-  <testcase name="testGenerateMessage_Penalty" classname="com.lifeos.voice.service.SystemVoiceServiceTest" time="0.019">
-    <system-out><![CDATA[17:10:09.750 [main] INFO com.lifeos.voice.service.SystemVoiceService -- System Voice: [PENALTY] Daily objectives failed. Penalty Zone activated.
-]]></system-out>
-  </testcase>
-  <testcase name="testTitleLogic" classname="com.lifeos.voice.service.SystemVoiceServiceTest" time="0.105">
-    <system-out><![CDATA[17:10:09.832 [main] INFO com.lifeos.voice.service.SystemVoiceService -- System Voice: [FAILURE] Promotion attempt failed. Penalty conditions applied.
+  <testcase name="testHandleEvent_PenaltyState_AllowCritical" classname="com.lifeos.voice.service.SystemEventListenerTest" time="0.017"/>
+  <testcase name="testHandleEvent_PenaltyState_SuppressNonCritical" classname="com.lifeos.voice.service.SystemEventListenerTest" time="0.069">
+    <system-out><![CDATA[17:10:05.794 [main] INFO com.lifeos.voice.service.SystemEventListener -- Voice suppressed (Penalty Override): Type=QUEST_COMPLETED Player=70551164-4f52-45e0-8c60-9014c5821dfd
 ]]></system-out>
   </testcase>
 </testsuite>
