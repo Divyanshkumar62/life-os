@@ -1,0 +1,70 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.lifeos:player-service >----------------------
+[INFO] Building player-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ player-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ player-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 105 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ player-service ---
+[INFO] skip non existing resourceDirectory C:\Users\user\Desktop\life-os\backend\player-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ player-service ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 16 source files with javac [debug release 17] to target\test-classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] -------------------------------------------------------------
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/test/java/com/lifeos/penalty/service/PenaltyAdvancementTest.java:[156,45] constructor PenaltyService in class com.lifeos.penalty.service.PenaltyService cannot be applied to given types;
+  required: com.lifeos.penalty.repository.PenaltyRecordRepository,com.lifeos.penalty.service.PenaltyCalculationService,com.lifeos.player.service.PlayerStateService,com.lifeos.quest.repository.QuestRepository,com.lifeos.streak.service.StreakService,org.springframework.context.ApplicationEventPublisher,com.lifeos.penalty.service.PenaltyQuestService,com.lifeos.penalty.repository.PenaltyQuestRepository
+  found:    <nulltype>,<nulltype>,com.lifeos.player.service.PlayerStateService,com.lifeos.quest.repository.QuestRepository,com.lifeos.streak.service.StreakService,org.springframework.context.ApplicationEventPublisher
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/test/java/com/lifeos/penalty/service/PenaltyAdvancementTest.java:[180,45] constructor PenaltyService in class com.lifeos.penalty.service.PenaltyService cannot be applied to given types;
+  required: com.lifeos.penalty.repository.PenaltyRecordRepository,com.lifeos.penalty.service.PenaltyCalculationService,com.lifeos.player.service.PlayerStateService,com.lifeos.quest.repository.QuestRepository,com.lifeos.streak.service.StreakService,org.springframework.context.ApplicationEventPublisher,com.lifeos.penalty.service.PenaltyQuestService,com.lifeos.penalty.repository.PenaltyQuestRepository
+  found:    <nulltype>,<nulltype>,com.lifeos.player.service.PlayerStateService,<nulltype>,com.lifeos.streak.service.StreakService,org.springframework.context.ApplicationEventPublisher
+  reason: actual and formal argument lists differ in length
+[INFO] 2 errors 
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:42 min
+[INFO] Finished at: 2026-01-14T13:50:02+05:30
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:testCompile (default-testCompile) on project player-service: Compilation failure: Compilation failure: 
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/test/java/com/lifeos/penalty/service/PenaltyAdvancementTest.java:[156,45] constructor PenaltyService in class com.lifeos.penalty.service.PenaltyService cannot be applied to given types;
+[ERROR]   required: com.lifeos.penalty.repository.PenaltyRecordRepository,com.lifeos.penalty.service.PenaltyCalculationService,com.lifeos.player.service.PlayerStateService,com.lifeos.quest.repository.QuestRepository,com.lifeos.streak.service.StreakService,org.springframework.context.ApplicationEventPublisher,com.lifeos.penalty.service.PenaltyQuestService,com.lifeos.penalty.repository.PenaltyQuestRepository
+[ERROR]   found:    <nulltype>,<nulltype>,com.lifeos.player.service.PlayerStateService,com.lifeos.quest.repository.QuestRepository,com.lifeos.streak.service.StreakService,org.springframework.context.ApplicationEventPublisher
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/Users/user/Desktop/life-os/backend/player-service/src/test/java/com/lifeos/penalty/service/PenaltyAdvancementTest.java:[180,45] constructor PenaltyService in class com.lifeos.penalty.service.PenaltyService cannot be applied to given types;
+[ERROR]   required: com.lifeos.penalty.repository.PenaltyRecordRepository,com.lifeos.penalty.service.PenaltyCalculationService,com.lifeos.player.service.PlayerStateService,com.lifeos.quest.repository.QuestRepository,com.lifeos.streak.service.StreakService,org.springframework.context.ApplicationEventPublisher,com.lifeos.penalty.service.PenaltyQuestService,com.lifeos.penalty.repository.PenaltyQuestRepository
+[ERROR]   found:    <nulltype>,<nulltype>,com.lifeos.player.service.PlayerStateService,<nulltype>,com.lifeos.streak.service.StreakService,org.springframework.context.ApplicationEventPublisher
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException

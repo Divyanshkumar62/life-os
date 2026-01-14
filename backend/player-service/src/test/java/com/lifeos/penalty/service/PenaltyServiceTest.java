@@ -42,6 +42,8 @@ public class PenaltyServiceTest {
     @Mock private QuestRepository questRepository;
     @Mock private com.lifeos.streak.service.StreakService streakService;
     @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    @Mock private com.lifeos.penalty.service.PenaltyQuestService penaltyQuestService;
+    @Mock private com.lifeos.penalty.repository.PenaltyQuestRepository penaltyQuestRepository;
 
     @InjectMocks
     private PenaltyService penaltyService;

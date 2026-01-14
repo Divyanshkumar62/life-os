@@ -49,6 +49,16 @@ public class RewardService {
         // Fetch Player State (Read-only view for calculation)
         var playerState = playerStateService.getPlayerState(playerId);
 
+        // PENALTY GUARD: No rewards if in Penalty Zone
+        boolean inPenalty = playerState.getActiveFlags().stream()
+                .anyMatch(f -> f.getFlag() == com.lifeos.player.domain.enums.StatusFlagType.PENALTY_ZONE);
+        
+        if (inPenalty) {
+             // NO REWARDS during penalty
+             org.slf4j.LoggerFactory.getLogger(RewardService.class).info("Reward suppressed: Player {} in Penalty Zone", playerId);
+             return;
+        }
+
         // 3. Calculate Reward
         RewardDefinition reward = calculationService.calculateReward(quest, playerState);
 

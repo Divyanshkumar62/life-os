@@ -4,6 +4,8 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pl
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerPsychStateDTO.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerStatusFlagDTO.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\SystemDailyTemplate.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\enums\PenaltyQuestType.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\repository\PenaltyQuestRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerStateResponse.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\repository\PlayerProgressionRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\repository\PlayerStatusFlagRepository.java
@@ -19,8 +21,10 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\ec
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\economy\domain\PlayerEconomy.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\repository\QuestMutationLogRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\service\QuestLifecycleServiceImpl.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\service\PenaltyQuestService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\economy\repository\ShopItemRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\domain\enums\ExamStatus.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\enums\WorkSource.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerStatusFlag.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\repository\PenaltyRecordRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\QuestConstraint.java
@@ -41,6 +45,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\qu
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\repository\QuestConstraintRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\project\service\ProjectService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\reward\service\RewardCalculationService.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\PenaltyQuest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\repository\PlayerIdentityRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\project\domain\enums\ProjectStatus.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\service\PenaltyCalculationService.java
@@ -62,6 +67,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\qu
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\enums\PenaltySeverity.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\service\QuestLifecycleService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\QuestCategory.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\enums\PenaltyTriggerReason.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\voice\event\VoiceSystemEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\streak\domain\PlayerStreak.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\economy\service\EconomyService.java
@@ -76,6 +82,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\vo
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\MutationType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\QuestState.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\voice\domain\enums\SystemMessageType.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\enums\PenaltyQuestStatus.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\streak\repository\PlayerStreakRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\voice\repository\SystemMessageRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerProgression.java

@@ -3,6 +3,7 @@ package com.lifeos.penalty.service;
 import com.lifeos.penalty.domain.PenaltyDefinition;
 import com.lifeos.penalty.domain.PenaltyRecord;
 import com.lifeos.penalty.domain.enums.FailureReason;
+import com.lifeos.penalty.repository.PenaltyQuestRepository;
 import com.lifeos.penalty.repository.PenaltyRecordRepository;
 import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.quest.domain.Quest;
@@ -35,8 +36,12 @@ public class PenaltyService {
     private final StreakService streakService;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
+    private final PenaltyQuestService penaltyQuestService;
+    private final PenaltyQuestRepository penaltyQuestRepository; // For exit guard
+
     @Transactional
     public void applyPenalty(UUID questId, UUID playerId, FailureReason reason) {
+        // ... (existing logic unchanged) ...
         // 1. Idempotency Guard
         if (penaltyRepository.existsByQuestId(questId)) {
             log.info("Penalty already applied for quest {}", questId);
@@ -50,12 +55,10 @@ public class PenaltyService {
         PenaltyDefinition def = calculationService.calculatePenalty(quest, reason);
 
         // 3. Apply Effects
-        // XP Deduction (Floor logic is inside PlayerStateService)
         if (def.getXpDeduction() > 0) {
             playerStateService.applyXpDeduction(playerId, def.getXpDeduction());
         }
 
-        // Debuff
         if (def.getDebuffAttribute() != null) {
             playerStateService.applyStatDebuff(
                     playerId, 
@@ -65,7 +68,6 @@ public class PenaltyService {
             );
         }
 
-        // Streak Reset
         if (def.isResetStreak()) {
             playerStateService.resetStreak(playerId);
         }
@@ -118,28 +120,16 @@ public class PenaltyService {
         
         // 3. Reset Streaks
         playerStateService.resetStreak(playerId);
-        streakService.resetStreak(playerId); // New Streak Engine Reset
+        streakService.resetStreak(playerId);
         
-        // 4. Generate SURVIVAL PROTOCOL Quest
-        Quest survivalQuest = Quest.builder()
-                .player(com.lifeos.player.domain.PlayerIdentity.builder().playerId(playerId).build())
-                .title("SURVIVAL PROTOCOL")
-                .description("You have violated the system. Complete 100 Pushups + 100 Situps to restore access.\n" +
-                             "Project Creation and Rank Promotions are LOCKED until this is done.")
-                .category(com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY) // Or specific PENALTY category? Using SYSTEM_DAILY to ensure visibility/priority, or maybe new Category?
-                // Plan said QuestType PENALTY. Category can remain SYSTEM_DAILY or MAIN. Let's use SYSTEM_DAILY for priority.
-                .difficultyTier(com.lifeos.quest.domain.enums.DifficultyTier.RED)
-                .state(com.lifeos.quest.domain.enums.QuestState.ACTIVE)
-                .priority(com.lifeos.quest.domain.enums.Priority.CRITICAL)
-                .questType(com.lifeos.quest.domain.enums.QuestType.PENALTY)
-                .assignedAt(LocalDateTime.now())
-                .startsAt(LocalDateTime.now())
-                .deadlineAt(LocalDateTime.now().plusYears(100)) // Must not expire
-                .systemMutable(false) // User cannot delete
-                .build();
-                
-        questRepository.save(survivalQuest);
-        log.info("Generated SURVIVAL PROTOCOL quest for player {}", playerId);
+        // 4. Generate Penalty Quest (Official V1 Engine)
+        // Map string reason to Enum (simplistic logic for now, default to MISSED_DAYS)
+        com.lifeos.penalty.domain.enums.PenaltyTriggerReason triggerReason = 
+            "EXAM_FAIL".equals(reason) ? 
+            com.lifeos.penalty.domain.enums.PenaltyTriggerReason.EXAM_FAIL : 
+            com.lifeos.penalty.domain.enums.PenaltyTriggerReason.MISSED_DAYS;
+
+        penaltyQuestService.generatePenaltyQuest(playerId, triggerReason);
         
         // VOICE: PENALTY_ZONE_ENTRY
         eventPublisher.publishEvent(VoiceSystemEvent.builder()
@@ -150,16 +140,22 @@ public class PenaltyService {
 
     @Transactional
     public void exitPenaltyZone(UUID playerId) {
+        // RUNTIME GUARD: Check for COMPLETED penalty quest
+        boolean hasCompletedQuest = penaltyQuestRepository.existsByPlayerIdAndStatus(
+                playerId, 
+                com.lifeos.penalty.domain.enums.PenaltyQuestStatus.COMPLETED
+        );
+
+        if (!hasCompletedQuest) {
+            throw new IllegalStateException("Access Denied: Cannot exit Penalty Zone without completing a Penalty Quest.");
+        }
+
         log.info("EXITING PENALTY ZONE: Player {}", playerId);
         
         // 1. Remove Penalty Zone Flag
         playerStateService.removeStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.PENALTY_ZONE);
         
-        // 2. Reset failures counter through Temporal State?
-        // Logic might reside in PlayerStateService, but here we just ensure the flag is gone.
-        // Hybrid Trigger logic in DailyQuestService resets counter on successful day. 
-        // But if they just finished the Penalty Quest, does that count as a "successful day"?
-        // Probably yes, but let's explicity reset the counter here to be safe/merciful.
+        // 2. Reset failures counter
         playerStateService.updateConsecutiveFailures(playerId, 0);
     }
 }
