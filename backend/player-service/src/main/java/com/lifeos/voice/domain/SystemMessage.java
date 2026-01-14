@@ -35,20 +35,24 @@ public class SystemMessage {
     @Column(nullable = false)
     private boolean isRead;
 
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+    
+    @Column(name = "event_id", unique = true, nullable = false)
+    private UUID eventId;
 
     public SystemMessage() {}
 
-    public SystemMessage(UUID id, UUID playerId, SystemVoiceMode mode, SystemMessageType type, String title, String body, boolean isRead, LocalDateTime createdAt) {
+    public SystemMessage(UUID id, UUID playerId, SystemMessageType type, SystemVoiceMode mode, String title, String body, boolean isRead, LocalDateTime createdAt, UUID eventId) {
         this.id = id;
         this.playerId = playerId;
-        this.mode = mode;
         this.type = type;
+        this.mode = mode;
         this.title = title;
         this.body = body;
         this.isRead = isRead;
         this.createdAt = createdAt;
+        this.eventId = eventId;
     }
 
     public UUID getId() { return id; }
@@ -75,6 +79,9 @@ public class SystemMessage {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
+    public UUID getEventId() { return eventId; }
+    public void setEventId(UUID eventId) { this.eventId = eventId; }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -88,6 +95,7 @@ public class SystemMessage {
         private String body;
         private boolean isRead;
         private LocalDateTime createdAt;
+        private UUID eventId;
 
         public Builder id(UUID id) { this.id = id; return this; }
         public Builder playerId(UUID playerId) { this.playerId = playerId; return this; }
@@ -97,9 +105,10 @@ public class SystemMessage {
         public Builder body(String body) { this.body = body; return this; }
         public Builder isRead(boolean isRead) { this.isRead = isRead; return this; }
         public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public Builder eventId(UUID eventId) { this.eventId = eventId; return this; }
 
         public SystemMessage build() {
-            return new SystemMessage(id, playerId, mode, type, title, body, isRead, createdAt);
+            return new SystemMessage(id, playerId, type, mode, title, body, isRead, createdAt, eventId);
         }
     }
 }

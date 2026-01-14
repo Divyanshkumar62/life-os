@@ -1,0 +1,67 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.lifeos:player-service >----------------------
+[INFO] Building player-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ player-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ player-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 105 source files with javac [debug release 17] to target\classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ player-service ---
+[INFO] skip non existing resourceDirectory C:\Users\user\Desktop\life-os\backend\player-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ player-service ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 17 source files with javac [debug release 17] to target\test-classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ player-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.lifeos.voice.service.SystemEventListenerTest
+WARNING: A Java agent has been loaded dynamically (C:\Users\user\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.10\byte-buddy-agent-1.14.10.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+17:10:05.794 [main] INFO com.lifeos.voice.service.SystemEventListener -- Voice suppressed (Penalty Override): Type=QUEST_COMPLETED Player=70551164-4f52-45e0-8c60-9014c5821dfd
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.984 s -- in com.lifeos.voice.service.SystemEventListenerTest
+[INFO] Running com.lifeos.voice.service.SystemVoiceServiceTest
+17:10:09.656 [main] INFO com.lifeos.voice.service.SystemVoiceService -- System Voice: [REWARD] Quest completed. Rewards applied.
+17:10:09.730 [main] INFO com.lifeos.voice.service.SystemVoiceService -- System Voice: [REWARD] Quest completed. Rewards applied.
+17:10:09.750 [main] INFO com.lifeos.voice.service.SystemVoiceService -- System Voice: [PENALTY] Daily objectives failed. Penalty Zone activated.
+17:10:09.832 [main] INFO com.lifeos.voice.service.SystemVoiceService -- System Voice: [FAILURE] Promotion attempt failed. Penalty conditions applied.
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.856 s -- in com.lifeos.voice.service.SystemVoiceServiceTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  01:15 min
+[INFO] Finished at: 2026-01-14T17:10:10+05:30
+[INFO] ------------------------------------------------------------------------

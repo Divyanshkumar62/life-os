@@ -26,9 +26,10 @@ public class SystemVoiceService {
      * @param playerId Target player
      * @param type Message Type (defines Template)
      * @param payload Dynamic values for template replacement
+     * @param eventId Unique Event ID for idempotency/deduplication
      */
     @Transactional
-    public void generateMessage(UUID playerId, SystemMessageType type, Map<String, Object> payload) {
+    public void generateMessage(UUID playerId, SystemMessageType type, Map<String, Object> payload, UUID eventId) {
         String template = type.getTemplate();
         String resolvedBody = resolveTemplate(template, payload);
         
@@ -40,10 +41,15 @@ public class SystemVoiceService {
                 .body(resolvedBody)
                 .isRead(false)
                 .createdAt(LocalDateTime.now())
+                .eventId(eventId)
                 .build();
         
-        messageRepository.save(message);
-        log.info("System Voice: [{}] {}", type.getDefaultMode(), resolvedBody.replace("\n", " "));
+        try {
+            messageRepository.save(message);
+            log.info("System Voice: [{}] {}", type.getDefaultMode(), resolvedBody.replace("\n", " "));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            log.warn("Duplicate Voice Message suppressed (Idempotency): PlayId={} Type={} EventId={}", playerId, type, eventId);
+        }
     }
 
     private String resolveTemplate(String template, Map<String, Object> payload) {

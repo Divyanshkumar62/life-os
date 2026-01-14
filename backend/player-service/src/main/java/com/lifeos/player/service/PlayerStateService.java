@@ -20,6 +20,7 @@ public interface PlayerStateService {
     void applyStatusFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flag, java.time.LocalDateTime expiresAt);
     void removeStatusFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flagType);
     void updateConsecutiveFailures(UUID playerId, int failures);
+    boolean hasActiveFlag(UUID playerId, com.lifeos.player.domain.enums.StatusFlagType flag);
 
     // Reward Methods
     void extendStreak(UUID playerId);
