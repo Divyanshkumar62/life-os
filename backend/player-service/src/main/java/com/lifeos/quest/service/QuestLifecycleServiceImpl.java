@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import com.lifeos.penalty.service.PenaltyService;
+import com.lifeos.penalty.service.PenaltyQuestService;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     // We need to fetch Player identity to link it, but Repositories are better than linking services if just for fetching.
     // However, for rewards/penalties we MUST use the Service to ensure invariants.
     private final PenaltyService penaltyService;
+    private final PenaltyQuestService penaltyQuestService;
     private final com.lifeos.reward.service.RewardService rewardService;
     private final com.lifeos.progression.service.ProgressionService progressionService;
     private final PlayerStateService playerStateService;
@@ -176,10 +178,32 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
             progressionService.processPromotionOutcome(quest.getPlayer().getPlayerId(), true);
         }
         
-        // 6. Penalty Logic (Exit Protocol)
-        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PENALTY) {
-            penaltyService.exitPenaltyZone(quest.getPlayer().getPlayerId());
+        // 6. Penalty WORK Logic (V1 Engine)
+        // If in Penalty Zone, check if work counts.
+        var playerState = playerStateService.getPlayerState(quest.getPlayer().getPlayerId());
+        boolean inPenalty = playerState.getActiveFlags().stream()
+                .anyMatch(f -> f.getFlag() == com.lifeos.player.domain.enums.StatusFlagType.PENALTY_ZONE);
+                
+        if (inPenalty) {
+             // V1 Rule: Daily Quests count as work
+             if (quest.getCategory() == com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY) {
+                 penaltyQuestService.recordWork(
+                     quest.getPlayer().getPlayerId(), 
+                     1, 
+                     com.lifeos.penalty.domain.enums.WorkSource.DAILY_QUEST
+                 );
+             }
         }
+
+        // Old Logic: If quest ITSELF was the Penalty Quest (generic "SURVIVAL PROTOCOL"), exit.
+        // BUT: V1 Penalty Engine uses PenaltyQuestService to track progress and exit.
+        // We should NOT blindly call exitPenaltyZone here unless it was the LEGACY/Fallback way.
+        // The PenaltyQuestService calls exitPenaltyZone when the PenaltyQuest entity completes.
+        // So we remove the direct call here to avoid by-passing the 10-rep requirement.
+        
+        // if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PENALTY) {
+        //     penaltyService.exitPenaltyZone(quest.getPlayer().getPlayerId());
+        // }
     }
 
     @Override

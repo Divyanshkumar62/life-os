@@ -11,6 +11,7 @@ public enum SystemMessageType {
     // Penalty
     PENALTY_ZONE_ENTRY("Daily objectives failed.\nPenalty Zone activated.", SystemVoiceMode.PENALTY),
     PENALTY_ONGOING("Restricted mode active.\nComplete the Penalty Quest to regain access.", SystemVoiceMode.PENALTY),
+    PENALTY_QUEST_COMPLETED("Penalty protocols satisfied.\nAccess restored.", SystemVoiceMode.REWARD),
     
     // Rank
     RANK_GATE_REACHED("Level limit reached.\nRank advancement required.", SystemVoiceMode.NEUTRAL),

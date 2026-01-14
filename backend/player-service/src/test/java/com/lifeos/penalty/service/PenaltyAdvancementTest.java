@@ -46,6 +46,8 @@ class PenaltyAdvancementTest {
     @Mock private ProjectService projectService; 
     @Mock private com.lifeos.streak.service.StreakService streakService;
     @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    @Mock private com.lifeos.penalty.service.PenaltyQuestService penaltyQuestService;
+    @Mock private com.lifeos.penalty.repository.PenaltyQuestRepository penaltyQuestRepository;
     
     // We need real instances for logic testing where possible, but here we test interactions mostly.
     @InjectMocks private DailyQuestService dailyQuestService; // To test Hybrid Trigger
@@ -152,8 +154,9 @@ class PenaltyAdvancementTest {
         // Setup PenaltyService manually since we used @InjectMocks for DailyQuestService
         QuestRepository qRepo = mock(QuestRepository.class);
         PlayerStateService psService = mock(PlayerStateService.class);
+        com.lifeos.penalty.service.PenaltyQuestService pqService = mock(com.lifeos.penalty.service.PenaltyQuestService.class);
         // PenaltyCalculationService - not needed for enter/exit
-        PenaltyService realPenaltyService = new PenaltyService(null, null, psService, qRepo, streakService, eventPublisher);
+        PenaltyService realPenaltyService = new PenaltyService(null, null, psService, qRepo, streakService, eventPublisher, pqService, null);
         
         when(psService.getPlayerState(playerId)).thenReturn(playerState);
 
@@ -165,19 +168,24 @@ class PenaltyAdvancementTest {
         verify(psService).applyStatusFlag(eq(playerId), eq(StatusFlagType.PENALTY_ZONE), any());
         // 2. Warning Removed
         verify(psService).removeStatusFlag(playerId, StatusFlagType.WARNING);
-        // 3. Quest Generated
-        ArgumentCaptor<Quest> questCaptor = ArgumentCaptor.forClass(Quest.class);
-        verify(qRepo).save(questCaptor.capture());
+        // 3. Quest Generated -> MOVED TO PenaltyQuestService. 
+        // Verification change: Verify pqService called.
+        // The old test verified generic quest generation. Now it should verify pqService.generatePenaltyQuest.
+        verify(pqService).generatePenaltyQuest(eq(playerId), any());
         
-        Quest generated = questCaptor.getValue();
-        assertEquals(QuestType.PENALTY, generated.getQuestType());
-        assertEquals("SURVIVAL PROTOCOL", generated.getTitle());
+        // Old verification of generic quest save is no longer valid if logic moved.
+        // ArgumentCaptor<Quest> questCaptor = ArgumentCaptor.forClass(Quest.class);
+        // verify(qRepo).save(questCaptor.capture());
     }
 
     @Test
     void testPenaltyService_ExitZone() {
         PlayerStateService psService = mock(PlayerStateService.class);
-        PenaltyService realPenaltyService = new PenaltyService(null, null, psService, null, streakService, eventPublisher);
+        com.lifeos.penalty.repository.PenaltyQuestRepository pqRepo = mock(com.lifeos.penalty.repository.PenaltyQuestRepository.class);
+        PenaltyService realPenaltyService = new PenaltyService(null, null, psService, null, streakService, eventPublisher, null, pqRepo);
+        
+        // Mock the Guard check
+        when(pqRepo.existsByPlayerIdAndStatus(eq(playerId), any())).thenReturn(true);
 
         // Execute
         realPenaltyService.exitPenaltyZone(playerId);

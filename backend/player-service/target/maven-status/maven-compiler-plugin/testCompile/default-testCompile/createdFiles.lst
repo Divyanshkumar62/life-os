@@ -8,6 +8,7 @@ com\lifeos\economy\service\EconomySystemTest.class
 com\lifeos\quest\service\StatSystemTest.class
 com\lifeos\project\service\ProjectServiceTest.class
 com\lifeos\reward\service\RewardServiceTest.class
+com\lifeos\penalty\service\PenaltyQuestServiceTest.class
 com\lifeos\penalty\service\PenaltyServiceTest.class
 com\lifeos\progression\service\RankExamSystemTest.class
 com\lifeos\streak\service\StreakServiceTest.class

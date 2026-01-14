@@ -1,0 +1,60 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.lifeos:player-service >----------------------
+[INFO] Building player-service 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ player-service ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ player-service ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ player-service ---
+[INFO] skip non existing resourceDirectory C:\Users\user\Desktop\life-os\backend\player-service\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ player-service ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 16 source files with javac [debug release 17] to target\test-classes
+[INFO] Annotation processing is enabled because one or more processors were found
+  on the class path. A future release of javac may disable annotation processing
+  unless at least one processor is specified by name (-processor), or a search
+  path is specified (--processor-path, --processor-module-path), or annotation
+  processing is enabled explicitly (-proc:only, -proc:full).
+  Use -Xlint:-options to suppress this message.
+  Use -proc:none to disable annotation processing.
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ player-service ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.lifeos.penalty.service.PenaltyQuestServiceTest
+WARNING: A Java agent has been loaded dynamically (C:\Users\user\.m2\repository\net\bytebuddy\byte-buddy-agent\1.14.10\byte-buddy-agent-1.14.10.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+13:57:32.412 [main] INFO com.lifeos.penalty.service.PenaltyQuestService -- Recorded 1 work units for player 59098e09-19b2-438a-beeb-f6f481c7d940. Progress: 1/10
+13:57:32.506 [main] INFO com.lifeos.penalty.service.PenaltyQuestService -- Active penalty quest already exists for player c45e834d-035d-4c37-83a8-4468cbe85503
+13:57:32.542 [main] INFO com.lifeos.penalty.service.PenaltyQuestService -- Generated Penalty Quest (SURVIVAL) for player f5dd3b0f-997e-4d1a-a324-9c10b0b81b79. Reason: MISSED_DAYS
+13:57:32.570 [main] WARN com.lifeos.penalty.service.PenaltyQuestService -- Invalid work source applied to penalty: SYSTEM_DEFINED_ONLY
+13:57:32.600 [main] INFO com.lifeos.penalty.service.PenaltyQuestService -- Recorded 2 work units for player 0ef3883f-cc7e-4181-9fb2-26d045679503. Progress: 2/10
+13:57:32.601 [main] INFO com.lifeos.penalty.service.PenaltyQuestService -- Recorded 1 work units for player 0ef3883f-cc7e-4181-9fb2-26d045679503. Progress: 3/10
+13:57:32.617 [main] INFO com.lifeos.penalty.service.PenaltyQuestService -- Recorded 1 work units for player de371cb8-3833-4b93-8734-090e3db9681c. Progress: 10/10
+13:57:32.617 [main] INFO com.lifeos.penalty.service.PenaltyQuestService -- Penalty Quest COMPLETED for player de371cb8-3833-4b93-8734-090e3db9681c
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.631 s -- in com.lifeos.penalty.service.PenaltyQuestServiceTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  37.128 s
+[INFO] Finished at: 2026-01-14T13:57:32+05:30
+[INFO] ------------------------------------------------------------------------
