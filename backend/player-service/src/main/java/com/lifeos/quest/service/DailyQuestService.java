@@ -193,6 +193,9 @@ public class DailyQuestService {
                     .build();
             
             questRepository.save(quest);
+            
+            // Emit Event
+            domainEventPublisher.publish(new com.lifeos.event.concrete.DailyQuestGeneratedEvent(playerId, quest.getQuestId()));
         }
         
         log.info("Generated {} daily quests for player {}", Math.min(count, allTemplates.length), playerId);

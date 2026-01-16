@@ -140,5 +140,8 @@ public class DailyQuestServiceTest {
         List<Quest> saved = captor.getAllValues();
         assertEquals(QuestCategory.SYSTEM_DAILY, saved.get(0).getCategory());
         assertNotNull(saved.get(0).getDeadlineAt());
+
+        // Verify Event
+        verify(domainEventPublisher, times(2)).publish(any(com.lifeos.event.concrete.DailyQuestGeneratedEvent.class));
     }
 }

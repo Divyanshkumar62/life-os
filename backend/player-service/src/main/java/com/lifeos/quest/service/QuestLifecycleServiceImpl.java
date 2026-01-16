@@ -3,6 +3,8 @@ package com.lifeos.quest.service;
 import com.lifeos.event.DomainEventPublisher;
 import com.lifeos.event.concrete.DailyQuestCompletedEvent;
 import com.lifeos.event.concrete.QuestCompletedEvent;
+import com.lifeos.event.concrete.QuestFailedEvent;
+import com.lifeos.event.concrete.QuestExpiredEvent;
 import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.domain.QuestOutcomeProfile;
@@ -72,6 +74,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
                 .quest(quest)
                 .successXp(request.getSuccessXp())
                 .failureXp(request.getFailureXp())
+                .goldReward(request.getGoldReward())
                 .attributeDeltaJson(request.getAttributeDeltas())
                 .build();
         outcomeRepository.save(outcome);
@@ -189,17 +192,15 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         // Apply Penalties
         penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.FAILED);
         
-        // Progression Check (Promotion Fail)
-        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM) {
-            progressionService.processPromotionOutcome(quest.getPlayer().getPlayerId(), false);
-        }
-
         // Update Link
         var link = linkRepository.findByPlayerIdAndQuestId(quest.getPlayer().getPlayerId(), questId)
                 .orElseThrow(() -> new IllegalStateException("Link missing"));
         link.setState(QuestState.FAILED);
         link.setFailedAt(LocalDateTime.now());
         linkRepository.save(link);
+
+        // Emit Event
+        domainEventPublisher.publish(new QuestFailedEvent(quest.getPlayer().getPlayerId(), questId, quest.getTitle(), quest.getQuestType()));
     }
 
     @Override
@@ -222,5 +223,8 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
                 .orElse(new PlayerQuestLink());
         link.setState(QuestState.EXPIRED);
         linkRepository.save(link);
+
+        // Emit Event
+        domainEventPublisher.publish(new QuestExpiredEvent(quest.getPlayer().getPlayerId(), questId, quest.getTitle()));
     }
 }

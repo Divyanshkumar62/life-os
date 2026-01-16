@@ -57,10 +57,9 @@ public class RewardCalculationService {
         if (finalXp < 0) finalXp = 0;
 
         // 5. Calculate Attributes
-        // Low Momentum -> Boost Attributes too? Spec says "XP + Attribute Boost".
-        // Let's add 10% boost to attributes if momentum < 30
+        // Rule: PROMOTION_EXAM does not give individual attribute growth (handled by ProgressionService)
         Map<AttributeType, Double> finalAttribs = new HashMap<>();
-        if (baseAttribs != null) {
+        if (baseAttribs != null && quest.getQuestType() != com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM) {
             for (Map.Entry<String, Double> entry : baseAttribs.entrySet()) {
                 try {
                     AttributeType type = AttributeType.valueOf(entry.getKey());
@@ -98,7 +97,7 @@ public class RewardCalculationService {
         }
 
         // 7. Gold Logic
-        long baseGold = outcome.getGoldReward();
+        long baseGold = outcome.getGoldReward() != null ? outcome.getGoldReward() : 0L;
         // V1: Direct pass-through. No logic mapping for now unless Difficulty mapped in Profile creation.
         // Assuming Profile has correct value.
         

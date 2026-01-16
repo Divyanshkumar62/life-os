@@ -14,12 +14,16 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class InProcessDomainEventPublisher implements DomainEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(InProcessDomainEventPublisher.class);
-    private final List<DomainEventHandler<?>> handlers;
+    private final java.util.List<DomainEventHandler<?>> handlers;
     private final PlayerStateService playerStateService;
+
+    public InProcessDomainEventPublisher(@org.springframework.context.annotation.Lazy java.util.List<DomainEventHandler<?>> handlers, PlayerStateService playerStateService) {
+        this.handlers = handlers;
+        this.playerStateService = playerStateService;
+    }
 
     @Override
     @SuppressWarnings("unchecked")

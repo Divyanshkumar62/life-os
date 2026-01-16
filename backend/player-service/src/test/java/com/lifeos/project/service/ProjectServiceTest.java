@@ -33,6 +33,7 @@ public class ProjectServiceTest {
     @Mock private QuestRepository questRepository;
     @Mock private PlayerProgressionRepository progressionRepository;
     @Mock private UserBossKeyRepository bossKeyRepository;
+    @Mock private com.lifeos.player.service.PlayerStateService playerStateService;
 
     @InjectMocks
     private ProjectService projectService;
@@ -70,6 +71,12 @@ public class ProjectServiceTest {
         when(projectRepository.countByPlayerPlayerIdAndStatus(playerId, ProjectStatus.ACTIVE)).thenReturn(0L);
         when(projectRepository.save(any(Project.class))).thenAnswer(i -> i.getArgument(0));
         
+        // Mock PlayerState
+        com.lifeos.player.dto.PlayerStateResponse state = com.lifeos.player.dto.PlayerStateResponse.builder()
+                .activeFlags(java.util.Collections.emptyList())
+                .build();
+        when(playerStateService.getPlayerState(playerId)).thenReturn(state);
+        
         Project created = projectService.createProject(validProject);
         
         assertNotNull(created.getHardDeadline()); // Should be set automatically
@@ -79,6 +86,12 @@ public class ProjectServiceTest {
 
     @Test
     void testCreateProject_Fail_ShortDuration() {
+        // Mock PlayerState
+        com.lifeos.player.dto.PlayerStateResponse state = com.lifeos.player.dto.PlayerStateResponse.builder()
+                .activeFlags(java.util.Collections.emptyList())
+                .build();
+        when(playerStateService.getPlayerState(playerId)).thenReturn(state);
+
         validProject.setDurationDays(3);
         
         assertThrows(IllegalArgumentException.class, () -> projectService.createProject(validProject));
@@ -86,6 +99,12 @@ public class ProjectServiceTest {
 
     @Test
     void testCreateProject_Fail_SlotLimitReached() {
+        // Mock PlayerState
+        com.lifeos.player.dto.PlayerStateResponse state = com.lifeos.player.dto.PlayerStateResponse.builder()
+                .activeFlags(java.util.Collections.emptyList())
+                .build();
+        when(playerStateService.getPlayerState(playerId)).thenReturn(state);
+        
         when(progressionRepository.findByPlayerPlayerId(playerId)).thenReturn(Optional.of(progression));
         // Active projects: 1 (Max for E-Rank)
         when(projectRepository.countByPlayerPlayerIdAndStatus(playerId, ProjectStatus.ACTIVE)).thenReturn(1L);

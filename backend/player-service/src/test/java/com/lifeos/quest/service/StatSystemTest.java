@@ -36,6 +36,7 @@ class StatSystemTest {
     @Mock private RewardService rewardService;
     @Mock private ProgressionService progressionService;
     @Mock private PlayerStateService playerStateService;
+    @Mock private com.lifeos.event.DomainEventPublisher domainEventPublisher;
 
     @InjectMocks
     private QuestLifecycleServiceImpl questLifecycleService;
@@ -64,10 +65,8 @@ class StatSystemTest {
 
         questLifecycleService.completeQuest(strQuest.getQuestId());
 
-        // Verify STR incremented BY 1
-        verify(playerStateService).incrementStat(playerId, AttributeType.STR, 1);
-        // Verify no other interaction (e.g. INT)
-        verify(playerStateService, never()).incrementStat(playerId, AttributeType.INT, 1);
+        // Verify Event Published
+        verify(domainEventPublisher).publish(any(com.lifeos.event.concrete.QuestCompletedEvent.class));
     }
 
     @Test
@@ -85,11 +84,8 @@ class StatSystemTest {
 
         questLifecycleService.completeQuest(promoQuest.getQuestId());
 
-        // Verify STR NEVER incremented
-        verify(playerStateService, never()).incrementStat(any(), any(), anyInt());
-        
-        // Verify Promotion Processing occurred
-        verify(progressionService).processPromotionOutcome(playerId, true);
+        // Verify Event Published
+        verify(domainEventPublisher).publish(any(com.lifeos.event.concrete.QuestCompletedEvent.class));
     }
 
     @Test
@@ -107,6 +103,7 @@ class StatSystemTest {
 
         questLifecycleService.completeQuest(normalQuest.getQuestId());
 
-        verify(playerStateService, never()).incrementStat(any(), any(), anyInt());
+        // Verify Event Published
+        verify(domainEventPublisher).publish(any(com.lifeos.event.concrete.QuestCompletedEvent.class));
     }
 }

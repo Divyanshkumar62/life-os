@@ -11,22 +11,22 @@ import java.util.List;
 public class PlayerStateResponse {
     private PlayerIdentityDTO identity;
     private PlayerProgressionDTO progression;
-    private List<PlayerAttributeDTO> attributes;
+    private java.util.List<PlayerAttributeDTO> attributes = new java.util.ArrayList<>();
     private PlayerPsychStateDTO psychState;
     private PlayerMetricsDTO metrics;
-    private List<PlayerStatusFlagDTO> activeFlags;
+    private java.util.List<PlayerStatusFlagDTO> activeFlags = new java.util.ArrayList<>();
     private PlayerTemporalStateDTO temporalState;
     private PlayerHistoryDTO history;
     
     public PlayerStateResponse() {}
 
-    public PlayerStateResponse(PlayerIdentityDTO identity, PlayerProgressionDTO progression, List<PlayerAttributeDTO> attributes, PlayerPsychStateDTO psychState, PlayerMetricsDTO metrics, List<PlayerStatusFlagDTO> activeFlags, PlayerTemporalStateDTO temporalState, PlayerHistoryDTO history) {
+    public PlayerStateResponse(PlayerIdentityDTO identity, PlayerProgressionDTO progression, java.util.List<PlayerAttributeDTO> attributes, PlayerPsychStateDTO psychState, PlayerMetricsDTO metrics, java.util.List<PlayerStatusFlagDTO> activeFlags, PlayerTemporalStateDTO temporalState, PlayerHistoryDTO history) {
         this.identity = identity;
         this.progression = progression;
-        this.attributes = attributes;
+        this.attributes = attributes != null ? attributes : new java.util.ArrayList<>();
         this.psychState = psychState;
         this.metrics = metrics;
-        this.activeFlags = activeFlags;
+        this.activeFlags = activeFlags != null ? activeFlags : new java.util.ArrayList<>();
         this.temporalState = temporalState;
         this.history = history;
     }
@@ -36,13 +36,19 @@ public class PlayerStateResponse {
     public void setIdentity(PlayerIdentityDTO identity) { this.identity = identity; }
     public PlayerProgressionDTO getProgression() { return progression; }
     public void setProgression(PlayerProgressionDTO progression) { this.progression = progression; }
-    public List<PlayerAttributeDTO> getAttributes() { return attributes; }
+    public java.util.List<PlayerAttributeDTO> getAttributes() { 
+        if (attributes == null) attributes = new java.util.ArrayList<>();
+        return attributes; 
+    }
     public void setAttributes(List<PlayerAttributeDTO> attributes) { this.attributes = attributes; }
     public PlayerPsychStateDTO getPsychState() { return psychState; }
     public void setPsychState(PlayerPsychStateDTO psychState) { this.psychState = psychState; }
     public PlayerMetricsDTO getMetrics() { return metrics; }
     public void setMetrics(PlayerMetricsDTO metrics) { this.metrics = metrics; }
-    public List<PlayerStatusFlagDTO> getActiveFlags() { return activeFlags; }
+    public java.util.List<PlayerStatusFlagDTO> getActiveFlags() { 
+        if (activeFlags == null) activeFlags = new java.util.ArrayList<>();
+        return activeFlags; 
+    }
     public void setActiveFlags(List<PlayerStatusFlagDTO> activeFlags) { this.activeFlags = activeFlags; }
     public PlayerTemporalStateDTO getTemporalState() { return temporalState; }
     public void setTemporalState(PlayerTemporalStateDTO temporalState) { this.temporalState = temporalState; }

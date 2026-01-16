@@ -46,6 +46,7 @@ class RankExamSystemTest {
     @Mock private QuestRepository questRepository;
     @Mock private UserBossKeyRepository bossKeyRepository;
     @Mock private RankExamAttemptRepository examAttemptRepository;
+    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ProgressionService progressionService;

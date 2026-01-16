@@ -1,3 +1,4 @@
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\PenaltyZoneExitedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\Priority.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\QuestMutationLog.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\service\PlayerStateServiceImpl.java
@@ -30,6 +31,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pe
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerStatusFlag.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\repository\PenaltyRecordRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\QuestConstraint.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\PenaltyAppliedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\reward\domain\enums\RewardComponentType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerHistoryDTO.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\PenaltyRecord.java
@@ -38,6 +40,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pr
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\economy\domain\PurchaseTransaction.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\enums\AttributeType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\Quest.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\QuestExpiredEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\repository\PlayerQuestLinkRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\DailyQuestCompletedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerMetrics.java
@@ -63,6 +66,8 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pl
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerMetricsDTO.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\ConstraintType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\QuestType.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\QuestFailedEvent.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\handler\ProgressionEventHandler.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\service\DailyQuestService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerPsychState.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\EventCategory.java
@@ -103,6 +108,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\qu
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\domain\RankExamAttempt.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\enums\PenaltyType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\enums\PlayerRank.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\DailyQuestGeneratedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerAttribute.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\DailyQuestFailedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\repository\PlayerAttributeRepository.java
