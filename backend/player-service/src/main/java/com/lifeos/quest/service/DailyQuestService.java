@@ -12,6 +12,8 @@ import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.streak.service.StreakService;
 import com.lifeos.voice.domain.enums.SystemMessageType;
 import com.lifeos.voice.event.VoiceSystemEvent;
+import com.lifeos.event.DomainEventPublisher;
+import com.lifeos.event.concrete.DailyQuestFailedEvent;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,9 +37,9 @@ public class DailyQuestService {
     private final QuestRepository questRepository;
     private final PlayerStateService playerStateService;
     private final PlayerIdentityRepository playerRepository;
-    private final PenaltyService penaltyService;
     private final StreakService streakService;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final DomainEventPublisher domainEventPublisher;
 
     /**
      * SYSTEM-WIDE RESET (Scheduled Job would call this)
@@ -134,15 +136,11 @@ public class DailyQuestService {
                 // STRIKE 1: WARNING
                 // Apply Warning for 24h
                 playerStateService.applyStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.WARNING, now.plusDays(1));
-                log.info("Player {} missed dailies. Consecutive: 1. Applied WARNING.", playerId);
-                // VOICE: DAILY_INCOMPLETE
-                eventPublisher.publishEvent(VoiceSystemEvent.builder()
-                        .playerId(playerId)
-                        .type(SystemMessageType.DAILY_INCOMPLETE)
-                        .build());
+                // Trigger Penalty via Event
+                domainEventPublisher.publish(new DailyQuestFailedEvent(playerId));
             } else if (newFailures >= 2) {
                 // STRIKE 2+: PENALTY ZONE
-                penaltyService.enterPenaltyZone(playerId, "Consecutive Daily Failures: " + newFailures);
+                domainEventPublisher.publish(new DailyQuestFailedEvent(playerId));
             }
         } else {
             // SUCCESS (No failures found among active dailies, meaning likely completed)

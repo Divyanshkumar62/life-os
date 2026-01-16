@@ -1,16 +1,15 @@
 package com.lifeos.penalty.service;
 
+import com.lifeos.event.DomainEventPublisher;
 import com.lifeos.penalty.domain.PenaltyQuest;
 import com.lifeos.penalty.domain.enums.PenaltyQuestStatus;
 import com.lifeos.penalty.domain.enums.PenaltyQuestType;
 import com.lifeos.penalty.domain.enums.PenaltyTriggerReason;
 import com.lifeos.penalty.domain.enums.WorkSource;
 import com.lifeos.penalty.repository.PenaltyQuestRepository;
-import com.lifeos.voice.domain.enums.SystemMessageType;
-import com.lifeos.voice.event.VoiceSystemEvent;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,22 +19,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class PenaltyQuestService {
 
     private static final Logger log = LoggerFactory.getLogger(PenaltyQuestService.class);
     private static final int MAX_DAILY_WORK_UNITS = 3;
 
     private final PenaltyQuestRepository questRepository;
-    private final PenaltyService penaltyService;
-    private final ApplicationEventPublisher eventPublisher;
-
-    public PenaltyQuestService(PenaltyQuestRepository questRepository, 
-                               PenaltyService penaltyService,
-                               ApplicationEventPublisher eventPublisher) {
-        this.questRepository = questRepository;
-        this.penaltyService = penaltyService;
-        this.eventPublisher = eventPublisher;
-    }
+    private final DomainEventPublisher eventPublisher;
 
     @Transactional
     public void generatePenaltyQuest(UUID playerId, PenaltyTriggerReason reason) {
@@ -63,7 +54,7 @@ public class PenaltyQuestService {
     }
 
     @Transactional
-    public void recordWork(UUID playerId, int units, WorkSource source) {
+    public void recordWork(UUID playerId, int workUnits, WorkSource source) {
         // Guard #1: Source Validation
         if (source != WorkSource.DAILY_QUEST && source != WorkSource.BACKLOG_CLEAR) {
             log.warn("Invalid work source applied to penalty: {}", source);
@@ -94,7 +85,7 @@ public class PenaltyQuestService {
         }
 
         // Apply partial work if units > remaining cap (though usually units=1)
-        int allowedUnits = Math.min(units, MAX_DAILY_WORK_UNITS - quest.getTodayWorkUnits());
+        int allowedUnits = Math.min(workUnits, MAX_DAILY_WORK_UNITS - quest.getTodayWorkUnits());
         
         if (allowedUnits <= 0) return;
 
@@ -105,27 +96,14 @@ public class PenaltyQuestService {
                 allowedUnits, playerId, quest.getCompletedCount(), quest.getRequiredCount());
 
         if (quest.getCompletedCount() >= quest.getRequiredCount()) {
-            completeQuest(quest);
-        } else {
-            questRepository.save(quest);
+            quest.setStatus(PenaltyQuestStatus.COMPLETED);
+            quest.setCompletedAt(LocalDateTime.now());
+            
+            // Domain Event: Handlers will trigger Exit and Voice
+            eventPublisher.publish(new com.lifeos.event.concrete.PenaltyQuestCompletedEvent(playerId));
         }
-    }
 
-    private void completeQuest(PenaltyQuest quest) {
-        quest.setStatus(PenaltyQuestStatus.COMPLETED);
-        quest.setCompletedAt(LocalDateTime.now());
         questRepository.save(quest);
-
-        log.info("Penalty Quest COMPLETED for player {}", quest.getPlayerId());
-
-        // Emit Event
-        eventPublisher.publishEvent(VoiceSystemEvent.builder()
-                .playerId(quest.getPlayerId())
-                .type(SystemMessageType.PENALTY_QUEST_COMPLETED)
-                .build());
-
-        // Unlock System
-        penaltyService.exitPenaltyZone(quest.getPlayerId());
     }
 
     public Map<String, Object> getPenaltyQuestStatus(UUID playerId) {

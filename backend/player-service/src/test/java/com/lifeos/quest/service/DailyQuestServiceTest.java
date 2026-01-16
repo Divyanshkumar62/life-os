@@ -15,6 +15,7 @@ import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.domain.enums.QuestCategory;
 import com.lifeos.quest.domain.enums.QuestState;
 import com.lifeos.quest.repository.QuestRepository;
+import com.lifeos.event.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +39,8 @@ public class DailyQuestServiceTest {
     @Mock private QuestRepository questRepository;
     @Mock private PlayerStateService playerStateService;
     @Mock private PlayerIdentityRepository playerRepository;
-    @Mock private PenaltyService penaltyService;
     @Mock private com.lifeos.streak.service.StreakService streakService;
-    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    @Mock private DomainEventPublisher domainEventPublisher;
 
     @InjectMocks
     private DailyQuestService dailyQuestService;
@@ -93,8 +93,8 @@ public class DailyQuestServiceTest {
                 .deadlineAt(LocalDateTime.now().minusMinutes(1)) // Expired
                 .build();
                 
-        // Set Failures to 1 so next failure triggers Penalty (Threshold >= 2)
-        playerState.getTemporalState().setConsecutiveDailyFailures(1);
+        // Set Failures to 2 so it triggers Penalty (Threshold >= 2)
+        playerState.getTemporalState().setConsecutiveDailyFailures(2);
         
         when(questRepository.findByPlayerPlayerIdAndState(playerId, QuestState.ACTIVE))
                 .thenReturn(List.of(expiredDaily));
@@ -103,7 +103,8 @@ public class DailyQuestServiceTest {
         dailyQuestService.processPlayerReset(playerId);
         
         assertEquals(QuestState.FAILED, expiredDaily.getState());
-        verify(penaltyService).enterPenaltyZone(eq(playerId), contains("Consecutive"));
+        // Verify Event
+        verify(domainEventPublisher).publish(any(com.lifeos.event.concrete.DailyQuestFailedEvent.class));
         verify(questRepository).saveAll(anyList());
     }
 
@@ -124,7 +125,7 @@ public class DailyQuestServiceTest {
         
         // Should NOT be marked FAILED by this service (logic filters for SYSTEM_DAILY)
         assertEquals(QuestState.ACTIVE, projectTask.getState());
-        verify(penaltyService, never()).enterPenaltyZone(any(), any());
+        verify(domainEventPublisher, never()).publish(any(com.lifeos.event.concrete.DailyQuestFailedEvent.class));
     }
     
     @Test

@@ -1,11 +1,23 @@
 package com.lifeos.quest.service;
 
-import com.lifeos.player.domain.enums.AttributeType;
+import com.lifeos.event.DomainEventPublisher;
+import com.lifeos.event.concrete.DailyQuestCompletedEvent;
+import com.lifeos.event.concrete.QuestCompletedEvent;
 import com.lifeos.player.service.PlayerStateService;
-import com.lifeos.quest.domain.*;
-import com.lifeos.quest.domain.enums.*;
+import com.lifeos.quest.domain.Quest;
+import com.lifeos.quest.domain.QuestOutcomeProfile;
+import com.lifeos.quest.domain.QuestMutationLog;
+import com.lifeos.quest.domain.PlayerQuestLink;
+import com.lifeos.quest.domain.enums.MutationType;
+import com.lifeos.quest.domain.enums.QuestCategory;
+import com.lifeos.quest.domain.enums.QuestState;
+import com.lifeos.quest.domain.enums.QuestType;
 import com.lifeos.quest.dto.QuestRequest;
-import com.lifeos.quest.repository.*;
+import com.lifeos.quest.repository.QuestRepository;
+import com.lifeos.quest.repository.QuestOutcomeProfileRepository;
+import com.lifeos.quest.repository.QuestMutationLogRepository;
+import com.lifeos.quest.repository.PlayerQuestLinkRepository;
+import com.lifeos.player.domain.enums.StatusFlagType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,8 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
-import com.lifeos.penalty.service.PenaltyService;
-import com.lifeos.penalty.service.PenaltyQuestService;
 
 @Service
 @RequiredArgsConstructor
@@ -25,19 +35,14 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     private final QuestMutationLogRepository mutationLogRepository;
     private final PlayerQuestLinkRepository linkRepository;
     
-    // We need to fetch Player identity to link it, but Repositories are better than linking services if just for fetching.
-    // However, for rewards/penalties we MUST use the Service to ensure invariants.
-    private final PenaltyService penaltyService;
-    private final PenaltyQuestService penaltyQuestService;
-    private final com.lifeos.reward.service.RewardService rewardService;
+    // Services retained for Fail/Expire logic or non-event paths
+    private final com.lifeos.penalty.service.PenaltyService penaltyService;
     private final com.lifeos.progression.service.ProgressionService progressionService;
     private final PlayerStateService playerStateService;
-    // Assuming we can access PlayerIdentityRepository to verify player exists or use PlayerService
-    // For now, let's rely on PlayerStateService or just assume ID is valid and let FK Constraint fail if not?
-    // Better: use repositories for entities.
-    // We'll need PlayerIdentityRepository injected or fetched via PlayerStateService if it exposed it.
-    // Let's add PlayerIdentityRepository here for creation.
     private final com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository;
+    
+    // Event Publisher
+    private final DomainEventPublisher domainEventPublisher;
 
 
     @Override
@@ -135,12 +140,10 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         Quest quest = questRepository.findById(questId)
                 .orElseThrow(() -> new IllegalArgumentException("Quest not found"));
 
-        // Invariant: Must be ACTIVE
         if (quest.getState() != QuestState.ACTIVE) {
             throw new IllegalStateException("Quest must be ACTIVE to complete. Current: " + quest.getState());
         }
 
-        // Invariant: Cannot be expired (deadline check)
         if (quest.getDeadlineAt() != null && LocalDateTime.now().isAfter(quest.getDeadlineAt())) {
             throw new IllegalStateException("Quest has expired, cannot complete.");
         }
@@ -149,61 +152,24 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         quest.setState(QuestState.COMPLETED);
         questRepository.save(quest);
 
-        // 2. Update Link (Projection)
+        // 2. Update Link
         var link = linkRepository.findByPlayerIdAndQuestId(quest.getPlayer().getPlayerId(), questId)
-                .orElse(new PlayerQuestLink()); // Should exist
+                .orElse(new PlayerQuestLink());
         link.setState(QuestState.COMPLETED);
         link.setCompletedAt(LocalDateTime.now());
         linkRepository.save(link);
 
-        // 3. Apply Rewards (via Reward Engine)
-        rewardService.applyReward(questId, quest.getPlayer().getPlayerId());
+        // 3. Emit Domain Event
+        // Events: QuestCompletedEvent (Generic), DailyQuestCompletedEvent (Specific)
+        var event = new QuestCompletedEvent(quest.getPlayer().getPlayerId(), questId, quest.getQuestType());
+        domainEventPublisher.publish(event);
         
-        // 4. Stat Growth (Core Stats v1)
-        // Guard: Only grant stats if NOT a promotion exam and has a primary attribute
-        if (quest.getQuestType() != com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM 
-                && quest.getPrimaryAttribute() != null) {
-            boolean isCoreStat = quest.getPrimaryAttribute() == AttributeType.STR 
-                    || quest.getPrimaryAttribute() == AttributeType.INT 
-                    || quest.getPrimaryAttribute() == AttributeType.VIT 
-                    || quest.getPrimaryAttribute() == AttributeType.SEN;
-            
-            if (isCoreStat) {
-                playerStateService.incrementStat(quest.getPlayer().getPlayerId(), quest.getPrimaryAttribute(), 1);
-            }
+        if (quest.getCategory() == QuestCategory.SYSTEM_DAILY) {
+            domainEventPublisher.publish(new DailyQuestCompletedEvent(quest.getPlayer().getPlayerId()));
         }
         
-        // 5. Progression Check (Promotion)
-        if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM) {
-            progressionService.processPromotionOutcome(quest.getPlayer().getPlayerId(), true);
-        }
-        
-        // 6. Penalty WORK Logic (V1 Engine)
-        // If in Penalty Zone, check if work counts.
-        var playerState = playerStateService.getPlayerState(quest.getPlayer().getPlayerId());
-        boolean inPenalty = playerState.getActiveFlags().stream()
-                .anyMatch(f -> f.getFlag() == com.lifeos.player.domain.enums.StatusFlagType.PENALTY_ZONE);
-                
-        if (inPenalty) {
-             // V1 Rule: Daily Quests count as work
-             if (quest.getCategory() == com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY) {
-                 penaltyQuestService.recordWork(
-                     quest.getPlayer().getPlayerId(), 
-                     1, 
-                     com.lifeos.penalty.domain.enums.WorkSource.DAILY_QUEST
-                 );
-             }
-        }
-
-        // Old Logic: If quest ITSELF was the Penalty Quest (generic "SURVIVAL PROTOCOL"), exit.
-        // BUT: V1 Penalty Engine uses PenaltyQuestService to track progress and exit.
-        // We should NOT blindly call exitPenaltyZone here unless it was the LEGACY/Fallback way.
-        // The PenaltyQuestService calls exitPenaltyZone when the PenaltyQuest entity completes.
-        // So we remove the direct call here to avoid by-passing the 10-rep requirement.
-        
-        // if (quest.getQuestType() == com.lifeos.quest.domain.enums.QuestType.PENALTY) {
-        //     penaltyService.exitPenaltyZone(quest.getPlayer().getPlayerId());
-        // }
+        // Note: RewardService, Stats, Progression, Penalty Work are now handled by EventHandlers listing to these events.
+        // Legacy direct calls removed.
     }
 
     @Override

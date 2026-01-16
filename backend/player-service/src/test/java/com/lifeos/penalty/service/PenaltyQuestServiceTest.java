@@ -34,10 +34,7 @@ class PenaltyQuestServiceTest {
     private PenaltyQuestRepository questRepository;
 
     @Mock
-    private PenaltyService penaltyService;
-
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
+    private com.lifeos.event.DomainEventPublisher domainEventPublisher;
 
     @InjectMocks
     private PenaltyQuestService questService;
@@ -144,11 +141,8 @@ class PenaltyQuestServiceTest {
         assertEquals(PenaltyQuestStatus.COMPLETED, activeQuest.getStatus());
         assertNotNull(activeQuest.getCompletedAt());
         
-        verify(penaltyService).exitPenaltyZone(playerId);
-        
-        ArgumentCaptor<VoiceSystemEvent> eventCaptor = ArgumentCaptor.forClass(VoiceSystemEvent.class);
-        verify(eventPublisher).publishEvent(eventCaptor.capture());
-        assertEquals(SystemMessageType.PENALTY_QUEST_COMPLETED, eventCaptor.getValue().getType());
+        // Handled by Domain Event
+        verify(domainEventPublisher).publish(any(com.lifeos.event.concrete.PenaltyQuestCompletedEvent.class));
     }
     
     @Test
