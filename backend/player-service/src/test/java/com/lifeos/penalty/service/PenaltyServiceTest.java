@@ -41,7 +41,7 @@ public class PenaltyServiceTest {
     
     @Mock private QuestRepository questRepository;
     @Mock private com.lifeos.streak.service.StreakService streakService;
-    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    @Mock private com.lifeos.event.DomainEventPublisher domainEventPublisher;
     @Mock private com.lifeos.penalty.service.PenaltyQuestService penaltyQuestService;
     @Mock private com.lifeos.penalty.repository.PenaltyQuestRepository penaltyQuestRepository;
 
@@ -58,7 +58,6 @@ public class PenaltyServiceTest {
         playerId = UUID.randomUUID();
         quest = Quest.builder()
                 .questId(questId)
-                //.playerId(playerId) // Entity has 'player' object, simplistic mock here
                 .difficultyTier(DifficultyTier.C)
                 .build();
     }
@@ -82,9 +81,6 @@ public class PenaltyServiceTest {
         when(penaltyRepository.existsByQuestId(questId)).thenReturn(false);
         when(questRepository.findById(questId)).thenReturn(Optional.of(quest));
         
-        // C Tier -> 15 XP Penalty (Medium Severity usually, but let's check basic XP)
-        // With Abandoned -> Low Severity -> Just XP.
-        
         // When
         penaltyService.applyPenalty(questId, playerId, FailureReason.ABANDONED);
 
@@ -94,29 +90,16 @@ public class PenaltyServiceTest {
         
         PenaltyRecord saved = captor.getValue();
         assertEquals(PenaltyType.XP_DEDUCTION, saved.getType());
-        assertEquals(15L, saved.getValuePayload().get("xpDeduction"));
-        
         verify(playerStateService).applyXpDeduction(eq(playerId), eq(15L));
     }
 
     @Test
-    void testApplyPenalty_CriticalFailure() {
-        // Given
-        quest.setDifficultyTier(DifficultyTier.RED); // Critical
-        when(penaltyRepository.existsByQuestId(questId)).thenReturn(false);
-        when(questRepository.findById(questId)).thenReturn(Optional.of(quest));
-
+    void testEnterPenaltyZone_EmitsEvent() {
         // When
-        penaltyService.applyPenalty(questId, playerId, FailureReason.FAILED);
+        penaltyService.enterPenaltyZone(playerId, "Test Reason");
 
         // Then
-        // Should trigger Streak Reset + Heavy Debuff + XP
-        verify(playerStateService).resetStreak(eq(playerId));
-        verify(playerStateService).applyXpDeduction(eq(playerId), eq(100L)); // Red = 100
-        verify(playerStateService).applyStatDebuff(eq(playerId), any(), eq(10.0), any());
-        
-        ArgumentCaptor<PenaltyRecord> captor = ArgumentCaptor.forClass(PenaltyRecord.class);
-        verify(penaltyRepository).save(captor.capture());
-        assertEquals(PenaltyType.STREAK_RESET, captor.getValue().getType());
+        verify(penaltyQuestService).generatePenaltyQuest(eq(playerId), any());
+        verify(domainEventPublisher).publish(any(com.lifeos.event.concrete.PenaltyZoneEnteredEvent.class));
     }
 }

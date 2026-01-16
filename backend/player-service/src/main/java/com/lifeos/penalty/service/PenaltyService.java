@@ -3,14 +3,16 @@ package com.lifeos.penalty.service;
 import com.lifeos.penalty.domain.PenaltyDefinition;
 import com.lifeos.penalty.domain.PenaltyRecord;
 import com.lifeos.penalty.domain.enums.FailureReason;
+import com.lifeos.penalty.domain.enums.PenaltyTriggerReason;
 import com.lifeos.penalty.repository.PenaltyQuestRepository;
 import com.lifeos.penalty.repository.PenaltyRecordRepository;
+import com.lifeos.player.domain.enums.StatusFlagType;
 import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.streak.service.StreakService;
-import com.lifeos.voice.domain.enums.SystemMessageType;
-import com.lifeos.voice.event.VoiceSystemEvent;
+import com.lifeos.event.DomainEventPublisher;
+import com.lifeos.event.concrete.PenaltyZoneEnteredEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -34,10 +36,11 @@ public class PenaltyService {
     private final PlayerStateService playerStateService;
     private final QuestRepository questRepository;
     private final StreakService streakService;
-    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher; // Kept as per instruction's snippet
 
     private final PenaltyQuestService penaltyQuestService;
     private final PenaltyQuestRepository penaltyQuestRepository; // For exit guard
+    private final DomainEventPublisher domainEventPublisher; // Added
 
     @Transactional
     public void applyPenalty(UUID questId, UUID playerId, FailureReason reason) {
@@ -124,18 +127,14 @@ public class PenaltyService {
         
         // 4. Generate Penalty Quest (Official V1 Engine)
         // Map string reason to Enum (simplistic logic for now, default to MISSED_DAYS)
-        com.lifeos.penalty.domain.enums.PenaltyTriggerReason triggerReason = 
+        PenaltyTriggerReason triggerReason = 
             "EXAM_FAIL".equals(reason) ? 
-            com.lifeos.penalty.domain.enums.PenaltyTriggerReason.EXAM_FAIL : 
-            com.lifeos.penalty.domain.enums.PenaltyTriggerReason.MISSED_DAYS;
-
+            PenaltyTriggerReason.EXAM_FAIL : 
+            PenaltyTriggerReason.MISSED_DAYS;
         penaltyQuestService.generatePenaltyQuest(playerId, triggerReason);
-        
-        // VOICE: PENALTY_ZONE_ENTRY
-        eventPublisher.publishEvent(VoiceSystemEvent.builder()
-                .playerId(playerId)
-                .type(SystemMessageType.PENALTY_ZONE_ENTRY)
-                .build());
+
+        // Emit Domain Event (Handlers: Voice, Streak)
+        domainEventPublisher.publish(new PenaltyZoneEnteredEvent(playerId));
     }
 
     @Transactional

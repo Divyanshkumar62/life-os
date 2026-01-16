@@ -14,4 +14,3 @@ com\lifeos\progression\service\RankExamSystemTest.class
 com\lifeos\streak\service\StreakServiceTest.class
 com\lifeos\player\service\PlayerVerificationTest.class
 com\lifeos\progression\service\StatGateTest.class
-com\lifeos\voice\service\SystemEventListenerTest.class
