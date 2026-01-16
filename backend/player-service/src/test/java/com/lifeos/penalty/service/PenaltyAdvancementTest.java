@@ -121,8 +121,8 @@ class PenaltyAdvancementTest {
         // Verify
         // 1. Update Failures to 2
         verify(playerStateService).updateConsecutiveFailures(playerId, 2);
-        // 2. Trigger Penalty Zone
-        verify(penaltyService).enterPenaltyZone(eq(playerId), contains("Consecutive"));
+        // 2. Trigger Penalty via Event
+        verify(domainEventPublisher).publish(any(com.lifeos.event.concrete.DailyQuestFailedEvent.class));
     }
 
     @Test
@@ -130,8 +130,6 @@ class PenaltyAdvancementTest {
         // Given: NO Missed Dailies, Current Failures = 1
         playerState.getTemporalState().setConsecutiveDailyFailures(1);
         
-        // No active dailies returned (or implied completed/not expired)
-        // Note: Logic iterates ACTIVE. If list empty, todayFailed = false.
         when(questRepository.findByPlayerPlayerIdAndState(playerId, QuestState.ACTIVE))
                 .thenReturn(Collections.emptyList()); 
         when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
@@ -206,6 +204,9 @@ class PenaltyAdvancementTest {
         // Verify
         verify(psService).removeStatusFlag(playerId, StatusFlagType.PENALTY_ZONE);
         verify(psService).updateConsecutiveFailures(playerId, 0);
+
+        // Verify Event
+        verify(dpMock).publish(any(com.lifeos.event.concrete.PenaltyZoneExitedEvent.class));
     }
 
     // --- Project Integration Test ---

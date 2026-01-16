@@ -91,10 +91,19 @@ public class PenaltyServiceTest {
         PenaltyRecord saved = captor.getValue();
         assertEquals(PenaltyType.XP_DEDUCTION, saved.getType());
         verify(playerStateService).applyXpDeduction(eq(playerId), eq(15L));
+        
+        // Verify Event
+        verify(domainEventPublisher).publish(any(com.lifeos.event.concrete.PenaltyAppliedEvent.class));
     }
 
     @Test
     void testEnterPenaltyZone_EmitsEvent() {
+        // Mock PlayerStateResponse with empty activeFlags to prevent NPE
+        com.lifeos.player.dto.PlayerStateResponse state = com.lifeos.player.dto.PlayerStateResponse.builder()
+                .activeFlags(java.util.Collections.emptyList())
+                .build();
+        when(playerStateService.getPlayerState(any())).thenReturn(state);
+
         // When
         penaltyService.enterPenaltyZone(playerId, "Test Reason");
 

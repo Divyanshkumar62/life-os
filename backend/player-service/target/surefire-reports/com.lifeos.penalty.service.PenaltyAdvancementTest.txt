@@ -1,19 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.lifeos.penalty.service.PenaltyAdvancementTest
 -------------------------------------------------------------------------------
-Tests run: 6, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 7.947 s <<< FAILURE! -- in com.lifeos.penalty.service.PenaltyAdvancementTest
-com.lifeos.penalty.service.PenaltyAdvancementTest.testHybridTrigger_PenaltyZone -- Time elapsed: 0.084 s <<< FAILURE!
-Wanted but not invoked:
-penaltyService.enterPenaltyZone(
-    3083266d-053d-4dfa-b5c5-4ae7e35ac767,
-    contains("Consecutive")
-);
--> at com.lifeos.penalty.service.PenaltyService.enterPenaltyZone(PenaltyService.java:103)
-Actually, there were zero interactions with this mock.
-
-	at com.lifeos.penalty.service.PenaltyService.enterPenaltyZone(PenaltyService.java:103)
-	at com.lifeos.penalty.service.PenaltyAdvancementTest.testHybridTrigger_PenaltyZone(PenaltyAdvancementTest.java:125)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
-
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.045 s -- in com.lifeos.penalty.service.PenaltyAdvancementTest

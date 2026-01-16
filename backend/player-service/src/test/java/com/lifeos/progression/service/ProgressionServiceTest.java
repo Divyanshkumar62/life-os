@@ -39,6 +39,7 @@ public class ProgressionServiceTest {
     @Mock private QuestRepository questRepository;
     @Mock private UserBossKeyRepository bossKeyRepository;
     @Mock private RankExamAttemptRepository examAttemptRepository;
+    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ProgressionService progressionService;
@@ -64,9 +65,9 @@ public class ProgressionServiceTest {
                 .activeFlags(new ArrayList<>())
                 .build();
                 
-        // Add Stats
-        playerState.getAttributes().add(PlayerAttributeDTO.builder().attributeType(AttributeType.PHYSICAL_ENERGY).currentValue(10.0).build());
-        playerState.getAttributes().add(PlayerAttributeDTO.builder().attributeType(AttributeType.DISCIPLINE).currentValue(8.0).build());
+        // Add Stats (STR 5.0, INT 5.0 required for E->D)
+        playerState.getAttributes().add(PlayerAttributeDTO.builder().attributeType(AttributeType.STR).currentValue(10.0).build());
+        playerState.getAttributes().add(PlayerAttributeDTO.builder().attributeType(AttributeType.INT).currentValue(10.0).build());
         
         // Mock UserBossKey
         userBossKey = UserBossKey.builder()
@@ -110,7 +111,7 @@ public class ProgressionServiceTest {
     
     @Test
     void testCanRequestPromotion_Fail_LowStats() {
-        playerState.getAttributes().get(1).setCurrentValue(7.0); // Discipline < 8.0
+        playerState.getAttributes().get(1).setCurrentValue(4.0); // Discipline < 5.0 (Required for E->D)
         when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
         when(bossKeyRepository.findByPlayerPlayerIdAndRank(playerId, PlayerRank.E))
                 .thenReturn(Optional.of(userBossKey));
@@ -157,9 +158,9 @@ public class ProgressionServiceTest {
                 .build();
         attempt.getPlayer().setPlayerId(playerId);
 
-        when(examAttemptRepository.findById(attemptId)).thenReturn(Optional.of(attempt));
+        when(examAttemptRepository.findLatestByPlayerId(playerId)).thenReturn(Optional.of(attempt));
 
-        progressionService.processPromotionOutcome(attemptId, true);
+        progressionService.processPromotionOutcome(playerId, true);
         
         assertEquals(ExamStatus.PASSED, attempt.getStatus());
         verify(playerStateService).promoteRank(playerId);
@@ -174,9 +175,9 @@ public class ProgressionServiceTest {
                 .status(ExamStatus.UNLOCKED)
                 .build();
                 
-        when(examAttemptRepository.findById(attemptId)).thenReturn(Optional.of(attempt));
+        when(examAttemptRepository.findLatestByPlayerId(playerId)).thenReturn(Optional.of(attempt));
         
-        progressionService.processPromotionOutcome(attemptId, false);
+        progressionService.processPromotionOutcome(playerId, false);
         
         assertEquals(ExamStatus.FAILED, attempt.getStatus());
         // Verify promoteRank is NOT called

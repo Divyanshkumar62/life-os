@@ -20,6 +20,7 @@ public class QuestRequest {
     // Outcome Profile Data
     private long successXp;
     private long failureXp;
+    private long goldReward;
     private Map<String, Double> attributeDeltas; // e.g., {"STRENGTH": 1.0}
     
     // Optional
@@ -27,7 +28,7 @@ public class QuestRequest {
     
     public QuestRequest() {}
 
-    public QuestRequest(UUID playerId, String title, String description, QuestType questType, DifficultyTier difficultyTier, Priority priority, LocalDateTime deadlineAt, long successXp, long failureXp, Map<String, Double> attributeDeltas, boolean systemMutable) {
+    public QuestRequest(UUID playerId, String title, String description, QuestType questType, DifficultyTier difficultyTier, Priority priority, LocalDateTime deadlineAt, long successXp, long failureXp, long goldReward, Map<String, Double> attributeDeltas, boolean systemMutable) {
         this.playerId = playerId;
         this.title = title;
         this.description = description;
@@ -37,6 +38,7 @@ public class QuestRequest {
         this.deadlineAt = deadlineAt;
         this.successXp = successXp;
         this.failureXp = failureXp;
+        this.goldReward = goldReward;
         this.attributeDeltas = attributeDeltas;
         this.systemMutable = systemMutable;
     }
@@ -60,6 +62,8 @@ public class QuestRequest {
     public void setSuccessXp(long successXp) { this.successXp = successXp; }
     public long getFailureXp() { return failureXp; }
     public void setFailureXp(long failureXp) { this.failureXp = failureXp; }
+    public long getGoldReward() { return goldReward; }
+    public void setGoldReward(long goldReward) { this.goldReward = goldReward; }
     public Map<String, Double> getAttributeDeltas() { return attributeDeltas; }
     public void setAttributeDeltas(Map<String, Double> attributeDeltas) { this.attributeDeltas = attributeDeltas; }
     public boolean isSystemMutable() { return systemMutable; }
@@ -79,6 +83,7 @@ public class QuestRequest {
         private LocalDateTime deadlineAt;
         private long successXp;
         private long failureXp;
+        private long goldReward;
         private Map<String, Double> attributeDeltas;
         private boolean systemMutable;
 
@@ -91,11 +96,12 @@ public class QuestRequest {
         public QuestRequestBuilder deadlineAt(LocalDateTime deadlineAt) { this.deadlineAt = deadlineAt; return this; }
         public QuestRequestBuilder successXp(long successXp) { this.successXp = successXp; return this; }
         public QuestRequestBuilder failureXp(long failureXp) { this.failureXp = failureXp; return this; }
+        public QuestRequestBuilder goldReward(long goldReward) { this.goldReward = goldReward; return this; }
         public QuestRequestBuilder attributeDeltas(Map<String, Double> attributeDeltas) { this.attributeDeltas = attributeDeltas; return this; }
         public QuestRequestBuilder systemMutable(boolean systemMutable) { this.systemMutable = systemMutable; return this; }
 
         public QuestRequest build() {
-            return new QuestRequest(playerId, title, description, questType, difficultyTier, priority, deadlineAt, successXp, failureXp, attributeDeltas, systemMutable);
+            return new QuestRequest(playerId, title, description, questType, difficultyTier, priority, deadlineAt, successXp, failureXp, goldReward, attributeDeltas, systemMutable);
         }
     }
 }

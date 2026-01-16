@@ -1,6 +1,7 @@
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\reward\service\RewardServiceTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\voice\service\SystemVoiceServiceTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\quest\service\DailyQuestServiceTest.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\event\EventIntegrationTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\quest\service\StatSystemTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\player\service\PlayerVerificationTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\progression\service\ProgressionServiceTest.java
@@ -8,6 +9,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\qu
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\progression\service\RankExamSystemTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\penalty\service\PenaltyAdvancementTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\project\service\ProjectServiceTest.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\event\impl\InProcessDomainEventPublisherTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\penalty\service\PenaltyServiceTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\economy\service\EconomySystemTest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\test\java\com\lifeos\streak\service\StreakServiceTest.java

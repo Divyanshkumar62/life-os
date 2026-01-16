@@ -40,7 +40,8 @@ public class PenaltyService {
 
     private final PenaltyQuestService penaltyQuestService;
     private final PenaltyQuestRepository penaltyQuestRepository; // For exit guard
-    private final DomainEventPublisher domainEventPublisher; // Added
+    private final DomainEventPublisher domainEventPublisher; 
+
 
     @Transactional
     public void applyPenalty(UUID questId, UUID playerId, FailureReason reason) {
@@ -95,6 +96,9 @@ public class PenaltyService {
 
         penaltyRepository.save(record);
         log.info("Applied penalty {} to player {} for quest {}", def.getSeverity(), playerId, questId);
+
+        // Emit Event
+        domainEventPublisher.publish(new com.lifeos.event.concrete.PenaltyAppliedEvent(playerId, questId, reason, def.getXpDeduction()));
     }
 
     @Transactional
@@ -156,5 +160,8 @@ public class PenaltyService {
         
         // 2. Reset failures counter
         playerStateService.updateConsecutiveFailures(playerId, 0);
+
+        // Emit Event
+        domainEventPublisher.publish(new com.lifeos.event.concrete.PenaltyZoneExitedEvent(playerId));
     }
 }

@@ -10,6 +10,7 @@ com\lifeos\event\concrete\DailyQuestFailedEvent.class
 com\lifeos\project\repository\ProjectRepository.class
 com\lifeos\quest\domain\QuestOutcomeProfile$QuestOutcomeProfileBuilder.class
 com\lifeos\player\dto\PlayerIdentityDTO$PlayerIdentityDTOBuilder.class
+com\lifeos\event\concrete\DailyQuestGeneratedEvent.class
 com\lifeos\player\domain\PlayerProgression$PlayerProgressionBuilder.class
 com\lifeos\player\domain\PlayerPsychState$PlayerPsychStateBuilder.class
 com\lifeos\reward\service\RewardService.class
@@ -43,6 +44,7 @@ com\lifeos\economy\repository\PurchaseTransactionRepository.class
 com\lifeos\player\domain\PlayerStatusFlag.class
 com\lifeos\player\domain\PlayerPsychState.class
 com\lifeos\player\dto\PlayerPsychStateDTO$PlayerPsychStateDTOBuilder.class
+com\lifeos\event\concrete\PenaltyAppliedEvent.class
 com\lifeos\quest\domain\enums\QuestType.class
 com\lifeos\player\dto\PlayerPsychStateDTO.class
 com\lifeos\quest\domain\QuestOutcomeProfile.class
@@ -63,6 +65,8 @@ com\lifeos\event\EventCategory.class
 com\lifeos\penalty\domain\PenaltyDefinition.class
 com\lifeos\player\dto\PlayerProgressionDTO$PlayerProgressionDTOBuilder.class
 com\lifeos\voice\domain\SystemMessage.class
+com\lifeos\event\concrete\PenaltyZoneExitedEvent.class
+com\lifeos\event\concrete\QuestExpiredEvent.class
 com\lifeos\progression\repository\UserBossKeyRepository.class
 com\lifeos\quest\dto\QuestRequest.class
 com\lifeos\economy\domain\ShopItem.class
@@ -94,6 +98,7 @@ com\lifeos\project\domain\Project$ProjectBuilder.class
 com\lifeos\event\handler\PenaltyEventHandler.class
 com\lifeos\quest\domain\Quest.class
 com\lifeos\penalty\repository\PenaltyRecordRepository.class
+com\lifeos\event\concrete\QuestFailedEvent.class
 com\lifeos\player\domain\PlayerAttribute.class
 com\lifeos\quest\domain\QuestMutationLog$QuestMutationLogBuilder.class
 com\lifeos\economy\service\ShopService.class
@@ -113,6 +118,7 @@ com\lifeos\event\concrete\PenaltyZoneEnteredEvent.class
 com\lifeos\penalty\domain\enums\PenaltyQuestType.class
 com\lifeos\project\domain\enums\ProjectStatus.class
 com\lifeos\quest\repository\QuestOutcomeProfileRepository.class
+com\lifeos\event\handler\ProgressionEventHandler.class
 com\lifeos\economy\repository\PlayerEconomyRepository.class
 com\lifeos\player\service\PlayerStateService.class
 com\lifeos\quest\domain\enums\MutationType.class

@@ -37,6 +37,9 @@ public class QuestLifecycleServiceTest {
     @Autowired
     private PlayerQuestLinkRepository linkRepository;
 
+    @org.springframework.boot.test.mock.mockito.SpyBean
+    private com.lifeos.event.DomainEventPublisher domainEventPublisher;
+
     private UUID playerId;
 
     @BeforeEach
@@ -81,6 +84,7 @@ public class QuestLifecycleServiceTest {
                 .priority(Priority.NORMAL)
                 .deadlineAt(LocalDateTime.now().plusHours(1))
                 .successXp(200)
+                .goldReward(50L)
                 .attributeDeltas(Map.of("DISCIPLINE", 1.0))
                 .build();
         Quest quest = questService.assignQuest(request);
@@ -106,6 +110,9 @@ public class QuestLifecycleServiceTest {
         var progression = playerStateService.getPlayerState(playerId).getProgression();
         assertEquals(2, progression.getLevel(), "Player should have leveled up");
         assertEquals(100, progression.getCurrentXp(), "Should have 100 XP remaining after level up cost");
+
+        // Verify Event
+        org.mockito.Mockito.verify(domainEventPublisher).publish(org.mockito.ArgumentMatchers.any(com.lifeos.event.concrete.QuestCompletedEvent.class));
     }
 
     @Test
@@ -127,6 +134,9 @@ public class QuestLifecycleServiceTest {
         // Verify
         Quest failedQuest = questRepository.findById(quest.getQuestId()).orElseThrow();
         assertEquals(QuestState.FAILED, failedQuest.getState());
+
+        // Verify Event
+        org.mockito.Mockito.verify(domainEventPublisher).publish(org.mockito.ArgumentMatchers.any(com.lifeos.event.concrete.QuestFailedEvent.class));
     }
 
     @Test
@@ -148,6 +158,9 @@ public class QuestLifecycleServiceTest {
         // Verify
         Quest expiredQuest = questRepository.findById(quest.getQuestId()).orElseThrow();
         assertEquals(QuestState.EXPIRED, expiredQuest.getState());
+
+        // Verify Event
+        org.mockito.Mockito.verify(domainEventPublisher).publish(org.mockito.ArgumentMatchers.any(com.lifeos.event.concrete.QuestExpiredEvent.class));
     }
     
     @Test

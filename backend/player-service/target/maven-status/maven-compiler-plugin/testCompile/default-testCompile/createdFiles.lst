@@ -1,3 +1,4 @@
+com\lifeos\event\impl\InProcessDomainEventPublisherTest$TestEvent.class
 com\lifeos\quest\service\QuestLifecycleServiceTest.class
 com\lifeos\penalty\service\PenaltyAdvancementTest.class
 com\lifeos\player\service\PlayerStateServiceTest.class
@@ -12,5 +13,7 @@ com\lifeos\penalty\service\PenaltyQuestServiceTest.class
 com\lifeos\penalty\service\PenaltyServiceTest.class
 com\lifeos\progression\service\RankExamSystemTest.class
 com\lifeos\streak\service\StreakServiceTest.class
+com\lifeos\event\EventIntegrationTest.class
+com\lifeos\event\impl\InProcessDomainEventPublisherTest.class
 com\lifeos\player\service\PlayerVerificationTest.class
 com\lifeos\progression\service\StatGateTest.class
