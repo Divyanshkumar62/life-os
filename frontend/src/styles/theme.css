@@ -1,13 +1,178 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom Base Styles */
+/* CSS Custom Properties - Design Tokens */
 :root {
+  /* Colors */
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-blue-500: #3b82f6;
+
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
+  --color-black: #0a0a0a;
+  --color-gray-900: #111111;
+  --color-gray-800: #1a1a1a;
+  --color-gray-700: #2a2a2a;
+  --color-gray-600: #3a3a3a;
+  --color-gray-500: #6b7280;
+  --color-gray-400: #9ca3af;
+
+  /* Shadows */
+  --shadow-glow-cyan: 0 0 20px rgba(34, 211, 238, 0.5);
+  --shadow-glow-teal: 0 0 20px rgba(45, 212, 191, 0.5);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+
   color-scheme: dark;
 }
 
-body {
-  @apply bg-black text-white overflow-hidden;
-  font-family: 'Inter', sans-serif;
+/* Base Styles */
+@layer base {
+  * {
+    @apply border-gray-700;
+  }
+
+  body {
+    @apply bg-black text-white overflow-hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Monospace font for technical elements */
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+  }
+
+  /* Scrollbar Styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-900;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700 rounded;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-cyan-600;
+  }
+}
+
+/* Component Utilities */
+@layer components {
+
+  /* Cyan Glow Border */
+  .border-glow-cyan {
+    border: 1px solid var(--color-cyan-500);
+    box-shadow: var(--shadow-glow-cyan);
+  }
+
+  /* Teal Glow Border */
+  .border-glow-teal {
+    border: 1px solid var(--color-teal-500);
+    box-shadow: var(--shadow-glow-teal);
+  }
+
+  /* Glassmorphism Effect */
+  .glass {
+    background: rgba(26, 26, 26, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Gradient Text */
+  .text-gradient-cyan {
+    @apply bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent;
+  }
+
+  /* Progress Bar Gradient */
+  .progress-gradient {
+    @apply bg-gradient-to-r from-cyan-600 via-cyan-500 to-teal-400;
+  }
+
+  /* Card Shadow */
+  .card-shadow {
+    box-shadow: var(--shadow-card);
+  }
+}
+
+/* Utility Classes */
+@layer utilities {
+
+  /* Text Shadow for Glow Effect */
+  .text-glow-cyan {
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+  }
+
+  .text-glow-teal {
+    text-shadow: 0 0 10px rgba(45, 212, 191, 0.8);
+  }
+
+  /* Smooth Transitions */
+  .transition-smooth {
+    transition: all var(--transition-normal);
+  }
+
+  /* Hide Scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Animation Keyframes */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
 }
