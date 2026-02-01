@@ -34,6 +34,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\qu
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\PenaltyAppliedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\reward\domain\enums\RewardComponentType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerHistoryDTO.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\state\PlayerStateEventHandler.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\PenaltyRecord.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\service\ProgressionService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\domain\UserBossKey.java
@@ -67,6 +68,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pl
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\ConstraintType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\QuestType.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\QuestFailedEvent.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\state\PlayerReadService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\handler\ProgressionEventHandler.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\service\DailyQuestService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerPsychState.java
@@ -91,6 +93,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\qu
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\enums\DifficultyTier.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\service\PenaltyService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\controller\PlayerStateController.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\state\PlayerStateRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\reward\repository\RewardRecordRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\domain\RankTransitionTemplate.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\PenaltyQuestCompletedEvent.java
@@ -103,6 +106,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\st
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\handler\VoiceEventHandler.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\voice\repository\SystemMessageRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerProgression.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\state\PlayerStateSnapshot.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\streak\service\StreakService.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\dto\QuestRequest.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\progression\domain\RankExamAttempt.java
@@ -110,6 +114,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pe
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\enums\PlayerRank.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\DailyQuestGeneratedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\domain\PlayerAttribute.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\state\PlayerFlag.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\DailyQuestFailedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\repository\PlayerAttributeRepository.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\LifeOsApplication.java

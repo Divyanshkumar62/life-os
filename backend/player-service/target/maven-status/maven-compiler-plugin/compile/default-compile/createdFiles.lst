@@ -2,6 +2,7 @@ com\lifeos\economy\service\EconomyService.class
 com\lifeos\progression\domain\UserBossKey$UserBossKeyBuilder.class
 com\lifeos\streak\domain\PlayerStreak$PlayerStreakBuilder.class
 com\lifeos\player\dto\PlayerAttributeDTO.class
+com\lifeos\player\state\PlayerFlag.class
 com\lifeos\quest\domain\QuestConstraint$QuestConstraintBuilder.class
 com\lifeos\player\dto\PlayerStatusFlagDTO.class
 com\lifeos\economy\domain\enums\ShopCategory.class
@@ -67,6 +68,7 @@ com\lifeos\player\dto\PlayerProgressionDTO$PlayerProgressionDTOBuilder.class
 com\lifeos\voice\domain\SystemMessage.class
 com\lifeos\event\concrete\PenaltyZoneExitedEvent.class
 com\lifeos\event\concrete\QuestExpiredEvent.class
+com\lifeos\player\state\PlayerStateSnapshot$PlayerStateSnapshotBuilder.class
 com\lifeos\progression\repository\UserBossKeyRepository.class
 com\lifeos\quest\dto\QuestRequest.class
 com\lifeos\economy\domain\ShopItem.class
@@ -89,6 +91,7 @@ com\lifeos\reward\domain\RewardRecord.class
 com\lifeos\economy\repository\ShopItemRepository.class
 com\lifeos\player\dto\PlayerHistoryDTO.class
 com\lifeos\quest\repository\QuestConstraintRepository.class
+com\lifeos\player\state\PlayerStateSnapshot.class
 com\lifeos\player\repository\PlayerIdentityRepository.class
 com\lifeos\economy\domain\PurchaseTransaction$PurchaseTransactionBuilder.class
 com\lifeos\event\concrete\QuestCompletedEvent.class
@@ -96,6 +99,7 @@ com\lifeos\player\domain\PlayerStatusFlag$PlayerStatusFlagBuilder.class
 com\lifeos\player\domain\PlayerProgression.class
 com\lifeos\project\domain\Project$ProjectBuilder.class
 com\lifeos\event\handler\PenaltyEventHandler.class
+com\lifeos\player\state\PlayerReadService.class
 com\lifeos\quest\domain\Quest.class
 com\lifeos\penalty\repository\PenaltyRecordRepository.class
 com\lifeos\event\concrete\QuestFailedEvent.class
@@ -116,12 +120,14 @@ com\lifeos\penalty\domain\enums\PenaltyTriggerReason.class
 com\lifeos\quest\dto\QuestRequest$QuestRequestBuilder.class
 com\lifeos\event\concrete\PenaltyZoneEnteredEvent.class
 com\lifeos\penalty\domain\enums\PenaltyQuestType.class
+com\lifeos\player\state\PlayerStateRepository.class
 com\lifeos\project\domain\enums\ProjectStatus.class
 com\lifeos\quest\repository\QuestOutcomeProfileRepository.class
 com\lifeos\event\handler\ProgressionEventHandler.class
 com\lifeos\economy\repository\PlayerEconomyRepository.class
 com\lifeos\player\service\PlayerStateService.class
 com\lifeos\quest\domain\enums\MutationType.class
+com\lifeos\player\state\PlayerStateEventHandler.class
 com\lifeos\voice\domain\SystemMessage$Builder.class
 com\lifeos\player\domain\enums\AttributeType.class
 com\lifeos\player\dto\PlayerHistoryDTO$PlayerHistoryDTOBuilder.class
