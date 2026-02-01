@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Base Styles */
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-black text-white overflow-hidden;
+  font-family: 'Inter', sans-serif;
+}
