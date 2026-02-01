@@ -65,6 +65,15 @@ public class PlayerStateEventHandler {
     }
     
     // Helper to fetch-update-save
+    @EventListener
+    @Transactional
+    public void onStreakBroken(StreakBrokenEvent event) {
+        updateSnapshot(event.getPlayerId(), snapshot -> {
+            snapshot.setStreakActive(false);
+            snapshot.getActiveFlags().add(PlayerFlag.STREAK_BROKEN);
+        });
+    }
+
     private void updateSnapshot(UUID playerId, java.util.function.Consumer<PlayerStateSnapshot> updater) {
         PlayerStateSnapshot snapshot = repository.findById(playerId)
                 .orElse(PlayerStateSnapshot.builder()

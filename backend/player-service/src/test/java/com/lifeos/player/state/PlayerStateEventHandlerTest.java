@@ -113,4 +113,17 @@ class PlayerStateEventHandlerTest {
             !snapshot.isStreakActive()
         ));
     }
+
+    @Test
+    void testOnStreakBroken_UpdatesSnapshot() {
+        when(repository.findById(playerId)).thenReturn(Optional.empty());
+
+        handler.onStreakBroken(new com.lifeos.event.concrete.StreakBrokenEvent(playerId, 5, "DAILY_FAILURE"));
+
+        verify(repository).save(argThat(snapshot -> 
+            snapshot.getPlayerId().equals(playerId) &&
+            !snapshot.isStreakActive() &&
+            snapshot.getActiveFlags().contains(PlayerFlag.STREAK_BROKEN)
+        ));
+    }
 }

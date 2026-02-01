@@ -33,6 +33,7 @@ C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\pe
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\quest\domain\QuestConstraint.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\PenaltyAppliedEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\reward\domain\enums\RewardComponentType.java
+C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\event\concrete\StreakBrokenEvent.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\dto\PlayerHistoryDTO.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\player\state\PlayerStateEventHandler.java
 C:\Users\user\Desktop\life-os\backend\player-service\src\main\java\com\lifeos\penalty\domain\PenaltyRecord.java

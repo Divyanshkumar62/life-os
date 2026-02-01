@@ -95,6 +95,28 @@ BEFORE INSERT OR UPDATE ON project
 FOR EACH ROW
 EXECUTE FUNCTION check_project_slots();
 
+-- Law 4: State Exclusivity
+-- Prevent promotion exam during penalty
+CREATE OR REPLACE FUNCTION check_state_exclusivity() RETURNS TRIGGER AS $$
+BEGIN
+    -- Check if player is in penalty zone
+    IF EXISTS (SELECT 1 FROM player_state_snapshot WHERE player_id = NEW.player_id AND in_penalty_zone = TRUE) THEN
+        IF NEW.status = 'IN_PROGRESS' OR NEW.status = 'ACTIVE' OR NEW.status = 'UNLOCKED' THEN 
+             -- UNLOCKED usually means ready to start. If they try to set it to UNLOCKED while in penalty, block?
+             -- Spec: "Penalty always overrides promotion".
+             -- If they try to START exam (status change to unlocked/in_progress).
+            RAISE EXCEPTION 'Law 4 Violation: Cannot start Promotion Exam while in Penalty Zone';
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_state_exclusivity
+BEFORE INSERT OR UPDATE ON rank_exam_attempts
+FOR EACH ROW
+EXECUTE FUNCTION check_state_exclusivity();
+
 
 -- Law 5: Key Purity
 -- Prevent direct modification of Boss Keys except via authorized procedure (simulated by source check)

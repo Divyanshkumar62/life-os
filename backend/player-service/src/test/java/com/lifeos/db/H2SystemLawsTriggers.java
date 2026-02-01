@@ -15,6 +15,9 @@ public class H2SystemLawsTriggers implements Trigger {
     private int colRank = -1;
     private int colPlayerId = -1;
     private String triggerName;
+    
+    private int colExamPlayerId = -1;
+    private int colExamStatus = -1;
 
     @Override
     public void init(Connection conn, String schemaName, String triggerName, String tableName, boolean before, int type) throws SQLException {
@@ -22,25 +25,55 @@ public class H2SystemLawsTriggers implements Trigger {
         try (ResultSet rs = conn.getMetaData().getColumns(null, schemaName, tableName, null)) {
             while (rs.next()) {
                 String colName = rs.getString("COLUMN_NAME").toLowerCase();
-                int ordinal = rs.getInt("ORDINAL_POSITION") - 1; // 0-based index for row array?
-                // H2 Trigger rows are 0-based. MetaData is 1-based?
-                // H2 docs: "The object array contains the values ...... index 0 is the first column."
+                int ordinal = rs.getInt("ORDINAL_POSITION") - 1; 
                 
-                if (colName.equals("id")) colId = ordinal;
-                else if (colName.equals("current_xp")) colCurrentXp = ordinal;
-                else if (colName.equals("level")) colLevel = ordinal;
-                else if (colName.equals("rank")) colRank = ordinal;
-                else if (colName.equals("player_id")) colPlayerId = ordinal;
+                if (tableName.equalsIgnoreCase("PLAYER_PROGRESSION") || tableName.equalsIgnoreCase("PROJECT")) {
+                    if (colName.equals("id")) colId = ordinal;
+                    else if (colName.equals("current_xp")) colCurrentXp = ordinal;
+                    else if (colName.equals("level")) colLevel = ordinal;
+                    else if (colName.equals("rank")) colRank = ordinal;
+                    else if (colName.equals("player_id")) colPlayerId = ordinal;
+                } else if (tableName.equalsIgnoreCase("RANK_EXAM_ATTEMPTS")) {
+                    if (colName.equals("player_id")) colExamPlayerId = ordinal;
+                    else if (colName.equals("status")) colExamStatus = ordinal;
+                }
             }
         }
     }
 
     @Override
     public void fire(Connection conn, Object[] oldRow, Object[] newRow) throws SQLException {
-        if ("TRG_PENALTY_EMBARGO".equalsIgnoreCase(triggerName)) {
+        if (triggerName == null) return;
+        
+        if (triggerName.equalsIgnoreCase("TRG_PENALTY_EMBARGO")) {
             checkPenaltyEmbargo(conn, oldRow, newRow);
-        } else if ("TRG_RANK_CEILING".equalsIgnoreCase(triggerName)) {
+        } else if (triggerName.equalsIgnoreCase("TRG_RANK_CEILING")) {
             checkRankCeiling(newRow);
+        } else if (triggerName.equalsIgnoreCase("TRG_STATE_EXCLUSIVITY")) {
+            checkStateExclusivity(conn, newRow);
+        }
+    }
+    
+    // ... existing checks ...
+
+    private void checkStateExclusivity(Connection conn, Object[] newRow) throws SQLException {
+        if (colExamPlayerId == -1 || colExamStatus == -1) return;
+
+        Object playerIdObj = newRow[colExamPlayerId];
+        String status = (String) newRow[colExamStatus];
+
+        // Status check: IN_PROGRESS or UNLOCKED or ACTIVE. 
+        // Need to match Enum string values.
+        if ("IN_PROGRESS".equals(status) || "UNLOCKED".equals(status) || "ACTIVE".equals(status)) {
+             try (PreparedStatement valStmt = conn.prepareStatement(
+                    "SELECT 1 FROM player_state_snapshot WHERE player_id = ? AND in_penalty_zone = TRUE")) {
+                valStmt.setObject(1, playerIdObj);
+                try (ResultSet rs = valStmt.executeQuery()) {
+                    if (rs.next()) {
+                        throw new SQLException("Law 4 Violation: Cannot start Promotion Exam while in Penalty Zone");
+                    }
+                }
+            }
         }
     }
 

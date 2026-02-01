@@ -1,0 +1,297 @@
+# SYSTEM SPECIFICATION — V1 (Frozen)
+
+## 1. Purpose & Philosophy
+
+The LifeOS backend is a **rule-driven, stateful progression system** inspired by game system architectures. The system does not motivate, persuade, or negotiate. It **observes actions, enforces rules, and applies consequences** deterministically.
+
+V1 establishes a **closed, enforceable world** where:
+
+* Every action has a consequence
+* Every reward is earned
+* Every failure has a cost
+* No rule can be bypassed via UI, timing, or exploit
+
+This document is the **constitutional contract** between backend, frontend, and future versions.
+
+---
+
+## 2. Core Design Principles
+
+1. **State > Actions**
+   The system reacts to *state transitions*, not user intent.
+
+2. **Event-Driven Decoupling**
+   Services do not call each other directly for outcomes. They emit domain events.
+
+3. **Penalty Supremacy**
+   Penalty overrides all progression systems.
+
+4. **Database-Enforced Integrity**
+   Game-breaking rules are enforced at the DB level, not just in services.
+
+5. **Fire-and-Forget Feedback**
+   System Voice messages are transient, not persistent conversation.
+
+---
+
+## 3. Player State Model (Authoritative)
+
+### PlayerState Read Model
+
+Single authoritative snapshot per player.
+
+Fields (conceptual):
+
+* playerId
+* currentRank
+* currentLevel
+* currentXP
+* xpBuffer
+* gold
+* activeFlags[] (PENALTY_ZONE, PROMOTION_IN_PROGRESS, etc.)
+* streak
+* longestStreak
+* activeProjectCount
+
+**All services read from this model.**
+
+---
+
+## 4. Engine Responsibilities (V1)
+
+### 4.1 Daily Quest Engine
+
+Authority over:
+
+* System Dailies generation
+* Completion / failure detection
+* Emission of:
+
+  * DailyQuestCompletedEvent (non-critical)
+  * DailyQuestFailedEvent (critical)
+
+No direct penalties or rewards applied here.
+
+---
+
+### 4.2 Streak Engine
+
+Authority over:
+
+* Binary streak tracking
+* Longest streak
+* Gold multipliers
+
+Rules:
+
+* Any system daily failure breaks the streak
+* Entering Penalty Zone resets streak
+
+Emits:
+
+* StreakBrokenEvent (critical)
+
+---
+
+### 4.3 Economy Engine
+
+Authority over:
+
+* Gold application
+* XP application
+
+Rules:
+
+* Rewards only applied via events
+* Economy logic MUST obey System Invariants
+
+---
+
+### 4.4 Penalty Engine
+
+Authority over:
+
+* Penalty Zone entry & exit
+* Locking progression
+
+Rules:
+
+* Entry triggered by critical failures
+* Exit ONLY via Penalty Quest completion
+
+Emits:
+
+* PenaltyZoneEnteredEvent (critical)
+
+---
+
+### 4.5 Penalty Quest Engine
+
+V1 Type: SURVIVAL
+
+Rules:
+
+* Only ONE active penalty quest per player
+* Required work count must be met
+* No bypass via gold, shop, or streaks
+
+On completion:
+
+* Exits Penalty Zone
+* Emits PenaltyQuestCompletedEvent (critical)
+
+---
+
+### 4.6 Reward Engine
+
+Authority over:
+
+* Applying gold / XP from QuestCompletedEvent
+
+Rules:
+
+* No rewards during penalty (enforced by events + DB)
+
+---
+
+### 4.7 System Voice Engine
+
+Role: Reactive System Announcer
+
+Rules:
+
+* Triggered only by events
+* Cold, unemotional tone
+* No chat
+
+Penalty Override:
+
+* When PENALTY_ZONE active → suppress non-critical messages
+
+Storage:
+
+* Fire-and-forget (ephemeral delivery)
+
+---
+
+## 5. Domain Events Layer
+
+### Base Event
+
+All events extend `DomainEvent`:
+
+* eventId
+* playerId
+* occurredAt
+* critical (boolean)
+
+### Central Rule
+
+Non-critical events are **suppressed at the publisher level** if player is in Penalty Zone.
+
+---
+
+### Event Catalogue (V1)
+
+| Event                      | Critical | Source              | Primary Handlers |
+| -------------------------- | -------- | ------------------- | ---------------- |
+| DailyQuestCompletedEvent   | No       | DailyQuestService   | Streak, Reward   |
+| DailyQuestFailedEvent      | Yes      | DailyQuestService   | Penalty          |
+| QuestCompletedEvent        | No       | QuestLifecycle      | Reward, Voice    |
+| PenaltyZoneEnteredEvent    | Yes      | PenaltyService      | Voice, Streak    |
+| PenaltyQuestCompletedEvent | Yes      | PenaltyQuestService | Penalty, Voice   |
+| StreakBrokenEvent          | Yes      | StreakService       | Voice            |
+
+---
+
+## 6. System Integrity & Invariants (ENFORCED AT DB LEVEL)
+
+### LAW 1 — The Penalty Embargo
+
+No XP or Gold may be increased while `penalty_active = true`.
+
+Violation Result:
+
+* Database error
+* Transaction rollback
+
+---
+
+### LAW 2 — The Rank Ceiling
+
+`current_level` may never exceed `rank_cap` unless Promotion is passed.
+
+Rules:
+
+* XP may overflow into buffer
+* Level increment is blocked
+
+---
+
+### LAW 3 — Slot Limits
+
+Active Projects cannot exceed rank-defined slot limits.
+
+Example:
+
+* E-Rank → max 1 active project
+
+---
+
+### LAW 4 — State Exclusivity
+
+A player cannot have:
+
+* `penalty_active = true`
+* AND `promotion_status = IN_PROGRESS`
+
+Penalty always overrides promotion.
+
+---
+
+### LAW 5 — Key Purity
+
+Boss Keys may ONLY be generated by Project Completion events.
+
+Forbidden Sources:
+
+* Shop
+* Grind
+* Rewards
+
+---
+
+## 7. Promotion System (V1 Constraints)
+
+* Promotion cannot be initiated during Penalty
+* Promotion failure is critical
+* Promotion success unlocks rank ceiling
+
+---
+
+## 8. Explicit Non-Goals (V1)
+
+The following are **intentionally excluded**:
+
+* Analytics & dashboards
+* Social features
+* Achievements
+* Messaging history
+* Dynamic difficulty tuning
+* AI coaching logic
+
+---
+
+## 9. Versioning & Change Policy
+
+This document defines **SYSTEM_SPEC_V1**.
+
+Rules:
+
+* No breaking changes without V2
+* UI must conform to this spec
+* Tests must assert against this spec
+
+---
+
+**STATUS: FROZEN**

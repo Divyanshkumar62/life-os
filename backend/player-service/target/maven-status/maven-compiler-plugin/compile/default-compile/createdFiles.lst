@@ -44,6 +44,7 @@ com\lifeos\quest\domain\QuestMutationLog.class
 com\lifeos\economy\repository\PurchaseTransactionRepository.class
 com\lifeos\player\domain\PlayerStatusFlag.class
 com\lifeos\player\domain\PlayerPsychState.class
+com\lifeos\event\concrete\StreakBrokenEvent.class
 com\lifeos\player\dto\PlayerPsychStateDTO$PlayerPsychStateDTOBuilder.class
 com\lifeos\event\concrete\PenaltyAppliedEvent.class
 com\lifeos\quest\domain\enums\QuestType.class
