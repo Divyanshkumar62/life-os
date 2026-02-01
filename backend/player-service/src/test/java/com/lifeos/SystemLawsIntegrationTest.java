@@ -7,18 +7,20 @@ import com.lifeos.player.domain.enums.PlayerRank;
 import com.lifeos.player.repository.PlayerIdentityRepository;
 import com.lifeos.player.repository.PlayerProgressionRepository;
 import com.lifeos.player.service.PlayerStateService;
+import com.lifeos.player.state.PlayerFlag;
 import com.lifeos.player.state.PlayerStateRepository;
+import com.lifeos.progression.domain.RankExamAttempt;
+import com.lifeos.progression.domain.enums.ExamStatus;
+import com.lifeos.progression.repository.RankExamAttemptRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -45,6 +47,9 @@ public class SystemLawsIntegrationTest {
     @Autowired
     private PlayerIdentityRepository playerRepository;
 
+    @Autowired
+    private RankExamAttemptRepository examRepository;
+
     @BeforeEach
     void setUp() {
         // Apply H2 Triggers explicitly if not using @Sql
@@ -63,7 +68,6 @@ public class SystemLawsIntegrationTest {
         eventPublisher.publishEvent(new PenaltyZoneEnteredEvent(playerId));
 
         // 4. Attempt to Add XP -> Should Fail via DB Trigger
-        // Since PlayerService might catch/wrap, we check for generic Exception or specific SQLException
         Exception exception = assertThrows(Exception.class, () -> {
              playerService.addXp(playerId, 50);
         });
@@ -94,7 +98,39 @@ public class SystemLawsIntegrationTest {
              || (exception.getCause() != null && exception.getCause().getMessage().contains("Law 2 Violation")));
     }
     
+    @Test
+    void testLaw4_StateExclusivity_BlocksPromotionDuringPenalty() {
+        // 1. Setup Player
+        UUID playerId = createPlayer("LawBreaker4");
+        PlayerIdentity player = playerRepository.findByUsername("LawBreaker4").get();
+        
+        // 2. Enter Penalty
+        eventPublisher.publishEvent(new PenaltyZoneEnteredEvent(playerId));
+        
+        // 3. Attempt to Start Promotion Exam (Insert Attempt) -> Should Fail
+        RankExamAttempt attempt = RankExamAttempt.builder()
+                .player(player)
+                .fromRank(PlayerRank.F)
+                .toRank(PlayerRank.E)
+                .status(ExamStatus.UNLOCKED)
+                .requiredKeys(1)
+                .consumedKeys(1)
+                .attemptNumber(1)
+                .build();
+                
+        Exception exception = assertThrows(Exception.class, () -> {
+             examRepository.saveAndFlush(attempt);
+        });
+        
+        assertTrue(exception.getMessage().contains("Law 4 Violation") 
+             || (exception.getCause() != null && exception.getCause().getMessage().contains("Law 4 Violation")));
+    }
+    
     private UUID createPlayer(String username) {
+        // Handle existing
+        Optional<PlayerIdentity> existing = playerRepository.findByUsername(username);
+        if (existing.isPresent()) return existing.get().getPlayerId();
+        
         playerService.initializePlayer(username);
         return playerRepository.findByUsername(username).get().getPlayerId();
     }

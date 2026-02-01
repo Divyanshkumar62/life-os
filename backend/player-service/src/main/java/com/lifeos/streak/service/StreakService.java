@@ -51,9 +51,13 @@ public class StreakService {
         } else {
             // Failed. Reset.
             if (streak.getCurrentStreak() > 0) {
-                streak.setPreviousStreak(streak.getCurrentStreak()); // Save for repair
+                int brokenStreakVal = streak.getCurrentStreak();
+                streak.setPreviousStreak(brokenStreakVal); // Save for repair
                 streak.setLastBrokenDate(evaluatedDate);
                 streak.setCurrentStreak(0);
+                
+                // EVENT: STREAK_BROKEN
+                eventPublisher.publishEvent(new com.lifeos.event.concrete.StreakBrokenEvent(playerId, brokenStreakVal, "DAILY_FAILURE"));
                 
                 // VOICE: STREAK_BROKEN
                 eventPublisher.publishEvent(VoiceSystemEvent.builder()
