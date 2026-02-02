@@ -1,4 +1,8 @@
+import { useState } from 'react';
 import { ScreenFrame } from '../../components/layout';
+import { PenaltyPopup } from '../../components/features/PenaltyZone/PenaltyPopup';
+import { PromotionPopup } from '../../components/features/Promotion/PromotionPopup';
+import { SystemInterruptionPopup } from '../../components/features/SystemInterruption/SystemInterruptionPopup';
 import { TopBar } from './TopBar';
 import { PlayerProfileCard } from './PlayerProfileCard';
 import { CurrentStatusPanel } from './CurrentStatusPanel';
@@ -16,6 +20,11 @@ import { CapacityPanel } from './CapacityPanel';
  * - Provide demo data
  */
 export function DashboardView() {
+    // State
+    const [isPenaltyActive, setIsPenaltyActive] = useState(false);
+    const [isPromotionActive, setIsPromotionActive] = useState(false);
+    const [isInterruptionActive, setIsInterruptionActive] = useState(false);
+
     // Mock Data
     const mockQuests = [
         {
@@ -105,7 +114,13 @@ export function DashboardView() {
 
                     <DailyQuestsPanel
                         quests={mockQuests}
-                        onQuestToggle={(id, completed) => console.log('Toggle quest:', id, completed)}
+                        onQuestToggle={(id, completed) => {
+                            console.log('Toggle quest:', id, completed);
+                            // Demo trigger for penalty popup
+                            if (id === '4' && !completed) {
+                                setIsPenaltyActive(true);
+                            }
+                        }}
                         onClaimReward={(id) => console.log('Claim reward:', id)}
                     />
                 </div>
@@ -131,9 +146,43 @@ export function DashboardView() {
                         SERVER CONNECTED
                     </span>
                     <span>LATENCY: 12ms</span>
+
+                    {/* Dev Trigger for Penalty Zone */}
+                    <button
+                        onClick={() => setIsPenaltyActive(true)}
+                        className="ml-4 px-2 py-1 bg-red-900/30 text-red-500 border border-red-900 rounded hover:bg-red-900/50 transition-colors"
+                    >
+                        [DEV] TRIGGER PENALTY SYSTEM
+                    </button>
+                    <button
+                        onClick={() => setIsPromotionActive(true)}
+                        className="ml-2 px-2 py-1 bg-blue-900/30 text-blue-500 border border-blue-900 rounded hover:bg-blue-900/50 transition-colors"
+                    >
+                        [DEV] TRIGGER PROMOTION
+                    </button>
+                    <button
+                        onClick={() => setIsInterruptionActive(true)}
+                        className="ml-2 px-2 py-1 bg-cyan-900/30 text-cyan-500 border border-cyan-900 rounded hover:bg-cyan-900/50 transition-colors"
+                    >
+                        [DEV] TRIGGER INTERRUPTION
+                    </button>
                 </div>
                 <span>SYSTEM ARCHITECT // ADMIN ACCESS: RESTRICTED</span>
             </div>
+
+            {/* Penalty Zone Popup */}
+            <PenaltyPopup
+                isOpen={isPenaltyActive}
+                onClose={() => setIsPenaltyActive(false)}
+            />
+            <PromotionPopup
+                isOpen={isPromotionActive}
+                onClose={() => setIsPromotionActive(false)}
+            />
+            <SystemInterruptionPopup
+                isOpen={isInterruptionActive}
+                onClose={() => setIsInterruptionActive(false)}
+            />
         </ScreenFrame>
     );
 }

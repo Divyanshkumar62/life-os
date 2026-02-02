@@ -176,3 +176,92 @@
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
+
+/* Glitch Text Effect */
+.glitch-text {
+  position: relative;
+  display: inline-block;
+  color: var(--color-cyan-400);
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
+}
+
+.glitch-text::before {
+  color: #ff00ff;
+  clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+  animation: glitch-anim-1 0.4s infinite linear alternate-reverse;
+  transform: translate(-1px, 0);
+}
+
+.glitch-text::after {
+  color: #00ffff;
+  clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+  animation: glitch-anim-2 0.4s infinite linear alternate-reverse;
+  transform: translate(1px, 0);
+}
+
+@keyframes glitch-anim-1 {
+  0% {
+    clip-path: polygon(0 2%, 100% 2%, 100% 5%, 0 5%);
+  }
+
+  20% {
+    clip-path: polygon(0 15%, 100% 15%, 100% 15%, 0 15%);
+  }
+
+  40% {
+    clip-path: polygon(0 10%, 100% 10%, 100% 20%, 0 20%);
+  }
+
+  60% {
+    clip-path: polygon(0 1%, 100% 1%, 100% 2%, 0 2%);
+  }
+
+  80% {
+    clip-path: polygon(0 33%, 100% 33%, 100% 33%, 0 33%);
+  }
+
+  100% {
+    clip-path: polygon(0 44%, 100% 44%, 100% 44%, 0 44%);
+  }
+}
+
+@keyframes glitch-anim-2 {
+  0% {
+    clip-path: polygon(0 52%, 100% 52%, 100% 55%, 0 55%);
+  }
+
+  20% {
+    clip-path: polygon(0 55%, 100% 55%, 100% 65%, 0 65%);
+  }
+
+  40% {
+    clip-path: polygon(0 60%, 100% 60%, 100% 70%, 0 70%);
+  }
+
+  60% {
+    clip-path: polygon(0 70%, 100% 70%, 100% 80%, 0 80%);
+  }
+
+  80% {
+    clip-path: polygon(0 85%, 100% 85%, 100% 85%, 0 85%);
+  }
+
+  100% {
+    clip-path: polygon(0 100%, 100% 100%, 100% 100%, 0 100%);
+  }
+}
+
+/* Slanted Clip Path for Buttons */
+.clip-path-slant {
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
