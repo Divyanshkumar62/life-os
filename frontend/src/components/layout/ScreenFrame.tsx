@@ -21,9 +21,9 @@ export function ScreenFrame({
     return (
         <div
             className={clsx(
-                'min-h-screen w-full bg-black',
+                'h-screen w-full bg-black',
                 'p-4 md:p-6',
-                'overflow-auto',
+                'overflow-y-auto',
                 className
             )}
         >
