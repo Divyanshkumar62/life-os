@@ -9,6 +9,7 @@ export interface LogEntry {
 
 export interface SystemLogPanelProps {
     entries: LogEntry[];
+    onViewFullLog?: () => void;
 }
 
 /**
@@ -21,6 +22,7 @@ export interface SystemLogPanelProps {
  */
 export function SystemLogPanel({
     entries,
+    onViewFullLog,
 }: SystemLogPanelProps) {
     const typeVariants = {
         info: 'info' as const,
@@ -47,6 +49,18 @@ export function SystemLogPanel({
                     </div>
                 ))}
             </div>
+
+            {/* Footer Action */}
+            {onViewFullLog && (
+                <div className="mt-2 pt-2 border-t border-gray-700 flex justify-end">
+                    <button
+                        onClick={onViewFullLog}
+                        className="text-[10px] text-cyan-500 hover:text-cyan-400 font-mono tracking-widest flex items-center gap-1 transition-colors"
+                    >
+                        VIEW FULL LOG <span className="text-lg leading-none">»</span>
+                    </button>
+                </div>
+            )}
         </SystemPanel>
     );
 }
