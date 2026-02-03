@@ -19,7 +19,14 @@ import { CapacityPanel } from './CapacityPanel';
  * - Handle responsive grid layout
  * - Provide demo data
  */
-export function DashboardView() {
+export interface DashboardViewProps {
+    onViewSystemLog?: () => void;
+    onViewDiagnostic?: () => void;
+    onViewProfile?: () => void;
+    onViewMissions?: () => void;
+}
+
+export function DashboardView({ onViewSystemLog, onViewDiagnostic, onViewProfile, onViewMissions }: DashboardViewProps) {
     // State
     const [isPenaltyActive, setIsPenaltyActive] = useState(false);
     const [isPromotionActive, setIsPromotionActive] = useState(false);
@@ -127,7 +134,10 @@ export function DashboardView() {
 
                 {/* Right Column */}
                 <div className="space-y-4">
-                    <SystemLogPanel entries={mockLogs} />
+                    <SystemLogPanel
+                        entries={mockLogs}
+                        onViewFullLog={onViewSystemLog}
+                    />
 
                     <CapacityPanel
                         activeQuests={3}
@@ -147,30 +157,59 @@ export function DashboardView() {
                     </span>
                     <span>LATENCY: 12ms</span>
 
-                    {/* Dev Trigger for Penalty Zone */}
-                    <button
-                        onClick={() => setIsPenaltyActive(true)}
-                        className="ml-4 px-2 py-1 bg-red-900/30 text-red-500 border border-red-900 rounded hover:bg-red-900/50 transition-colors"
-                    >
-                        [DEV] TRIGGER PENALTY SYSTEM
-                    </button>
-                    <button
-                        onClick={() => setIsPromotionActive(true)}
-                        className="ml-2 px-2 py-1 bg-blue-900/30 text-blue-500 border border-blue-900 rounded hover:bg-blue-900/50 transition-colors"
-                    >
-                        [DEV] TRIGGER PROMOTION
-                    </button>
-                    <button
-                        onClick={() => setIsInterruptionActive(true)}
-                        className="ml-2 px-2 py-1 bg-cyan-900/30 text-cyan-500 border border-cyan-900 rounded hover:bg-cyan-900/50 transition-colors"
-                    >
-                        [DEV] TRIGGER INTERRUPTION
-                    </button>
+                    {/* Dev Triggers */}
+                    <div className="flex gap-2 ml-4 flex-wrap">
+                        <button
+                            onClick={() => setIsPenaltyActive(true)}
+                            className="px-2 py-1 bg-red-900/30 text-red-500 border border-red-900 rounded hover:bg-red-900/50 transition-colors"
+                        >
+                            [DEV] PENALTY
+                        </button>
+                        <button
+                            onClick={() => setIsPromotionActive(true)}
+                            className="px-2 py-1 bg-blue-900/30 text-blue-500 border border-blue-900 rounded hover:bg-blue-900/50 transition-colors"
+                        >
+                            [DEV] PROMOTION
+                        </button>
+                        <button
+                            onClick={() => setIsInterruptionActive(true)}
+                            className="px-2 py-1 bg-cyan-900/30 text-cyan-500 border border-cyan-900 rounded hover:bg-cyan-900/50 transition-colors"
+                        >
+                            [DEV] INTERRUPT
+                        </button>
+                        <button
+                            onClick={onViewSystemLog}
+                            className="px-2 py-1 bg-gray-800 text-gray-400 border border-gray-600 rounded hover:bg-gray-700 transition-colors"
+                        >
+                            [DEV] LOG
+                        </button>
+                        <button
+                            onClick={onViewDiagnostic}
+                            className="px-2 py-1 bg-green-900/30 text-green-500 border border-green-900 rounded hover:bg-green-900/50 transition-colors"
+                        >
+                            [DEV] DIAGNOSTIC
+                        </button>
+                        <button
+                            onClick={onViewProfile}
+                            className="px-2 py-1 bg-purple-900/30 text-purple-500 border border-purple-900 rounded hover:bg-purple-900/50 transition-colors"
+                        >
+                            [DEV] PROFILE
+                        </button>
+                        <button
+                            onClick={() => {
+                                console.log('Dashboard: Missions button clicked');
+                                if (onViewMissions) onViewMissions();
+                            }}
+                            className="px-2 py-1 bg-cyan-900/30 text-cyan-500 border border-cyan-900 rounded hover:bg-cyan-900/50 transition-colors"
+                        >
+                            [DEV] MISSIONS
+                        </button>
+                    </div>
                 </div>
                 <span>SYSTEM ARCHITECT // ADMIN ACCESS: RESTRICTED</span>
             </div>
 
-            {/* Penalty Zone Popup */}
+            {/* Popups */}
             <PenaltyPopup
                 isOpen={isPenaltyActive}
                 onClose={() => setIsPenaltyActive(false)}
