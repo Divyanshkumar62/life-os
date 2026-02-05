@@ -27,13 +27,17 @@ public class PlayerIdentity {
     @Column(name = "system_version")
     private String systemVersion;
 
+    @Column(name = "onboarding_completed")
+    private boolean onboardingCompleted = false;
+
     public PlayerIdentity() {}
 
-    public PlayerIdentity(UUID playerId, String username, LocalDateTime createdAt, String systemVersion) {
+    public PlayerIdentity(UUID playerId, String username, LocalDateTime createdAt, String systemVersion, boolean onboardingCompleted) {
         this.playerId = playerId;
         this.username = username;
         this.createdAt = createdAt;
         this.systemVersion = systemVersion;
+        this.onboardingCompleted = onboardingCompleted;
     }
 
     @PrePersist
@@ -48,12 +52,14 @@ public class PlayerIdentity {
     public String getUsername() { return username; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public String getSystemVersion() { return systemVersion; }
+    public boolean isOnboardingCompleted() { return onboardingCompleted; }
 
     // Setters
     public void setPlayerId(UUID playerId) { this.playerId = playerId; }
     public void setUsername(String username) { this.username = username; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public void setSystemVersion(String systemVersion) { this.systemVersion = systemVersion; }
+    public void setOnboardingCompleted(boolean onboardingCompleted) { this.onboardingCompleted = onboardingCompleted; }
 
     // Builder
     public static PlayerIdentityBuilder builder() {
@@ -70,9 +76,12 @@ public class PlayerIdentity {
         public PlayerIdentityBuilder username(String username) { this.username = username; return this; }
         public PlayerIdentityBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public PlayerIdentityBuilder systemVersion(String systemVersion) { this.systemVersion = systemVersion; return this; }
+        public PlayerIdentityBuilder onboardingCompleted(boolean onboardingCompleted) { this.onboardingCompleted = onboardingCompleted; return this; }
+
+        private boolean onboardingCompleted;
 
         public PlayerIdentity build() {
-            return new PlayerIdentity(playerId, username, createdAt, systemVersion);
+            return new PlayerIdentity(playerId, username, createdAt, systemVersion, onboardingCompleted);
         }
     }
 }

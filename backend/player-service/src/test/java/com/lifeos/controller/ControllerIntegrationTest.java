@@ -7,6 +7,8 @@ import com.lifeos.quest.dto.QuestRequest;
 import com.lifeos.quest.service.QuestLifecycleService;
 import com.lifeos.progression.service.ProgressionService;
 import com.lifeos.penalty.service.PenaltyService;
+import com.lifeos.player.repository.PlayerIdentityRepository;
+import com.lifeos.progression.repository.UserBossKeyRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +47,12 @@ public class ControllerIntegrationTest {
 
     @MockBean
     private PenaltyService penaltyService;
+
+    @MockBean
+    private PlayerIdentityRepository playerIdentityRepository;
+
+    @MockBean
+    private UserBossKeyRepository bossKeyRepository;
 
     @Test
     void testQuestAssignment() throws Exception {
