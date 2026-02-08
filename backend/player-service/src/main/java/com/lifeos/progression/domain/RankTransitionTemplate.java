@@ -9,6 +9,9 @@ import java.util.Map;
 
 public enum RankTransitionTemplate {
 
+    F_TO_E(PlayerRank.F, PlayerRank.E, 1, 
+           Map.of()),
+
     E_TO_D(PlayerRank.E, PlayerRank.D, 1, 
            Map.of(AttributeType.STR, 5.0, AttributeType.INT, 5.0)),
            
