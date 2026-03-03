@@ -30,16 +30,28 @@ public class ShopItem {
     private long cost;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private ShopCategory category;
 
+    @Column(name = "stock_limit")
+    private Integer stockLimit; // Nullable - null means unlimited
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rank_requirement", columnDefinition = "VARCHAR(255)")
+    private com.lifeos.player.domain.enums.PlayerRank rankRequirement;
+
+    @Column(name = "purchase_cooldown_hours")
+    private Integer purchaseCooldownHours;
+
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
     private Map<String, Object> effectPayload;
+
+    @Column(name = "image_url")
+    private String imageUrl;
     
     public ShopItem() {}
 
-    public ShopItem(UUID itemId, String code, String name, String description, long cost, ShopCategory category, Map<String, Object> effectPayload) {
+    public ShopItem(UUID itemId, String code, String name, String description, long cost, ShopCategory category, Map<String, Object> effectPayload, String imageUrl) {
         this.itemId = itemId;
         this.code = code;
         this.name = name;
@@ -47,6 +59,7 @@ public class ShopItem {
         this.cost = cost;
         this.category = category;
         this.effectPayload = effectPayload;
+        this.imageUrl = imageUrl;
     }
 
     // Getters and Setters
@@ -62,8 +75,16 @@ public class ShopItem {
     public void setCost(long cost) { this.cost = cost; }
     public ShopCategory getCategory() { return category; }
     public void setCategory(ShopCategory category) { this.category = category; }
+    public Integer getStockLimit() { return stockLimit; }
+    public void setStockLimit(Integer stockLimit) { this.stockLimit = stockLimit; }
+    public com.lifeos.player.domain.enums.PlayerRank getRankRequirement() { return rankRequirement; }
+    public void setRankRequirement(com.lifeos.player.domain.enums.PlayerRank rankRequirement) { this.rankRequirement = rankRequirement; }
+    public Integer getPurchaseCooldownHours() { return purchaseCooldownHours; }
+    public void setPurchaseCooldownHours(Integer purchaseCooldownHours) { this.purchaseCooldownHours = purchaseCooldownHours; }
     public Map<String, Object> getEffectPayload() { return effectPayload; }
     public void setEffectPayload(Map<String, Object> effectPayload) { this.effectPayload = effectPayload; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     public static ShopItemBuilder builder() {
         return new ShopItemBuilder();
@@ -76,7 +97,11 @@ public class ShopItem {
         private String description;
         private long cost;
         private ShopCategory category;
+        private Integer stockLimit;
+        private com.lifeos.player.domain.enums.PlayerRank rankRequirement;
+        private Integer purchaseCooldownHours;
         private Map<String, Object> effectPayload;
+        private String imageUrl;
 
         public ShopItemBuilder itemId(UUID itemId) { this.itemId = itemId; return this; }
         public ShopItemBuilder code(String code) { this.code = code; return this; }
@@ -84,10 +109,18 @@ public class ShopItem {
         public ShopItemBuilder description(String description) { this.description = description; return this; }
         public ShopItemBuilder cost(long cost) { this.cost = cost; return this; }
         public ShopItemBuilder category(ShopCategory category) { this.category = category; return this; }
+        public ShopItemBuilder stockLimit(Integer stockLimit) { this.stockLimit = stockLimit; return this; }
+        public ShopItemBuilder rankRequirement(com.lifeos.player.domain.enums.PlayerRank rankRequirement) { this.rankRequirement = rankRequirement; return this; }
+        public ShopItemBuilder purchaseCooldownHours(Integer purchaseCooldownHours) { this.purchaseCooldownHours = purchaseCooldownHours; return this; }
         public ShopItemBuilder effectPayload(Map<String, Object> effectPayload) { this.effectPayload = effectPayload; return this; }
+        public ShopItemBuilder imageUrl(String imageUrl) { this.imageUrl = imageUrl; return this; }
 
         public ShopItem build() {
-            return new ShopItem(itemId, code, name, description, cost, category, effectPayload);
+            ShopItem item = new ShopItem(itemId, code, name, description, cost, category, effectPayload, imageUrl);
+            item.setStockLimit(stockLimit);
+            item.setRankRequirement(rankRequirement);
+            item.setPurchaseCooldownHours(purchaseCooldownHours);
+            return item;
         }
     }
 }

@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface PlayerEconomyRepository extends JpaRepository<PlayerEconomy, UUID> {
+    java.util.Optional<PlayerEconomy> findByPlayerPlayerId(UUID playerId);
 }

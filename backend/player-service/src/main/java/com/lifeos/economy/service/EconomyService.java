@@ -11,11 +11,16 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class EconomyService {
 
     private final PlayerEconomyRepository economyRepository;
     private final com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository;
+
+    public EconomyService(PlayerEconomyRepository economyRepository, 
+                        com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository) {
+        this.economyRepository = economyRepository;
+        this.playerIdentityRepository = playerIdentityRepository;
+    }
 
     @Transactional
     public void addGold(UUID playerId, long amount, String source) {

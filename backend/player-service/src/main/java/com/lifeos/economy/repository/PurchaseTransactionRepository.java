@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface PurchaseTransactionRepository extends JpaRepository<PurchaseTransaction, UUID> {
+    long countByPlayerIdAndItemId(UUID playerId, UUID itemId);
 }
