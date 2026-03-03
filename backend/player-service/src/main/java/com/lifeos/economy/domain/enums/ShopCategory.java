@@ -3,5 +3,7 @@ package com.lifeos.economy.domain.enums;
 public enum ShopCategory {
     CONSUMABLE,
     COSMETIC,
-    UPGRADE
+    UPGRADE,
+    KEY,
+    EQUIPMENT
 }
