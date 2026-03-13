@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.lifeos.project.domain.enums.ProjectStability;
 
 @Entity
 @Table(name = "project")
@@ -28,14 +29,14 @@ public class Project {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private PlayerRank rankRequirement;
 
     @Column(nullable = false)
     private int difficultyTier; // 1-5, cosmetic for V1
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private ProjectStatus status;
 
     @Column(nullable = false)
@@ -55,10 +56,20 @@ public class Project {
 
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
+
+    @Column(name = "last_activity_at")
+    private LocalDateTime lastActivityAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "stability_status", columnDefinition = "VARCHAR(255)")
+    private ProjectStability stabilityStatus = ProjectStability.STABLE;
+
+    @Column(name = "final_xp_multiplier")
+    private double finalXpMultiplier = 1.0;
     
     public Project() {}
 
-    public Project(UUID projectId, PlayerIdentity player, String title, String description, PlayerRank rankRequirement, int difficultyTier, ProjectStatus status, int minSubtasks, int durationDays, LocalDateTime startDate, LocalDateTime hardDeadline, int bossKeyReward, LocalDateTime createdAt, LocalDateTime completedAt) {
+    public Project(UUID projectId, PlayerIdentity player, String title, String description, PlayerRank rankRequirement, int difficultyTier, ProjectStatus status, int minSubtasks, int durationDays, LocalDateTime startDate, LocalDateTime hardDeadline, int bossKeyReward, LocalDateTime createdAt, LocalDateTime completedAt, LocalDateTime lastActivityAt, ProjectStability stabilityStatus, double finalXpMultiplier) {
         this.projectId = projectId;
         this.player = player;
         this.title = title;
@@ -73,6 +84,9 @@ public class Project {
         this.bossKeyReward = bossKeyReward;
         this.createdAt = createdAt;
         this.completedAt = completedAt;
+        this.lastActivityAt = lastActivityAt;
+        this.stabilityStatus = stabilityStatus;
+        this.finalXpMultiplier = finalXpMultiplier;
     }
 
     @PrePersist
@@ -80,6 +94,8 @@ public class Project {
         if (createdAt == null) createdAt = LocalDateTime.now();
         if (status == null) status = ProjectStatus.ACTIVE;
         if (startDate == null) startDate = LocalDateTime.now();
+        if (lastActivityAt == null) lastActivityAt = LocalDateTime.now();
+        if (stabilityStatus == null) stabilityStatus = ProjectStability.STABLE;
     }
     
     // Getters and Setters
@@ -111,6 +127,12 @@ public class Project {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
     public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+    public LocalDateTime getLastActivityAt() { return lastActivityAt; }
+    public void setLastActivityAt(LocalDateTime lastActivityAt) { this.lastActivityAt = lastActivityAt; }
+    public ProjectStability getStabilityStatus() { return stabilityStatus; }
+    public void setStabilityStatus(ProjectStability stabilityStatus) { this.stabilityStatus = stabilityStatus; }
+    public double getFinalXpMultiplier() { return finalXpMultiplier; }
+    public void setFinalXpMultiplier(double finalXpMultiplier) { this.finalXpMultiplier = finalXpMultiplier; }
 
     public static ProjectBuilder builder() {
         return new ProjectBuilder();
@@ -131,6 +153,9 @@ public class Project {
         private int bossKeyReward = 1;
         private LocalDateTime createdAt;
         private LocalDateTime completedAt;
+        private LocalDateTime lastActivityAt;
+        private ProjectStability stabilityStatus;
+        private double finalXpMultiplier = 1.0;
 
         public ProjectBuilder projectId(UUID projectId) { this.projectId = projectId; return this; }
         public ProjectBuilder player(PlayerIdentity player) { this.player = player; return this; }
@@ -146,9 +171,12 @@ public class Project {
         public ProjectBuilder bossKeyReward(int bossKeyReward) { this.bossKeyReward = bossKeyReward; return this; }
         public ProjectBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ProjectBuilder completedAt(LocalDateTime completedAt) { this.completedAt = completedAt; return this; }
+        public ProjectBuilder lastActivityAt(LocalDateTime lastActivityAt) { this.lastActivityAt = lastActivityAt; return this; }
+        public ProjectBuilder stabilityStatus(ProjectStability stabilityStatus) { this.stabilityStatus = stabilityStatus; return this; }
+        public ProjectBuilder finalXpMultiplier(double finalXpMultiplier) { this.finalXpMultiplier = finalXpMultiplier; return this; }
 
         public Project build() {
-            return new Project(projectId, player, title, description, rankRequirement, difficultyTier, status, minSubtasks, durationDays, startDate, hardDeadline, bossKeyReward, createdAt, completedAt);
+            return new Project(projectId, player, title, description, rankRequirement, difficultyTier, status, minSubtasks, durationDays, startDate, hardDeadline, bossKeyReward, createdAt, completedAt, lastActivityAt, stabilityStatus, finalXpMultiplier);
         }
     }
 }

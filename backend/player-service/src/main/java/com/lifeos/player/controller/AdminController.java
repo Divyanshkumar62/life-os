@@ -8,8 +8,8 @@ import com.lifeos.progression.domain.UserBossKey;
 import com.lifeos.progression.repository.UserBossKeyRepository;
 import com.lifeos.player.domain.PlayerIdentity;
 import com.lifeos.player.repository.PlayerIdentityRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,14 +17,29 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin")
-@RequiredArgsConstructor
-@Slf4j
 public class AdminController {
+
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     private final PlayerStateService playerStateService;
     private final PenaltyService penaltyService;
     private final UserBossKeyRepository bossKeyRepository;
     private final PlayerIdentityRepository playerIdentityRepository;
+
+    public AdminController(PlayerStateService playerStateService, PenaltyService penaltyService, 
+                          UserBossKeyRepository bossKeyRepository, PlayerIdentityRepository playerIdentityRepository) {
+        this.playerStateService = playerStateService;
+        this.penaltyService = penaltyService;
+        this.bossKeyRepository = bossKeyRepository;
+        this.playerIdentityRepository = playerIdentityRepository;
+    }
+
+    @PostMapping("/players/{playerId}/level")
+    public ResponseEntity<Void> setLevel(@PathVariable UUID playerId, @RequestParam int level) {
+        log.info("Admin: Setting level to {} for player: {}", level, playerId);
+        playerStateService.setLevel(playerId, level);
+        return ResponseEntity.ok().build();
+    }
 
     @PostMapping("/players/{playerId}/add-xp")
     public ResponseEntity<Void> addXp(@PathVariable UUID playerId, @RequestParam long amount) {

@@ -3,41 +3,49 @@ package com.lifeos.onboarding.service;
 import com.lifeos.onboarding.domain.OnboardingProgress;
 import com.lifeos.onboarding.domain.OnboardingStage;
 import com.lifeos.onboarding.domain.PlayerProfile;
-import com.lifeos.onboarding.dto.CalibrationRequest;
 import com.lifeos.onboarding.dto.OnboardingResponse;
 import com.lifeos.onboarding.dto.QuestionnaireRequest;
 import com.lifeos.onboarding.repository.OnboardingProgressRepository;
 import com.lifeos.onboarding.repository.PlayerProfileRepository;
 import com.lifeos.player.domain.PlayerIdentity;
+import com.lifeos.player.domain.PlayerProgression;
 import com.lifeos.player.domain.enums.AttributeType;
 import com.lifeos.player.repository.PlayerIdentityRepository;
 import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.domain.enums.QuestState;
+import com.lifeos.quest.domain.enums.QuestType;
 import com.lifeos.quest.dto.QuestRequest;
 import com.lifeos.quest.repository.QuestRepository;
+import com.lifeos.quest.service.QuestFallbackService;
 import com.lifeos.quest.service.QuestLifecycleService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class OnboardingService {
+
+    private static final Logger log = LoggerFactory.getLogger(OnboardingService.class);
 
     private final PlayerStateService playerStateService;
     private final OnboardingProgressRepository onboardingRepository;
     private final PlayerProfileRepository profileRepository;
     private final PlayerIdentityRepository identityRepository;
+    private final com.lifeos.player.repository.PlayerProgressionRepository progressionRepository;
     private final QuestLifecycleService questService;
     private final QuestRepository questRepository;
     private final TrialQuestGenerator trialQuestGenerator;
+    private final QuestFallbackService questFallbackService;
+    private final com.lifeos.ai.service.AIQuestService aiQuestService;
+    private final IntelQuestGenerator intelQuestGenerator;
 
     @Transactional
     public OnboardingResponse startOnboarding(String username) {
@@ -49,15 +57,10 @@ public class OnboardingService {
         PlayerIdentity player = identityRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalStateException("Player created but not found"));
 
-        // 2. Generate Trial Quest
-        QuestRequest trialReq = trialQuestGenerator.generateTrialQuest(playerId);
-        Quest quest = questService.assignQuest(trialReq);
-
-        // 3. Create Onboarding Progress
+        // 2. Create Onboarding Progress (Start at QUESTIONNAIRE/AWAKENING)
         OnboardingProgress progress = OnboardingProgress.builder()
                 .player(player)
-                .currentStage(OnboardingStage.TRIAL_QUEST)
-                .trialQuestId(quest.getQuestId())
+                .currentStage(OnboardingStage.QUESTIONNAIRE)
                 .trialCompleted(false)
                 .build();
         
@@ -65,123 +68,207 @@ public class OnboardingService {
 
         return OnboardingResponse.builder()
                 .playerId(playerId)
-                .currentStage(OnboardingStage.TRIAL_QUEST)
-                .trialQuest(quest)
-                .message("System Qualification Initiated. Complete the Trial Quest to unlock full access.")
+                .currentStage(OnboardingStage.QUESTIONNAIRE)
+                .message("System Evaluation Initiated.")
                 .build();
     }
 
     @Transactional
-    public OnboardingResponse completeTrialQuest(UUID playerId) {
-        OnboardingProgress progress = getProgress_OrThrow(playerId);
+    public OnboardingResponse submitAwakening(UUID playerId, QuestionnaireRequest request) {
+        log.info("=== ONBOARDING START === Processing Awakening for player: {} with archetype: {}", playerId, request.getArchetype());
         
-        if (progress.getCurrentStage() != OnboardingStage.TRIAL_QUEST) {
-            return buildResponse(progress, "Trial already completed or skipped.");
+        try {
+            OnboardingProgress progress = getProgress_OrThrow(playerId);
+            log.debug("Found onboarding progress: current stage = {}", progress.getCurrentStage());
+        } catch (Exception e) {
+            log.error("!!! ERROR: Could not find onboarding progress for player: {}", playerId, e);
+            throw new RuntimeException("Onboarding progress not found", e);
         }
-
-        Quest trialQuest = questRepository.findById(progress.getTrialQuestId())
-                .orElseThrow(() -> new IllegalArgumentException("Trial quest not found"));
-
-        if (trialQuest.getState() != QuestState.COMPLETED) {
-            throw new IllegalStateException("Trial quest is not completed yet. You must complete the quest actions first.");
-        }
-
-        progress.setTrialCompleted(true);
-        progress.setCurrentStage(OnboardingStage.QUESTIONNAIRE);
-        onboardingRepository.save(progress);
-
-        return buildResponse(progress, "Trial Passed. Proceed to Player Profiling.");
-    }
-
-    @Transactional
-    public OnboardingResponse submitQuestionnaire(UUID playerId, QuestionnaireRequest request) {
+        
         OnboardingProgress progress = getProgress_OrThrow(playerId);
         
         if (progress.getCurrentStage() != OnboardingStage.QUESTIONNAIRE) {
-            throw new IllegalStateException("Invalid stage for questionnaire submission.");
+            log.warn("Invalid stage for Awakening: {}", progress.getCurrentStage());
         }
 
-        // Save Profile
-        PlayerProfile profile = PlayerProfile.builder()
-                .playerId(playerId)
-                .ageRange(request.getAgeRange())
-                .primaryRole(request.getPrimaryRole())
-                .workSchedule(request.getWorkSchedule())
-                .livingSituation(request.getLivingSituation())
-                .focusAreas(request.getFocusAreas())
-                .sixMonthGoal(request.getSixMonthGoal())
-                .biggestChallenge(request.getBiggestChallenge())
-                .weaknesses(request.getWeaknesses())
-                .pastFailures(request.getPastFailures())
-                .quitReasons(request.getQuitReasons())
-                .availableTime(request.getAvailableTime())
-                .preferredQuestTypes(request.getPreferredQuestTypes())
-                .difficultyPreference(request.getDifficultyPreference())
-                .build();
-        
-        profileRepository.save(profile);
-
-        // Update Progress
-        // Store raw data in progress just in case, or verify mapping
-        // progress.setQuestionnaireData(map(request)); // Optional if we store JSON
-        progress.setCurrentStage(OnboardingStage.CALIBRATION);
-        onboardingRepository.save(progress);
-
-        return buildResponse(progress, "Profile Saved. Proceed to Attribute Calibration.");
-    }
-
-    @Transactional
-    public OnboardingResponse calibrateAttributes(UUID playerId, CalibrationRequest request) {
-        OnboardingProgress progress = getProgress_OrThrow(playerId);
-        
-        if (progress.getCurrentStage() != OnboardingStage.CALIBRATION) {
-            throw new IllegalStateException("Invalid stage for calibration.");
+        // 1. Save Awakening Profile with all 7 questionnaire fields
+        log.info("Step 1: Saving player profile...");
+        try {
+            PlayerProfile profile = PlayerProfile.builder()
+                    .playerId(playerId)
+                    .archetype(request.getArchetype())
+                    .biggestChallenge(request.getBiggestChallenge())
+                    .sixMonthGoal(request.getMainGoal())
+                    .wakeUpTime(request.getWakeUpTime())
+                    .availableTime(request.getAvailableTime())
+                    .focusAreas(request.getFocusArea() != null ? List.of(request.getFocusArea()) : List.of())
+                    .build();
+            
+            log.debug("Profile built: archetype={}, goal={}, challenge={}", request.getArchetype(), request.getMainGoal(), request.getBiggestChallenge());
+            profileRepository.save(profile);
+            log.info("Step 1: Profile saved successfully");
+        } catch (Exception e) {
+            log.error("!!! ERROR in Step 1 - Profile save failed: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save profile", e);
         }
 
-        // Logic: self-rating 1-10 -> Base Value
-        // 1-3 -> 5.0, 4-6 -> 10.0, 7-10 -> 15.0
-        request.getAttributeRatings().forEach((attrName, rating) -> {
-            try {
-                AttributeType type = AttributeType.valueOf(attrName.toUpperCase());
-                double baseValue = calculateBaseValue(rating);
-                
-                // We need a way to SET base value, but PlayerStateService only has updateAttribute (delta)
-                // Assuming newly created player has 10.0 (or 0.0 for some).
-                // Should we calculate delta?
-                // Let's assume initializePlayer sets them to 10.0 (default).
-                // Or we can add setAttributeBaseValue to PlayerStateService?
-                // For now, I'll use updateAttribute with delta.
-                // Assuming default is 10.0.
-                // If I want 15.0, I add 5.0. 
-                // However, I don't know current value easily without fetching state.
-                // Better approach: Just add some bonus based on rating, on top of default.
-                // 1-3: -5.0 (weakness), 4-6: 0 (average), 7-10: +5.0 (strength)
-                
-                double delta = calculateCalibrationDelta(rating);
-                if (delta != 0) {
-                    playerStateService.updateAttribute(playerId, type, delta);
+        // 2. Auto-Calibrate Stats based on Archetype
+        log.info("Step 2: Calibrating stats...");
+        try {
+            calibrateStats(playerId, request.getArchetype());
+            log.info("Step 2: Stats calibrated");
+        } catch (Exception e) {
+            log.error("!!! ERROR in Step 2 - Stats calibration failed: {}", e.getMessage(), e);
+        }
+        
+        // 3. Set Rank E and Class (if any implied, or generic)
+        log.info("Step 3: Initializing progression...");
+        try {
+            initializeProgression(playerId);
+            log.info("Step 3: Progression initialized");
+        } catch (Exception e) {
+            log.error("!!! ERROR in Step 3 - Progression init failed: {}", e.getMessage(), e);
+        }
+
+        // 4. Generate 3 Core Quests using Gemini AI based on player's context
+        // All core quests MUST have 24-hour deadline
+        log.info("Step 4: Generating 3 core quests via Gemini AI...");
+        List<QuestRequest> coreQuests;
+        
+        try {
+            log.info("Calling AI to generate 3 personalized core quests for player: {}", playerId);
+            coreQuests = aiQuestService.generateQuests(playerId, 3);
+            
+            // Ensure all have 24hr deadline
+            for (QuestRequest q : coreQuests) {
+                if (q.getDeadlineAt() == null || q.getDeadlineAt().isAfter(LocalDateTime.now().plusHours(24))) {
+                    q.setDeadlineAt(LocalDateTime.now().plusHours(24));
                 }
-                
-            } catch (IllegalArgumentException e) {
-                log.warn("Invalid attribute type in calibration: {}", attrName);
             }
-        });
-
-        // Finalize
-        progress.setCurrentStage(OnboardingStage.COMPLETED);
-        progress.setCompletedAt(LocalDateTime.now());
-        onboardingRepository.save(progress);
-
-        // Update Identity Flag
-        PlayerIdentity identity = progress.getPlayer();
-        identity.setOnboardingCompleted(true);
-        identityRepository.save(identity);
+            
+            log.info("AI generated {} core quests with 24hr deadline", coreQuests.size());
+        } catch (Exception e) {
+            log.error("!!! ERROR in Step 4 - AI quest generation failed: {}. This should not happen!", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate AI quests - player cannot proceed without AI-generated quests", e);
+        }
         
-        // Trigger AI Quest Generation (Async/Event preferrably)
-        // For Phase 0.1, we just mark complete.
+        log.info("Final core quests to assign: {}", coreQuests.size());
         
-        return buildResponse(progress, "Onboarding Completed. Welcome to the System.");
+        for (QuestRequest coreQuest : coreQuests) {
+            try {
+                log.debug("Assigning core quest: {}", coreQuest.getTitle());
+                questService.assignQuest(coreQuest);
+                log.info("Assigned core quest: {}", coreQuest.getTitle());
+            } catch (Exception e) {
+                log.error("!!! ERROR assigning core quest '{}': {}", coreQuest.getTitle(), e.getMessage(), e);
+            }
+        }
+
+        // 5. Generate Intel Quests with Adaptive Volume Logic
+        // Intel quests: 24hr deadline, NO penalty on fail (only blocks dungeon)
+        log.info("Step 5: Generating Intel quests (24hr deadline, no penalty on fail)...");
+        int intelQuestCount;
+        try {
+            intelQuestCount = calculateIntelQuestCount(playerId);
+            log.info("Intel quest count calculated: {}", intelQuestCount);
+        } catch (Exception e) {
+            log.error("!!! ERROR calculating Intel quest count: {}", e.getMessage(), e);
+            intelQuestCount = 2;
+        }
+        
+        // Always generate at least 1 Intel Quest for new players (Physical Analysis)
+        try {
+            log.debug("Generating Intel Quest 1: Physical Analysis (24hr deadline)");
+            QuestRequest intelQuest1 = intelQuestGenerator.generateFirstIntelQuest(playerId);
+            intelQuest1.setDeadlineAt(LocalDateTime.now().plusHours(24)); // 24hr deadline
+            questService.assignQuest(intelQuest1);
+            log.info("Assigned Intel Quest 1: {}", intelQuest1.getTitle());
+        } catch (Exception e) {
+            log.error("!!! ERROR assigning Intel Quest 1: {}", e.getMessage(), e);
+        }
+        
+        // Generate additional Intel Quests based on adaptive volume
+        if (intelQuestCount >= 2) {
+            log.info("Step 5b: Generating Intel Quest 2 (24hr deadline)...");
+            try {
+                QuestRequest intelQuest2 = intelQuestGenerator.generateMentalAnalysisQuest(playerId);
+                if (intelQuest2 != null) {
+                    intelQuest2.setDeadlineAt(LocalDateTime.now().plusHours(24)); // 24hr deadline
+                    questService.assignQuest(intelQuest2);
+                    log.info("Assigned Intel Quest 2: {}", intelQuest2.getTitle());
+                }
+            } catch (Exception e) {
+                log.error("!!! ERROR assigning Intel Quest 2: {}", e.getMessage(), e);
+            }
+        } else {
+            log.info("Step 5b: Skipping Intel Quest 2 (count = {})", intelQuestCount);
+        }
+
+        // 6. Keep player in TRIAL_QUEST state until all quests are completed
+        log.info("Step 6: Saving onboarding progress...");
+        try {
+            progress.setCurrentStage(OnboardingStage.TRIAL_QUEST);
+            progress.setTrialCompleted(false);
+            onboardingRepository.save(progress);
+            log.info("Onboarding progress saved: TRIAL_QUEST");
+        } catch (Exception e) {
+            log.error("!!! ERROR saving onboarding progress: {}", e.getMessage(), e);
+        }
+        
+        // Keep onboardingCompleted = false - player cannot access full system yet
+        log.info("Step 7: Saving player identity...");
+        try {
+            PlayerIdentity identity = progress.getPlayer();
+            identity.setOnboardingCompleted(false);
+            identityRepository.save(identity);
+            log.info("Player identity saved: onboardingCompleted = false");
+        } catch (Exception e) {
+            log.error("!!! ERROR saving player identity: {}", e.getMessage(), e);
+        }
+        
+        log.info("=== ONBOARDING COMPLETE === Returning response for player: {}", playerId);
+        
+        return buildResponse(progress, "Awakening Initiated. Complete all assigned quests to unlock the System.");
     }
+
+    private void calibrateStats(UUID playerId, String archetype) {
+        // Reset to base 0 (or assume initializePlayer set them to 10? We'll use updateAttribute relative to base or set absolute if possible)
+        // Since we don't have setAttribute, we'll assume base is near 0 or 10. 
+        // Better strategy: Calculate deltas from "Flat 10" baseline.
+        // Let's assume initializePlayer gives 10 to all.
+        
+        int intMod = 0, senMod = 0, strMod = 0, vitMod = 0, agiMod = 0;
+
+        switch (archetype != null ? archetype.toUpperCase() : "BALANCE") {
+            case "BRAINS":
+                intMod = +2; senMod = +2; strMod = -2; vitMod = -2;
+                break;
+            case "BRAWN":
+                strMod = +2; vitMod = +2; intMod = -2; senMod = -2;
+                break;
+            case "BALANCE":
+            default:
+                // Flat 10
+                break;
+        }
+
+        if (intMod != 0) playerStateService.updateAttribute(playerId, AttributeType.INTELLIGENCE, intMod);
+        if (senMod != 0) playerStateService.updateAttribute(playerId, AttributeType.SENSE, senMod);
+        if (strMod != 0) playerStateService.updateAttribute(playerId, AttributeType.STRENGTH, strMod);
+        if (vitMod != 0) playerStateService.updateAttribute(playerId, AttributeType.VITALITY, vitMod);
+        // AGI stays 10
+    }
+
+    private void initializeProgression(UUID playerId) {
+        PlayerProgression progression = progressionRepository.findByPlayerPlayerId(playerId)
+                .orElseGet(() -> PlayerProgression.builder().player(identityRepository.getReferenceById(playerId)).level(1).build());
+        
+        progression.setRank(com.lifeos.player.domain.enums.PlayerRank.E);
+        progression.setHunterClass("None"); // Start as None, unlock later
+        progressionRepository.save(progression);
+    }
+
+    // Deprecated / Bridge methods for backward compatibility if needed, else removed.
     
     public OnboardingResponse getStatus(UUID playerId) {
         OnboardingProgress progress = getProgress_OrThrow(playerId);
@@ -201,15 +288,128 @@ public class OnboardingService {
                 .build();
     }
     
-    private double calculateBaseValue(int rating) {
-        if (rating <= 3) return 5.0;
-        if (rating <= 6) return 10.0;
-        return 15.0;
+    private List<QuestRequest> createFallbackOnboardingQuests(UUID playerId, QuestionnaireRequest request) {
+        String focusArea = request.getFocusArea() != null ? request.getFocusArea() : "General";
+        String weakness = request.getPrimaryWeakness() != null ? request.getPrimaryWeakness() : "Consistency";
+        String goal = request.getMainGoal() != null ? request.getMainGoal() : "Personal Growth";
+        
+        return List.of(
+            QuestRequest.builder()
+                .playerId(playerId)
+                .title("Foundation: Build Your Routine")
+                .description("Start building a consistent routine. Task: Complete a 30-minute focused session on your goal: " + goal)
+                .questType(QuestType.DISCIPLINE)
+                .difficultyTier(com.lifeos.quest.domain.enums.DifficultyTier.E)
+                .priority(com.lifeos.quest.domain.enums.Priority.HIGH)
+                .deadlineAt(LocalDateTime.now().plusHours(24))
+                .successXp(50)
+                .goldReward(50)
+                .systemMutable(false)
+                .primaryAttribute(AttributeType.DISCIPLINE)
+                .build(),
+            QuestRequest.builder()
+                .playerId(playerId)
+                .title("Challenge: Face Your Weakness")
+                .description("Address your struggle with: " + weakness + ". Complete a focused 45-minute session.")
+                .questType(QuestType.COGNITIVE)
+                .difficultyTier(com.lifeos.quest.domain.enums.DifficultyTier.E)
+                .priority(com.lifeos.quest.domain.enums.Priority.HIGH)
+                .deadlineAt(LocalDateTime.now().plusHours(24))
+                .successXp(75)
+                .goldReward(75)
+                .systemMutable(false)
+                .primaryAttribute(AttributeType.FOCUS)
+                .build(),
+            QuestRequest.builder()
+                .playerId(playerId)
+                .title("Growth: " + focusArea + " Development")
+                .description("Begin developing your " + focusArea + " abilities. Complete a 30-minute practice session.")
+                .questType(QuestType.PHYSICAL)
+                .difficultyTier(com.lifeos.quest.domain.enums.DifficultyTier.E)
+                .priority(com.lifeos.quest.domain.enums.Priority.NORMAL)
+                .deadlineAt(LocalDateTime.now().plusHours(24))
+                .successXp(50)
+                .goldReward(50)
+                .systemMutable(false)
+                .primaryAttribute(AttributeType.VITALITY)
+                .build()
+        );
     }
     
-    private double calculateCalibrationDelta(int rating) {
-        if (rating <= 3) return -5.0; // Weakness
-        if (rating <= 6) return 0.0;  // Average
-        return 5.0;  // Strength
+    /**
+     * PRD Adaptive Volume Logic:
+     * - If player_tenure < 7 days, always issue 2 Intel Quests
+     * - If failure_rate > 30% in last 3 days, issue 2 Intel Quests for "Diagnostic Calibration"
+     * - Else, issue 1 or 0 Intel Quests
+     */
+    private int calculateIntelQuestCount(UUID playerId) {
+        try {
+            PlayerIdentity identity = identityRepository.findById(playerId).orElse(null);
+            if (identity == null) {
+                return 2; // Default for new players
+            }
+            
+            // Check player tenure (days since creation)
+            long daysSinceCreation = java.time.Duration.between(identity.getCreatedAt(), java.time.LocalDateTime.now()).toDays();
+            log.debug("Player {} tenure: {} days", playerId, daysSinceCreation);
+            
+            if (daysSinceCreation < 7) {
+                log.info("Player {} is new (< 7 days), issuing 2 Intel Quests", playerId);
+                return 2;
+            }
+            
+            // Check failure rate in last 3 days
+            double failureRate = calculateFailureRate(playerId);
+            log.debug("Player {} failure rate: {}%", playerId, failureRate * 100);
+            
+            if (failureRate > 0.30) {
+                log.info("Player {} has high failure rate ({}%), issuing 2 Intel Quests for Diagnostic Calibration", 
+                    playerId, failureRate * 100);
+                return 2;
+            }
+            
+            // Default: 1 Intel Quest
+            return 1;
+            
+        } catch (Exception e) {
+            log.error("Error calculating Intel Quest count, defaulting to 2", e);
+            return 2;
+        }
+    }
+    
+    /**
+     * Calculate failure rate based on quest completions in the last 3 days
+     */
+    private double calculateFailureRate(UUID playerId) {
+        try {
+            LocalDateTime threeDaysAgo = LocalDateTime.now().minusDays(3);
+            
+            // Get all quests attempted in last 3 days
+            List<Quest> recentQuests = questRepository.findByPlayerPlayerId(playerId)
+                    .stream()
+                    .filter(q -> q.getAssignedAt() != null && q.getAssignedAt().isAfter(threeDaysAgo))
+                    .toList();
+            
+            if (recentQuests.isEmpty()) {
+                return 0.0; // No history, no failure
+            }
+            
+            long failed = recentQuests.stream()
+                    .filter(q -> q.getState() == com.lifeos.quest.domain.enums.QuestState.FAILED)
+                    .count();
+            
+            return (double) failed / recentQuests.size();
+            
+        } catch (Exception e) {
+            log.error("Error calculating failure rate", e);
+            return 0.0;
+        }
+    }
+     
+    // Legacy support methods (can delete if clean break)
+    @Transactional
+    public OnboardingResponse completeTrialQuest(UUID playerId) {
+        // Bypass or map to new flow
+        return getStatus(playerId);
     }
 }

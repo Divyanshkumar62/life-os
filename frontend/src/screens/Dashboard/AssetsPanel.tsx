@@ -1,11 +1,8 @@
 import { SystemPanel, SystemMetric, SystemButton } from '../../components/system';
 
-export interface AssetsPanelProps {
-    totalGold: number;
-    weeklyTrend: number;
-    dailyIncome: number;
-    shopStats: number;
-}
+import { useSystemContext } from '../../context/SystemContext';
+
+export interface AssetsPanelProps { }
 
 /**
  * AssetsPanel - Economy/assets display
@@ -16,12 +13,14 @@ export interface AssetsPanelProps {
  * - Show income metrics
  * - Provide shop access
  */
-export function AssetsPanel({
-    totalGold,
-    weeklyTrend,
-    dailyIncome,
-    shopStats,
-}: AssetsPanelProps) {
+export function AssetsPanel({ }: AssetsPanelProps) {
+    const { statusWindow } = useSystemContext();
+
+    const totalGold = statusWindow?.economy?.gold || 0;
+    const weeklyTrend = 0; // Not yet in backend schema
+    const dailyIncome = 0; // Not yet in backend schema
+    const shopStats = 0;   // Not yet in backend schema
+
     const trendDirection = weeklyTrend >= 0 ? 'up' : 'down';
 
     return (

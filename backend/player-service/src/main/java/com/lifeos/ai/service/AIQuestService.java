@@ -6,6 +6,8 @@ import java.util.UUID;
 
 public interface AIQuestService {
     List<QuestRequest> generateQuests(UUID playerId, int count);
+    QuestRequest generatePenaltyQuest(UUID playerId, UUID failedQuestId);
+    QuestRequest generatePromotionExam(UUID playerId, com.lifeos.player.domain.enums.PlayerRank fromRank, com.lifeos.player.domain.enums.PlayerRank toRank);
     
     // Future expansion:
     // String analyzePerformance(UUID playerId);

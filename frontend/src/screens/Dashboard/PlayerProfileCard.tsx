@@ -1,11 +1,8 @@
 import { SystemPanel, SystemBadge } from '../../components/system';
 
-export interface PlayerProfileCardProps {
-    avatarUrl: string;
-    rank: string;
-    title: string;
-    fatigue: number;
-}
+import { useSystemContext } from '../../context/SystemContext';
+
+export interface PlayerProfileCardProps { }
 
 /**
  * PlayerProfileCard - Player identity display
@@ -15,12 +12,14 @@ export interface PlayerProfileCardProps {
  * - Display rank and title
  * - Show fatigue meter
  */
-export function PlayerProfileCard({
-    avatarUrl,
-    rank,
-    title,
-    fatigue,
-}: PlayerProfileCardProps) {
+export function PlayerProfileCard({ }: PlayerProfileCardProps) {
+    const { statusWindow } = useSystemContext();
+
+    const avatarUrl = "https://i.pravatar.cc/150?img=12"; // Could be dynamically mapped later
+    const rank = statusWindow?.identity?.rank || 'E';
+    const title = statusWindow?.identity?.title || 'None';
+    const fatigue = 0; // Fatigue not in backend schema yet
+
     return (
         <SystemPanel glowColor="cyan" className="flex flex-col items-center">
             {/* Avatar */}
@@ -48,7 +47,7 @@ export function PlayerProfileCard({
 
             {/* Title */}
             <div className="mb-4">
-                <SystemBadge variant="cyan" glow>
+                <SystemBadge variant="info" glow>
                     {title}
                 </SystemBadge>
             </div>

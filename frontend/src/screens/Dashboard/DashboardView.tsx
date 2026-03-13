@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ScreenFrame } from '../../components/layout';
 import { PenaltyPopup } from '../../components/features/PenaltyZone/PenaltyPopup';
 import { PromotionPopup } from '../../components/features/Promotion/PromotionPopup';
@@ -10,6 +10,11 @@ import { AssetsPanel } from './AssetsPanel';
 import { DailyQuestsPanel } from './DailyQuestsPanel';
 import { SystemLogPanel } from './SystemLogPanel';
 import { CapacityPanel } from './CapacityPanel';
+import { QuestAPI, ProjectAPI } from '../../api/api';
+import { useSystemVoice } from '../../hooks/useSystemVoice';
+import { useSystemContext } from '../../context/SystemContext';
+import { clsx } from 'clsx';
+import { AlertTriangle, Flame } from 'lucide-react';
 
 /**
  * DashboardView - Main dashboard layout composition
@@ -17,115 +22,183 @@ import { CapacityPanel } from './CapacityPanel';
  * Responsibilities:
  * - Compose all dashboard panels
  * - Handle responsive grid layout
- * - Provide demo data
+ * - Fetch and display real player data
  */
 export interface DashboardViewProps {
+    playerId?: string | null;
     onViewSystemLog?: () => void;
     onViewDiagnostic?: () => void;
     onViewProfile?: () => void;
     onViewMissions?: () => void;
+    onViewStore?: () => void;
+    onViewInventory?: () => void;
+    onViewGate?: () => void;
 }
 
-export function DashboardView({ onViewSystemLog, onViewDiagnostic, onViewProfile, onViewMissions }: DashboardViewProps) {
+export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewInventory, onViewGate }: DashboardViewProps) {
     // State
     const [isPenaltyActive, setIsPenaltyActive] = useState(false);
     const [isPromotionActive, setIsPromotionActive] = useState(false);
     const [isInterruptionActive, setIsInterruptionActive] = useState(false);
 
-    // Mock Data
-    const mockQuests = [
-        {
-            id: '1',
-            title: 'Strength Training: Push-ups',
-            goal: 'GOAL: 100 REPS',
-            current: 45,
-            target: 100,
-            reward: '+4 STR',
-            completed: false,
-        },
-        {
-            id: '2',
-            title: 'Curl-ups',
-            goal: 'GOAL: 100',
-            current: 100,
-            target: 100,
-            reward: '+3 STR',
-            completed: false,
-        },
-        {
-            id: '3',
-            title: 'Squats',
-            goal: 'GOAL: 100',
-            current: 80,
-            target: 100,
-            reward: '+3 STR',
-            completed: false,
-        },
-        {
-            id: '4',
-            title: 'Running: 10km',
-            goal: 'QUEST COMPLETE',
-            current: 10,
-            target: 10,
-            reward: '+5 AGI',
-            completed: true,
-        },
-    ];
+    // Red Gate State
+    const [isRedGateActive, setIsRedGateActive] = useState(false);
+
+    // System Voice Polling
+    const { alerts, consumeAlert } = useSystemVoice(playerId);
+
+    // Consume Authoritative Global State
+    const { statusWindow, loading: _loading } = useSystemContext();
+
+    // Secondary Data State (Consider abstracting these later)
+    const [activeQuests, setActiveQuests] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (playerId) {
+            Promise.all([
+                ProjectAPI.fetchProjects(playerId),
+                QuestAPI.getActiveQuests(playerId).catch(() => []) // Requires an API method, mock handling for now
+            ]).then(([projects, quests]) => {
+                setActiveQuests(quests);
+
+                // Check for Broken Dungeons (Red Gate)
+                const hasBrokenDungeon = projects.some((p: any) => p.stabilityStatus === 'BROKEN');
+                setIsRedGateActive(hasBrokenDungeon);
+                if (hasBrokenDungeon) setIsInterruptionActive(true);
+            });
+        }
+    }, [playerId]);
+
+    // Sync Penalty/Promotion from global state
+    useEffect(() => {
+        if (statusWindow?.systemState) {
+            setIsPenaltyActive(!!statusWindow.systemState.penaltyActive);
+            // Promotion logic can be added here natively later
+        }
+    }, [statusWindow]);
+
+    // Parse System Voice into System Logs
+    const parsedAlerts = alerts.map(alert => ({
+        id: alert.eventId,
+        timestamp: new Date(alert.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: 'warning' as const, // Fallback, could map dynamically
+        message: alert.message
+    }));
 
     const mockLogs = [
-        { id: '1', timestamp: '10:45 AM', type: 'success' as const, message: 'Daily Quest: Strength Training has been updated.' },
-        { id: '2', timestamp: '09:54 AM', type: 'info' as const, message: 'Recovered 500 HP via sleep.' },
-        { id: '3', timestamp: 'Yesterday', type: 'warning' as const, message: 'WARNING: Penalty Quest nearing expiration.' },
-        { id: '4', timestamp: 'Yesterday', type: 'success' as const, message: 'Gold acquired: 50,000 G' },
+        { id: '1', timestamp: '10:45 AM', type: 'success' as const, message: 'System Connected.' },
     ];
 
+    const combinedLogs = [...parsedAlerts, ...mockLogs];
+
+    // Listen for Critical Alerts to trigger Popups
+    useEffect(() => {
+        alerts.forEach(alert => {
+            if (alert.eventType === 'PENALTY_ALERT') {
+                setIsPenaltyActive(true);
+            }
+            if (alert.eventType === 'PROMOTION_UPDATE') {
+                setIsPromotionActive(true);
+            }
+            // Consume automatically after reading into UI state
+            consumeAlert(alert.eventId);
+        });
+    }, [alerts, consumeAlert]);
+
+    if (_loading) {
+        return (
+            <ScreenFrame>
+                <div className="flex items-center justify-center h-full text-blue-500 animate-pulse">
+                    initiating_link...
+                </div>
+            </ScreenFrame>
+        );
+    }
+
     return (
-        <ScreenFrame>
+        <ScreenFrame className={clsx(isRedGateActive && "border-solo-red-900 bg-[#0f0404]")}>
+            {/* Red Gate Warning Banner */}
+            {isRedGateActive && (
+                <div className="bg-solo-red-950/80 border-b border-solo-red-600 p-2 text-center flex items-center justify-center gap-2 animate-pulse mb-4 rounded">
+                    <AlertTriangle className="text-solo-red-500" size={16} />
+                    <span className="text-solo-red-100 font-bold tracking-[0.2em] text-xs">
+                        WARNING: DUNGEON BREAK IN PROGRESS
+                    </span>
+                    <AlertTriangle className="text-solo-red-500" size={16} />
+                </div>
+            )}
+
             {/* Top Bar */}
             <TopBar
-                userName="SUNG JIN-WOO"
-                systemStatus="online"
-                diagnosticMode
+                userName={"Hunter"}
+                systemStatus={isRedGateActive ? "maintenance" : "online"}
             />
 
-            {/* Main Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4">
+            {/* Navigation / Quick Actions */}
+            <div className="flex gap-4 mt-6">
+                <button
+                    onClick={onViewStore}
+                    className={clsx(
+                        "flex-1 border bg-gray-900/80 py-3 rounded-lg transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg",
+                        !isRedGateActive && "border-solo-blue-900/50 hover:border-solo-blue-500 text-solo-blue-400 hover:text-white shadow-glow-cyan hover:shadow-cyan-500/20",
+                        isRedGateActive && "border-gray-800 text-gray-500 opacity-50 cursor-not-allowed" // Disable during break? Or just dim
+                    )}
+                >
+                    <span className="mr-2 opacity-50 group-hover:opacity-100">🛒</span>
+                    Store
+                </button>
+                <button
+                    onClick={onViewInventory}
+                    className={clsx(
+                        "flex-1 border bg-gray-900/80 py-3 rounded-lg transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg",
+                        !isRedGateActive && "border-solo-blue-900/50 hover:border-solo-blue-500 text-solo-blue-400 hover:text-white shadow-glow-cyan hover:shadow-cyan-500/20",
+                        isRedGateActive && "border-solo-red-900/50 text-solo-red-400 hover:text-white"
+                    )}
+                >
+                    <span className="mr-2 opacity-50 group-hover:opacity-100">🎒</span>
+                    Status
+                </button>
+                <button
+                    onClick={onViewGate}
+                    className={clsx(
+                        "flex-1 border bg-gray-900/80 py-3 rounded-lg transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg animate-pulse",
+                        !isRedGateActive && "border-solo-blue-500 text-solo-blue-400 hover:bg-solo-blue-900/30",
+                        isRedGateActive && "border-solo-red-500 bg-solo-red-900/20 text-solo-red-500 hover:bg-solo-red-900/50 shadow-glow-red"
+                    )}
+                >
+                    <span className="mr-2 opacity-50 group-hover:opacity-100">{isRedGateActive ? <Flame size={14} /> : '🌀'}</span>
+                    {isRedGateActive ? "ENTER RED GATE" : "SYSTEM GATES"}
+                </button>
+            </div>
+
+            <div className={clsx("grid grid-cols-1 lg:grid-cols-4 gap-4 mt-4 transition-all duration-700", isPenaltyActive && "pointer-events-none blur-sm opacity-50")}>
                 {/* Left Column */}
                 <div className="space-y-4">
-                    <PlayerProfileCard
-                        avatarUrl="https://i.pravatar.cc/150?img=12"
-                        rank="S"
-                        title="SHADOW MONARCH"
-                        fatigue={0}
-                    />
-
-                    <AssetsPanel
-                        totalGold={1450000}
-                        weeklyTrend={12.5}
-                        dailyIncome={50}
-                        shopStats={1200}
-                    />
+                    <PlayerProfileCard />
+                    <AssetsPanel />
                 </div>
 
                 {/* Center Column (2 cols wide) */}
                 <div className="lg:col-span-2 space-y-4">
-                    <CurrentStatusPanel
-                        level={45}
-                        currentXp={35000}
-                        maxXp={48000}
-                        jobClass="NECROMANCER"
-                        strength={205}
-                        agility={188}
-                        intellect={142}
-                    />
+                    <CurrentStatusPanel />
 
                     <DailyQuestsPanel
-                        quests={mockQuests}
-                        onQuestToggle={(id, completed) => {
-                            console.log('Toggle quest:', id, completed);
-                            // Demo trigger for penalty popup
-                            if (id === '4' && !completed) {
-                                setIsPenaltyActive(true);
+                        quests={activeQuests.map((q: any) => ({
+                            id: q.id,
+                            title: q.title,
+                            goal: q.goal || 'Complete',
+                            current: q.currentProgress,
+                            target: q.targetProgress,
+                            reward: q.rewardText,
+                            completed: q.completed
+                        }))}
+                        onQuestToggle={async (id, completed) => {
+                            if (!completed) {
+                                try {
+                                    await QuestAPI.completeQuest(id);
+                                } catch (error) {
+                                    console.error("Failed to complete quest:", error);
+                                }
                             }
                         }}
                         onClaimReward={(id) => console.log('Claim reward:', id)}
@@ -135,15 +208,15 @@ export function DashboardView({ onViewSystemLog, onViewDiagnostic, onViewProfile
                 {/* Right Column */}
                 <div className="space-y-4">
                     <SystemLogPanel
-                        entries={mockLogs}
+                        entries={combinedLogs}
                         onViewFullLog={onViewSystemLog}
                     />
 
                     <CapacityPanel
-                        activeQuests={3}
-                        maxQuests={6}
-                        inventoryLoad={45}
-                        equippedSkills={['⚡', '👁️', '🎯']}
+                        activeQuests={activeQuests.length}
+                        maxQuests={10}
+                        inventoryLoad={0}
+                        equippedSkills={[]}
                     />
                 </div>
             </div>
@@ -156,6 +229,7 @@ export function DashboardView({ onViewSystemLog, onViewDiagnostic, onViewProfile
                         SERVER CONNECTED
                     </span>
                     <span>LATENCY: 12ms</span>
+                    <span className="text-blue-500">PLAYER ID: {playerId ? playerId.substring(0, 8) + '...' : 'UNKNOWN'}</span>
 
                     {/* Dev Triggers */}
                     <div className="flex gap-2 ml-4 flex-wrap">
@@ -172,37 +246,10 @@ export function DashboardView({ onViewSystemLog, onViewDiagnostic, onViewProfile
                             [DEV] PROMOTION
                         </button>
                         <button
-                            onClick={() => setIsInterruptionActive(true)}
-                            className="px-2 py-1 bg-cyan-900/30 text-cyan-500 border border-cyan-900 rounded hover:bg-cyan-900/50 transition-colors"
+                            onClick={() => setIsRedGateActive(!isRedGateActive)}
+                            className="px-2 py-1 bg-[#450a0a] text-solo-red-500 border border-solo-red-900 rounded hover:bg-solo-red-900/50 transition-colors"
                         >
-                            [DEV] INTERRUPT
-                        </button>
-                        <button
-                            onClick={onViewSystemLog}
-                            className="px-2 py-1 bg-gray-800 text-gray-400 border border-gray-600 rounded hover:bg-gray-700 transition-colors"
-                        >
-                            [DEV] LOG
-                        </button>
-                        <button
-                            onClick={onViewDiagnostic}
-                            className="px-2 py-1 bg-green-900/30 text-green-500 border border-green-900 rounded hover:bg-green-900/50 transition-colors"
-                        >
-                            [DEV] DIAGNOSTIC
-                        </button>
-                        <button
-                            onClick={onViewProfile}
-                            className="px-2 py-1 bg-purple-900/30 text-purple-500 border border-purple-900 rounded hover:bg-purple-900/50 transition-colors"
-                        >
-                            [DEV] PROFILE
-                        </button>
-                        <button
-                            onClick={() => {
-                                console.log('Dashboard: Missions button clicked');
-                                if (onViewMissions) onViewMissions();
-                            }}
-                            className="px-2 py-1 bg-cyan-900/30 text-cyan-500 border border-cyan-900 rounded hover:bg-cyan-900/50 transition-colors"
-                        >
-                            [DEV] MISSIONS
+                            [DEV] RED GATE
                         </button>
                     </div>
                 </div>

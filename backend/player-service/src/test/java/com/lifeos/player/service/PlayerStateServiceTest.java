@@ -3,8 +3,8 @@ package com.lifeos.player.service;
 import com.lifeos.player.domain.enums.AttributeType;
 import com.lifeos.player.dto.PlayerStateResponse;
 import com.lifeos.player.repository.PlayerIdentityRepository;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,8 +13,11 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+import org.springframework.test.context.ActiveProfiles;
+
+@SpringBootTest(classes = com.lifeos.LifeOsApplication.class)
 @Transactional
+@ActiveProfiles("test-mysql")
 public class PlayerStateServiceTest {
 
     @Autowired
@@ -42,11 +45,11 @@ public class PlayerStateServiceTest {
         assertEquals(50, response.getProgression().getCurrentXp());
         assertEquals(1, response.getProgression().getLevel());
 
-        // 3. Add XP (Level Up) -> Threshold 100 for Level 1
-        playerStateService.addXp(playerId, 60); // Total 110 -> Level 2, Remainder 10
+        // 3. Add XP (Level Up) -> Threshold 110 for Level 1 (100 * 1.1^1)
+        playerStateService.addXp(playerId, 60); // Total 110 -> Level 2, Remainder 0
         response = playerStateService.getPlayerState(playerId);
         assertEquals(2, response.getProgression().getLevel());
-        assertEquals(10, response.getProgression().getCurrentXp());
+        assertEquals(0, response.getProgression().getCurrentXp());
 
         // 4. Update Attribute
         playerStateService.updateAttribute(playerId, AttributeType.FOCUS, 5.0);

@@ -22,7 +22,7 @@ public class PlayerStatusFlag {
     private PlayerIdentity player;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private StatusFlagType flag;
 
     @Column(name = "acquired_at", nullable = false)

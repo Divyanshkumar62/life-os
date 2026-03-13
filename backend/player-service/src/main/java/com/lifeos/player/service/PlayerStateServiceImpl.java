@@ -5,7 +5,7 @@ import com.lifeos.player.domain.enums.AttributeType;
 import com.lifeos.player.domain.enums.PlayerRank;
 import com.lifeos.player.dto.*;
 import com.lifeos.player.repository.*;
-import lombok.RequiredArgsConstructor;
+import com.lifeos.event.concrete.RankPromotionEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +16,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class PlayerStateServiceImpl implements PlayerStateService {
 
     private final PlayerIdentityRepository identityRepository;
@@ -28,6 +27,30 @@ public class PlayerStateServiceImpl implements PlayerStateService {
     private final PlayerTemporalStateRepository temporalStateRepository;
     private final PlayerHistoryRepository historyRepository;
     private final com.lifeos.penalty.repository.PenaltyRecordRepository penaltyRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+
+    public PlayerStateServiceImpl(
+            PlayerIdentityRepository identityRepository,
+            PlayerProgressionRepository progressionRepository,
+            PlayerAttributeRepository attributeRepository,
+            PlayerPsychStateRepository psychStateRepository,
+            PlayerMetricsRepository metricsRepository,
+            PlayerStatusFlagRepository flagRepository,
+            PlayerTemporalStateRepository temporalStateRepository,
+            PlayerHistoryRepository historyRepository,
+            com.lifeos.penalty.repository.PenaltyRecordRepository penaltyRepository,
+            org.springframework.context.ApplicationEventPublisher eventPublisher) {
+        this.identityRepository = identityRepository;
+        this.progressionRepository = progressionRepository;
+        this.attributeRepository = attributeRepository;
+        this.psychStateRepository = psychStateRepository;
+        this.metricsRepository = metricsRepository;
+        this.flagRepository = flagRepository;
+        this.temporalStateRepository = temporalStateRepository;
+        this.historyRepository = historyRepository;
+        this.penaltyRepository = penaltyRepository;
+        this.eventPublisher = eventPublisher;
+    }
 
     @Override
     @Transactional
@@ -134,10 +157,14 @@ public class PlayerStateServiceImpl implements PlayerStateService {
 
         var progression = progressionRepository.findByPlayerPlayerId(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        
+        // Track Total XP Accumulated (New Field)
+        progression.setTotalXpAccumulated(progression.getTotalXpAccumulated() + xpAmount);
 
         // Rank-Gate Logic: Check XP Freeze
         if (progression.isXpFrozen()) {
              System.out.println("XP is Frozen for player " + playerId);
+             progressionRepository.save(progression); // Save total XP update even if frozen? Yes.
              return;
         }
 
@@ -148,48 +175,41 @@ public class PlayerStateServiceImpl implements PlayerStateService {
              return;
         }
 
-        long newXp = progression.getCurrentXp() + xpAmount;
-        progression.setCurrentXp(newXp);
+        long tempXp = progression.getCurrentXp() + xpAmount;
+        boolean leveledUp = false;
 
-        // Simple Level Up Logic: Threshold = Level * 100
-        // Loop in case of multiple level ups, but also check CAP inside loop
+        // Exponential Level Up Logic
         while (true) {
-            long xpRequired = progression.getLevel() * 100L;
-            if (progression.getCurrentXp() >= xpRequired) {
+            long xpRequired = calculateMaxXp(progression.getLevel());
+            if (tempXp >= xpRequired) {
                 // Check if next level exceeds cap
                 if (progression.getLevel() + 1 > progression.getRank().getLevelCap()) {
-                    // Cannot level up further. Cap XP? Or just let it sit?
-                    // "XP gain halts completely".
-                    // If we are here, we had enough XP to level up.
-                    // But we shouldn't have exceeded cap.
-                    // Let's enforce cap:
-                    // If we hit cap, we stay at max XP for current level or 0 XP of max level?
-                    // Usually: Level = Cap, XP = 0 (or some buffer).
-                    // Logic above: `if (level >= cap) return`. 
-                    // So we can't be here unless we started below cap.
-                    
-                    // But what if this single addXp pushes us OVER the cap?
-                    // e.g. Level 9, Cap 10. addXp(Massive).
-                    // Level 9 -> 10. Now at 10. Stop.
-                    
-                    progression.setCurrentXp(progression.getCurrentXp() - xpRequired);
-                    progression.setLevel(progression.getLevel() + 1);
-                    
-                    if (progression.getLevel() >= progression.getRank().getLevelCap()) {
-                        // Reached Cap. Stop further leveling.
-                        break;
-                    }
+                    progression.setXpFrozen(true);
+                    // Keep explicit XP or cap it? 
+                    // Usually we keep the overflow in currentXp until promotion.
+                    break; 
                 } else {
-                    progression.setCurrentXp(progression.getCurrentXp() - xpRequired);
+                    tempXp -= xpRequired;
                     progression.setLevel(progression.getLevel() + 1);
+                    leveledUp = true;
                 }
-                // TODO: Trigger level up event/notification
             } else {
                 break;
             }
         }
-
+        
+        progression.setCurrentXp(tempXp);
         progressionRepository.save(progression);
+        
+        // Emit Level-Up Event
+        if (leveledUp) {
+            eventPublisher.publishEvent(new com.lifeos.event.concrete.LevelUpEvent(playerId, progression.getLevel()));
+        }
+    }
+
+    private long calculateMaxXp(int level) {
+        // Formula: 100 * (1.1 ^ level)
+        return (long) (100 * Math.pow(1.1, level));
     }
 
     @Override
@@ -398,6 +418,17 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         progression.setXpFrozen(false);
         
         progressionRepository.save(progression);
+        
+        eventPublisher.publishEvent(new RankPromotionEvent(playerId, nextRank.name()));
+    }
+
+    @Override
+    @Transactional
+    public void setLevel(UUID playerId, int level) {
+         var progression = progressionRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        progression.setLevel(level);
+        progressionRepository.save(progression);
     }
 
     private PlayerStateResponse buildResponse(PlayerIdentity identity) {
@@ -427,6 +458,8 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .rank(progression.getRank())
                 .rankProgressScore(progression.getRankProgressScore())
                 .xpFrozen(progression.isXpFrozen())
+                .totalXpAccumulated(progression.getTotalXpAccumulated())
+                .freeStatPoints(progression.getFreeStatPoints())
                 .build();
 
         var attributeDtos = attributes.stream()
@@ -507,5 +540,34 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .temporalState(temporalDto)
                 .history(historyDto)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void addFreeStatPoints(UUID playerId, int amount) {
+        var progression = progressionRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        progression.setFreeStatPoints(progression.getFreeStatPoints() + amount);
+        progressionRepository.save(progression);
+    }
+
+    @Override
+    @Transactional
+    public void allocateFreeStatPoint(UUID playerId, AttributeType stat, int amount) {
+        if (amount <= 0) throw new IllegalArgumentException("Amount must be positive");
+        
+        var progression = progressionRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        
+        if (progression.getFreeStatPoints() < amount) {
+            throw new IllegalStateException("Insufficient free stat points");
+        }
+        
+        // Decrement Pool
+        progression.setFreeStatPoints(progression.getFreeStatPoints() - amount);
+        progressionRepository.save(progression);
+        
+        // Increment Stat
+        incrementStat(playerId, stat, amount);
     }
 }

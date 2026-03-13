@@ -29,3 +29,8 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 .bak
+
+# Firebase/Secret configs (keep these out of version control)
+docs/*-firebase-adminsdk*.json
+docs/google-services.json
+

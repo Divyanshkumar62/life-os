@@ -5,5 +5,7 @@ public enum QuestState {
     ACTIVE,
     COMPLETED,
     FAILED,
-    EXPIRED
+    EXPIRED,
+    SUSPENDED,
+    PENDING
 }

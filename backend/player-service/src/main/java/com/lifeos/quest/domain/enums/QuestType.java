@@ -10,5 +10,7 @@ public enum QuestType {
     EGO_BREAKER,
     PROMOTION_EXAM,
     PENALTY,
-    SYSTEM_TRIAL
+    SYSTEM_TRIAL,
+    INTEL_GATHERING,
+    RED_GATE
 }

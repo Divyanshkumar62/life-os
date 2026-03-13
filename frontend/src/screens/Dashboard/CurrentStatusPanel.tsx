@@ -1,14 +1,10 @@
-import { SystemPanel, SystemProgressBar, SystemMetric, SystemBadge } from '../../components/system';
+import { SystemPanel, SystemProgressBar, SystemMetric, SystemBadge, SystemRadar } from '../../components/system';
 
-export interface CurrentStatusPanelProps {
-    level: number;
-    currentXp: number;
-    maxXp: number;
-    jobClass: string;
-    strength: number;
-    agility: number;
-    intellect: number;
-}
+
+import { useSystemContext } from '../../context/SystemContext';
+
+// Removing props as it now relies entirely on SystemContext
+export interface CurrentStatusPanelProps { }
 
 /**
  * CurrentStatusPanel - Primary player progression display
@@ -18,16 +14,18 @@ export interface CurrentStatusPanelProps {
  * - Display job class
  * - Show core stats (STR/AGI/INT)
  */
-export function CurrentStatusPanel({
-    level,
-    currentXp,
-    maxXp,
-    jobClass,
-    strength,
-    agility,
-    intellect,
-}: CurrentStatusPanelProps) {
-    const xpPercentage = (currentXp / maxXp) * 100;
+export function CurrentStatusPanel({ }: CurrentStatusPanelProps) {
+    const { statusWindow } = useSystemContext();
+
+    const currentXp = statusWindow?.progression?.currentXp || 0;
+    const maxXp = statusWindow?.progression?.maxXpForLevel || 100;
+    const level = statusWindow?.identity?.level || 1;
+    const jobClass = statusWindow?.identity?.title || 'None';
+    const strength = statusWindow?.attributes?.STR || 10;
+    const agility = statusWindow?.attributes?.VIT || 10; // VIT mapped to UI Agility
+    const intellect = statusWindow?.attributes?.INT || 10;
+
+    const xpPercentage = maxXp > 0 ? (currentXp / maxXp) * 100 : 0;
 
     return (
         <SystemPanel glowColor="cyan" className="col-span-2">
@@ -39,7 +37,7 @@ export function CurrentStatusPanel({
             {/* Level Display */}
             <div className="flex items-baseline gap-2 mb-2">
                 <h2 className="text-5xl font-bold text-white font-mono">LVL. {level}</h2>
-                <SystemBadge variant="teal" glow>
+                <SystemBadge variant="info" glow>
                     {jobClass}
                 </SystemBadge>
             </div>
@@ -58,6 +56,19 @@ export function CurrentStatusPanel({
                     <span className="text-xs text-gray-500 font-mono">{xpPercentage.toFixed(2)}%</span>
                     <span className="text-xs text-cyan-400 uppercase tracking-wide">To Next Level</span>
                 </div>
+            </div>
+
+            {/* Radar Chart */}
+            <div className="mb-6 flex justify-center">
+                <SystemRadar
+                    data={[
+                        { stat: 'STR', value: strength, max: 100 },
+                        { stat: 'VIT', value: agility, max: 100 }, // Mapping UI Agility to Backend VIT
+                        { stat: 'INT', value: intellect, max: 100 },
+                        { stat: 'SEN', value: 30, max: 100 } // Sensory default mapped
+                    ]}
+                    size={200}
+                />
             </div>
 
             {/* Stats Grid */}

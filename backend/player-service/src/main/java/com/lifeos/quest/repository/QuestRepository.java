@@ -2,6 +2,7 @@ package com.lifeos.quest.repository;
 
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.domain.enums.QuestState;
+import com.lifeos.quest.domain.enums.QuestType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,4 +18,10 @@ public interface QuestRepository extends JpaRepository<Quest, UUID> {
     
     // Find active quests that have passed their deadline
     List<Quest> findByStateAndDeadlineAtBefore(QuestState state, LocalDateTime now);
+
+    List<Quest> findByPlayerPlayerId(UUID playerId);
+
+    java.util.Optional<Quest> findByPlayerPlayerIdAndQuestTypeAndState(UUID playerId, QuestType type, QuestState state);
+
+    List<Quest> findByProjectId(UUID projectId);
 }

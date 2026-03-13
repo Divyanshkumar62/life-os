@@ -15,18 +15,22 @@ import com.lifeos.voice.domain.enums.SystemMessageType;
 import com.lifeos.voice.event.VoiceSystemEvent;
 import com.lifeos.player.repository.PlayerIdentityRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.lifeos.system.service.SystemVoiceService;
+import com.lifeos.system.domain.enums.SystemEventType;
+import org.springframework.context.annotation.Lazy;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class ProgressionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgressionService.class);
 
     private final PlayerStateService playerStateService;
     private final PenaltyService penaltyService;
@@ -35,6 +39,29 @@ public class ProgressionService {
     private final RankExamAttemptRepository examAttemptRepository;
     private final PlayerIdentityRepository playerIdentityRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final com.lifeos.ai.service.AIQuestService aiQuestService;
+    private final com.lifeos.quest.service.QuestLifecycleService questLifecycleService;
+    private final SystemVoiceService systemVoiceService;
+
+    public ProgressionService(PlayerStateService playerStateService, @Lazy PenaltyService penaltyService,
+                            QuestRepository questRepository, UserBossKeyRepository bossKeyRepository,
+                            RankExamAttemptRepository examAttemptRepository,
+                            PlayerIdentityRepository playerIdentityRepository,
+                            ApplicationEventPublisher eventPublisher,
+                            com.lifeos.ai.service.AIQuestService aiQuestService,
+                            @Lazy com.lifeos.quest.service.QuestLifecycleService questLifecycleService,
+                            SystemVoiceService systemVoiceService) {
+        this.playerStateService = playerStateService;
+        this.penaltyService = penaltyService;
+        this.questRepository = questRepository;
+        this.bossKeyRepository = bossKeyRepository;
+        this.examAttemptRepository = examAttemptRepository;
+        this.playerIdentityRepository = playerIdentityRepository;
+        this.eventPublisher = eventPublisher;
+        this.aiQuestService = aiQuestService;
+        this.questLifecycleService = questLifecycleService;
+        this.systemVoiceService = systemVoiceService;
+    }
 
     /**
      * Checks if player is at Rank Gate (Level == Cap).
@@ -137,32 +164,29 @@ public class ProgressionService {
         
         attempt = examAttemptRepository.save(attempt);
         
-        // SPAWN PROMOTION QUEST
-        Quest examQuest = Quest.builder()
-                .player(player)
-                .title("Rank Exam: " + currentRank + " -> " + currentRank.next())
-                .description("Prove your worth. Failure results in immediate Penalty Zone.")
-                .category(com.lifeos.quest.domain.enums.QuestCategory.MAIN)
-                .difficultyTier(com.lifeos.quest.domain.enums.DifficultyTier.RED)
-                .state(com.lifeos.quest.domain.enums.QuestState.ACTIVE)
-                .priority(com.lifeos.quest.domain.enums.Priority.CRITICAL)
-                .questType(com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM)
-                .assignedAt(LocalDateTime.now())
-                .startsAt(LocalDateTime.now())
-                .deadlineAt(LocalDateTime.now().plusDays(7))
-                .systemMutable(false)
-                .build();
+        // SPAWN AI PROMOTION QUEST
+        var questRequest = aiQuestService.generatePromotionExam(playerId, currentRank, currentRank.next());
+        if (questRequest == null) {
+            log.error("Failed to generate AI promotion exam for player {}", playerId);
+            throw new IllegalStateException("System could not generate trial. Ascension delayed.");
+        }
         
-        questRepository.save(examQuest);
+        // Ensure quest type is correct
+        questRequest.setQuestType(com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM);
         
-        log.info("Promotion initiated for player {}. Exam ID: {}, Quest ID: {}", 
-            playerId, attempt.getId(), examQuest.getQuestId());
+        // Assign via Lifecycle Service to get links and outcome profiles
+        questLifecycleService.assignQuest(questRequest);
+        
+        log.info("Promotion initiated with AI trial for player {}. Exam ID: {}", 
+            playerId, attempt.getId());
             
         // VOICE: PROMOTION_UNLOCKED
         eventPublisher.publishEvent(VoiceSystemEvent.builder()
                 .playerId(playerId)
                 .type(SystemMessageType.PROMOTION_UNLOCKED)
                 .build());
+                
+        systemVoiceService.emitEvent(playerId, SystemEventType.PROMOTION_UPDATE, "Promotion Exam Unlocked. Prepare yourself.");
         
         return attempt;
     }
@@ -203,6 +227,8 @@ public class ProgressionService {
                         .playerId(playerId)
                         .type(SystemMessageType.PROMOTION_PASSED)
                         .build());
+                        
+            systemVoiceService.emitEvent(playerId, SystemEventType.PROMOTION_UPDATE, "Promotion Successful. Your Rank has increased.");
         } else {
             // FAILURE: Mark attempt as failed
             // Keys are LOST (already consumed)
@@ -220,6 +246,8 @@ public class ProgressionService {
                         .playerId(playerId)
                         .type(SystemMessageType.PROMOTION_FAILED)
                         .build());
+                        
+            systemVoiceService.emitEvent(playerId, SystemEventType.PENALTY_ALERT, "Promotion Failed. Penalty Zone Initiated.");
         }
     }
 }

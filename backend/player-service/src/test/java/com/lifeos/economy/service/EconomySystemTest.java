@@ -137,7 +137,19 @@ class EconomySystemTest {
         // Let's rebuild ShopService with MOCK EconomyService for this test.
         EconomyService mockEcon = mock(EconomyService.class);
         StreakService mockStreak = mock(StreakService.class);
-        ShopService shopSvc = new ShopService(shopRepository, mockEcon, transactionRepository, playerStateService, mockStreak);
+        InventoryService mockInventory = mock(InventoryService.class);
+        com.lifeos.economy.repository.PurchaseCooldownRepository mockCooldown = mock(com.lifeos.economy.repository.PurchaseCooldownRepository.class);
+        com.lifeos.player.repository.PlayerIdentityRepository mockIdentity = mock(com.lifeos.player.repository.PlayerIdentityRepository.class);
+        ShopService shopSvc = new ShopService(
+            shopRepository, 
+            mockEcon, 
+            transactionRepository, 
+            playerStateService, 
+            mockStreak,
+            mockInventory,
+            mockCooldown,
+            mockIdentity
+        );
 
         shopSvc.purchaseItem(playerId, "POTION_FOCUS");
 

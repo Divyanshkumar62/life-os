@@ -6,6 +6,7 @@ import com.lifeos.player.repository.PlayerPsychStateRepository;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,8 +15,11 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.springframework.test.context.ActiveProfiles;
+
 @SpringBootTest
 @Transactional
+@ActiveProfiles("test-mysql")
 public class PlayerVerificationTest {
 
     @Autowired

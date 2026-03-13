@@ -19,11 +19,11 @@ public class SystemMessage {
     private UUID playerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private SystemVoiceMode mode;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private SystemMessageType type;
 
     @Column(nullable = false)

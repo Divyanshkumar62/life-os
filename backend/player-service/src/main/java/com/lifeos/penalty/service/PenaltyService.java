@@ -13,7 +13,6 @@ import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.streak.service.StreakService;
 import com.lifeos.event.DomainEventPublisher;
 import com.lifeos.event.concrete.PenaltyZoneEnteredEvent;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +23,10 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import com.lifeos.system.service.SystemVoiceService;
+import com.lifeos.system.domain.enums.SystemEventType;
 
 @Service
-@RequiredArgsConstructor
 public class PenaltyService {
 
     private static final Logger log = LoggerFactory.getLogger(PenaltyService.class);
@@ -36,12 +36,33 @@ public class PenaltyService {
     private final PlayerStateService playerStateService;
     private final QuestRepository questRepository;
     private final StreakService streakService;
-    private final org.springframework.context.ApplicationEventPublisher eventPublisher; // Kept as per instruction's snippet
-
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final PenaltyQuestService penaltyQuestService;
-    private final PenaltyQuestRepository penaltyQuestRepository; // For exit guard
-    private final DomainEventPublisher domainEventPublisher; 
+    private final PenaltyQuestRepository penaltyQuestRepository;
+    private final DomainEventPublisher domainEventPublisher;
+    private final SystemVoiceService systemVoiceService;
 
+    public PenaltyService(PenaltyRecordRepository penaltyRepository, 
+                         PenaltyCalculationService calculationService,
+                         PlayerStateService playerStateService,
+                         QuestRepository questRepository,
+                         StreakService streakService,
+                         org.springframework.context.ApplicationEventPublisher eventPublisher,
+                         PenaltyQuestService penaltyQuestService,
+                         PenaltyQuestRepository penaltyQuestRepository,
+                         DomainEventPublisher domainEventPublisher,
+                         SystemVoiceService systemVoiceService) {
+        this.penaltyRepository = penaltyRepository;
+        this.calculationService = calculationService;
+        this.playerStateService = playerStateService;
+        this.questRepository = questRepository;
+        this.streakService = streakService;
+        this.eventPublisher = eventPublisher;
+        this.penaltyQuestService = penaltyQuestService;
+        this.penaltyQuestRepository = penaltyQuestRepository;
+        this.domainEventPublisher = domainEventPublisher;
+        this.systemVoiceService = systemVoiceService;
+    }
 
     @Transactional
     public void applyPenalty(UUID questId, UUID playerId, FailureReason reason) {
@@ -63,15 +84,6 @@ public class PenaltyService {
             playerStateService.applyXpDeduction(playerId, def.getXpDeduction());
         }
 
-        if (def.getDebuffAttribute() != null) {
-            playerStateService.applyStatDebuff(
-                    playerId, 
-                    def.getDebuffAttribute(), 
-                    def.getDebuffAmount(), 
-                    def.getDebuffExpiresAt()
-            );
-        }
-
         if (def.isResetStreak()) {
             playerStateService.resetStreak(playerId);
         }
@@ -79,10 +91,6 @@ public class PenaltyService {
         // 4. Persist Record
         Map<String, Object> payload = new HashMap<>();
         payload.put("xpDeduction", def.getXpDeduction());
-        if (def.getDebuffAttribute() != null) {
-            payload.put("debuffAttr", def.getDebuffAttribute().name());
-            payload.put("debuffAmount", def.getDebuffAmount());
-        }
         
         PenaltyRecord record = PenaltyRecord.builder()
                 .playerId(playerId)
@@ -91,13 +99,12 @@ public class PenaltyService {
                 .severity(def.getSeverity())
                 .valuePayload(payload)
                 .appliedAt(LocalDateTime.now())
-                .expiresAt(def.getDebuffExpiresAt())
                 .build();
 
         penaltyRepository.save(record);
         log.info("Applied penalty {} to player {} for quest {}", def.getSeverity(), playerId, questId);
 
-        // Emit Event
+        // Emit Event - The PenaltyZoneEventHandler will pick this up to generate AI Penalty Quests
         domainEventPublisher.publish(new com.lifeos.event.concrete.PenaltyAppliedEvent(playerId, questId, reason, def.getXpDeduction()));
     }
 
@@ -114,6 +121,7 @@ public class PenaltyService {
         }
 
         log.info("ENTERING PENALTY ZONE: Player {} Reason: {}", playerId, reason);
+        systemVoiceService.emitEvent(playerId, SystemEventType.PENALTY_ALERT, "Warning. You have been placed in the Penalty Zone. All privileges are revoked.");
         
         // 1. Apply Penalty Zone Flag
         playerStateService.applyStatusFlag(
@@ -154,12 +162,26 @@ public class PenaltyService {
         }
 
         log.info("EXITING PENALTY ZONE: Player {}", playerId);
+        systemVoiceService.emitEvent(playerId, SystemEventType.GENERAL_NOTICE, "Penalty Sequence Completed. Standard operations have resumed.");
         
         // 1. Remove Penalty Zone Flag
         playerStateService.removeStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.PENALTY_ZONE);
         
         // 2. Reset failures counter
         playerStateService.updateConsecutiveFailures(playerId, 0);
+
+        // 3. Igris Exception: Resume any suspended Promotion Exams
+        var suspendedExams = questRepository.findByPlayerPlayerIdAndQuestTypeAndState(
+            playerId, 
+            com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM, 
+            com.lifeos.quest.domain.enums.QuestState.SUSPENDED
+        );
+        
+        suspendedExams.ifPresent(quest -> {
+            log.info("Igris Exception: Resuming suspended Promotion Exam for player {}", playerId);
+            quest.setState(com.lifeos.quest.domain.enums.QuestState.ACTIVE);
+            questRepository.save(quest);
+        });
 
         // Emit Event
         domainEventPublisher.publish(new com.lifeos.event.concrete.PenaltyZoneExitedEvent(playerId));

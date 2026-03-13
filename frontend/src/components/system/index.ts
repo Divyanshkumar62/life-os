@@ -14,7 +14,6 @@ export { SystemMetric } from './SystemMetric';
 export type { SystemMetricProps } from './SystemMetric';
 
 export { SystemBadge } from './SystemBadge';
-export type { SystemBadgeProps } from './SystemBadge';
 
 export { SystemButton } from './SystemButton';
 export type { SystemButtonProps } from './SystemButton';
@@ -24,3 +23,6 @@ export type { SystemCheckboxProps } from './SystemCheckbox';
 
 export { SystemTab } from './SystemTab';
 export type { SystemTabProps, Tab } from './SystemTab';
+
+export { SystemRadar } from './SystemRadar';
+export type { SystemRadarProps } from './SystemRadar';

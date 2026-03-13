@@ -5,7 +5,8 @@ import com.lifeos.onboarding.dto.OnboardingResponse;
 import com.lifeos.onboarding.dto.QuestionnaireRequest;
 import com.lifeos.onboarding.service.OnboardingService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,8 +15,10 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/onboarding")
 @RequiredArgsConstructor
-@Slf4j
+@CrossOrigin(origins = "*") // Allow frontend access
 public class OnboardingController {
+
+    private static final Logger log = LoggerFactory.getLogger(OnboardingController.class);
 
     private final OnboardingService onboardingService;
 
@@ -31,21 +34,15 @@ public class OnboardingController {
         return ResponseEntity.ok(onboardingService.completeTrialQuest(playerId));
     }
 
-    @PostMapping("/{playerId}/questionnaire")
-    public ResponseEntity<OnboardingResponse> submitQuestionnaire(
+    @PostMapping("/{playerId}/awakening")
+    public ResponseEntity<OnboardingResponse> submitAwakening(
             @PathVariable UUID playerId,
             @RequestBody QuestionnaireRequest request) {
-        log.info("Submitting questionnaire for player: {}", playerId);
-        return ResponseEntity.ok(onboardingService.submitQuestionnaire(playerId, request));
+        log.info("Submitting awakening (5-Question) for player: {}", playerId);
+        return ResponseEntity.ok(onboardingService.submitAwakening(playerId, request));
     }
 
-    @PostMapping("/{playerId}/calibrate")
-    public ResponseEntity<OnboardingResponse> calibrateAttributes(
-            @PathVariable UUID playerId,
-            @RequestBody CalibrationRequest request) {
-        log.info("Calibrating attributes for player: {}", playerId);
-        return ResponseEntity.ok(onboardingService.calibrateAttributes(playerId, request));
-    }
+    // Calibrate endpoint removed (merged into Awakening)
 
     @GetMapping("/{playerId}/status")
     public ResponseEntity<OnboardingResponse> getStatus(@PathVariable UUID playerId) {

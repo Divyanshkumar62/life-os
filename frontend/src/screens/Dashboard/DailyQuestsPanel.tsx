@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { SystemPanel, SystemTab, SystemCheckbox, SystemButton, SystemBadge } from '../../components/system';
+import { useTemporalCountdown } from '../../hooks/useReverseClock';
+import { useSystemContext } from '../../context/SystemContext';
 import type { Tab } from '../../components/system';
 
 export interface Quest {
@@ -10,6 +12,7 @@ export interface Quest {
     target: number;
     reward: string;
     completed: boolean;
+    deadlineAt?: string;
 }
 
 export interface DailyQuestsPanelProps {
@@ -38,7 +41,15 @@ export function DailyQuestsPanel({
         { id: 'penalty', label: 'Penalty Zone', icon: '⚠️' },
     ];
 
-    const refreshTime = '04:23:11';
+    // System Context for triggering global re-fetch on Zero
+    const { refreshSystem } = useSystemContext();
+
+    // Find the first quest with a deadline to use as the Panel's universal countdown
+    const representativeDeadline = quests.find(q => q.deadlineAt)?.deadlineAt;
+    const refreshTime = useTemporalCountdown(representativeDeadline, () => {
+        console.log("TEMPORAL COUNTDOWN HIT ZERO. REFRESHING SYSTEM AUTHORITY.");
+        refreshSystem();
+    });
 
     return (
         <SystemPanel glowColor="cyan" className="col-span-2">

@@ -22,7 +22,7 @@ public class PlayerAttribute {
     private PlayerIdentity player;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "attribute_type", nullable = false)
+    @Column(name = "attribute_type", nullable = false, columnDefinition = "VARCHAR(255)")
     private AttributeType attributeType;
 
     @Column(name = "base_value", nullable = false)

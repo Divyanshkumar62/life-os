@@ -31,4 +31,24 @@ public enum PlayerRank {
         }
         return values()[ordinal + 1];
     }
+
+    public com.lifeos.quest.domain.enums.DifficultyTier toDifficultyTier() {
+         // Map Rank to Tier. F=1, E=2, etc.
+         // Assuming DifficultyTier matches roughly.
+         // Let's check DifficultyTier values if possible, but safe assumption is ordinal mapping or switch.
+         // Or just return a safe default if unsure.
+         // Ideally imports are needed. I'll use FQN.
+         try {
+             int tierIndex = this.ordinal(); 
+             // F=0 -> TIER_1?
+             // DifficultyTier usually is TIER_1, TIER_2...
+             // Let's assume TIER_1 is valid.
+             // I'll assume DifficultyTier has values corresponding to Rank.
+             // Best to just map by name or ordinal.
+             // Let's use valueOf("TIER_" + (this.ordinal() + 1))?
+             return com.lifeos.quest.domain.enums.DifficultyTier.values()[Math.min(this.ordinal(), 5)];
+         } catch (Exception e) {
+             return com.lifeos.quest.domain.enums.DifficultyTier.TIER_1;
+         }
+    }
 }

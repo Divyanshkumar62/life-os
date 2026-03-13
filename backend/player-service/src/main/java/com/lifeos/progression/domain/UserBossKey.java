@@ -22,7 +22,7 @@ public class UserBossKey {
     private PlayerIdentity player;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "`rank`", nullable = false, columnDefinition = "VARCHAR(255)")
     private PlayerRank rank; // The rank this key allows promotion FROM (e.g., E means E->D exam)
 
     @Column(nullable = false)

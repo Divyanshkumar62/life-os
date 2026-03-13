@@ -1,203 +1,270 @@
 package com.lifeos.quest.service;
 
-import com.lifeos.penalty.service.PenaltyService;
-import com.lifeos.player.domain.enums.PlayerRank;
+import com.lifeos.player.domain.PlayerIdentity;
+import com.lifeos.player.domain.enums.AttributeType;
 import com.lifeos.player.repository.PlayerIdentityRepository;
 import com.lifeos.player.service.PlayerStateService;
-import com.lifeos.quest.domain.Quest;
-import com.lifeos.quest.domain.enums.QuestCategory;
-import com.lifeos.quest.domain.enums.QuestState;
-import com.lifeos.quest.domain.enums.SystemDailyTemplate;
-import com.lifeos.quest.repository.QuestRepository;
-import com.lifeos.streak.service.StreakService;
-import com.lifeos.voice.domain.enums.SystemMessageType;
-import com.lifeos.voice.event.VoiceSystemEvent;
-import com.lifeos.event.DomainEventPublisher;
-import com.lifeos.event.concrete.DailyQuestFailedEvent;
+import com.lifeos.onboarding.repository.PlayerProfileRepository;
+import com.lifeos.onboarding.domain.PlayerProfile;
+import com.lifeos.onboarding.service.IntelQuestGenerator;
+import com.lifeos.quest.domain.enums.DifficultyTier;
+import com.lifeos.quest.domain.enums.Priority;
+import com.lifeos.quest.domain.enums.QuestType;
+import com.lifeos.quest.dto.QuestRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-//@Slf4j
 public class DailyQuestService {
 
     private static final Logger log = LoggerFactory.getLogger(DailyQuestService.class);
 
-    private final QuestRepository questRepository;
+    private final PlayerIdentityRepository identityRepository;
+    private final PlayerProfileRepository profileRepository;
+    private final QuestLifecycleService questService;
     private final PlayerStateService playerStateService;
-    private final PlayerIdentityRepository playerRepository;
-    private final StreakService streakService;
-    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
-    private final DomainEventPublisher domainEventPublisher;
+    private final IntelQuestGenerator intelGenerator;
+    private final RedGateService redGateService;
 
-    /**
-     * SYSTEM-WIDE RESET (Scheduled Job would call this)
-     */
-    public void runDailyResetCycle() {
-        log.info("Starting System-Wide Daily Reset Cycle");
-        // In a real system, paginate through players. For V1, fetch all ID's.
-        List<UUID> allPlayerIds = playerRepository.findAllIds(); 
-        
-        for (UUID playerId : allPlayerIds) {
-            try {
-                processPlayerReset(playerId);
-            } catch (Exception e) {
-                log.error("Failed to reset daily quests for player {}", playerId, e);
-            }
-        }
-        log.info("Daily Reset Cycle Completed");
+    @Autowired
+    public DailyQuestService(PlayerIdentityRepository identityRepository, PlayerProfileRepository profileRepository,
+                           QuestLifecycleService questService, PlayerStateService playerStateService,
+                           IntelQuestGenerator intelGenerator, RedGateService redGateService) {
+        this.identityRepository = identityRepository;
+        this.profileRepository = profileRepository;
+        this.questService = questService;
+        this.playerStateService = playerStateService;
+        this.intelGenerator = intelGenerator;
+        this.redGateService = redGateService;
     }
 
     @Transactional
     public void processPlayerReset(UUID playerId) {
-        LocalDateTime now = LocalDateTime.now();
-        
-        // 1. Fetch Active System Dailies
-        List<Quest> dailies = questRepository.findByPlayerPlayerIdAndState(playerId, QuestState.ACTIVE).stream()
-                .filter(q -> q.getCategory() == QuestCategory.SYSTEM_DAILY)
-                .collect(Collectors.toList());
-        
-        // 2. Process Expiry & Penalties
-        // 2. Process Expiry & Penalties
-        boolean todayFailed = false;
-        
-        for (Quest daily : dailies) {
-            // Strict check: If deadline passed and not completed
-            if (daily.getDeadlineAt().isBefore(now)) {
-                daily.setState(QuestState.FAILED);
-                todayFailed = true;
-            }
-        }
-        
-        // 3. Update Streak (Evaluate YESTERDAY's performance, which is `dailies`)
-        // Actually, `dailies` usually refers to TODAY's dailies from perspective of reset time?
-        // Wait, "System-Wide Reset" usually runs at Midnight:00:01
-        // So `dailies` fetched are the ones that just expired (deadlineAt was yesterday midnight/today midnight).
-        // `daily.getDeadlineAt().isBefore(now)` implies they are expired.
-        // So `todayFailed` flag captures if any of them failed.
-        // If !todayFailed => All Success? We need to check if they are COMPLETED.
-        // Wait, loop only checks expiry. We must check status too.
-        
-        boolean allCompleted = true;
-        for (Quest daily : dailies) {
-             if (daily.getState() != QuestState.COMPLETED) {
-                 allCompleted = false;
-                 // If not completed and expired, it fails.
-                 if (daily.getDeadlineAt().isBefore(now)) {
-                     daily.setState(QuestState.FAILED);
-                 }
-                 // If not completed and deadline passed -> Failed.
-             }
-        }
-        
-        // Refinement: `todayFailed` logic above was incomplete.
-        // Let's re-eval: `todayFailed` meant "Did ANY fail?".
-        // Streak requires ALL to be COMPLETED.
-        // If any is FAILED or ACTIVE(expired), Streak breaks.
-        
-        boolean streakSuccess = true;
-        for (Quest daily : dailies) {
-             if (daily.getState() != QuestState.COMPLETED) {
-                 streakSuccess = false;
-             }
-        }
-        
-        // Call Streak Service
-        LocalDate yesterday = LocalDate.now().minusDays(1);
-        try {
-            streakService.processDailyCompletion(playerId, yesterday, streakSuccess);
-        } catch (Exception e) {
-            log.error("Failed to update streak for player {}", playerId, e);
-        }
-        
-        // HYBRID TRIGGER LOGIC
-        // Fetch current consecutive failures
-        // We need to re-fetch state? Or rely on what we have? 
-        // We didn't fetch state in this method yet.
-        var state = playerStateService.getPlayerState(playerId);
-        int currentFailures = state.getTemporalState().getConsecutiveDailyFailures();
-        
-        if (todayFailed) {
-            int newFailures = currentFailures + 1;
-            playerStateService.updateConsecutiveFailures(playerId, newFailures);
-            
-            if (newFailures == 1) {
-                // STRIKE 1: WARNING
-                // Apply Warning for 24h
-                playerStateService.applyStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.WARNING, now.plusDays(1));
-                // Trigger Penalty via Event
-                domainEventPublisher.publish(new DailyQuestFailedEvent(playerId));
-            } else if (newFailures >= 2) {
-                // STRIKE 2+: PENALTY ZONE
-                domainEventPublisher.publish(new DailyQuestFailedEvent(playerId));
-            }
-        } else {
-            // SUCCESS (No failures found among active dailies, meaning likely completed)
-            // Reset counter if it was > 0
-            if (currentFailures > 0) {
-                playerStateService.updateConsecutiveFailures(playerId, 0);
-                playerStateService.removeStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.WARNING);
-                log.info("Player {} completed dailies. Reset consecutive failures.", playerId);
-            }
-        }
-        
-        // Note: PROJECT_SUBTASKS are ignored here as requested. They naturally expire or stay active.
-        
-        questRepository.saveAll(dailies);
-        
-        // 3. Generate New Dailies for Next Cycle
-        generateDailyQuests(playerId);
+        performDailyResetCheck(playerId);
     }
 
     @Transactional
-    public void generateDailyQuests(UUID playerId) {
-        var state = playerStateService.getPlayerState(playerId);
-        PlayerRank rank = state.getProgression().getRank();
-        int count = rank.getSystemDailyCount();
+    public void performDailyResetCheck(UUID playerId) {
+        PlayerIdentity identity = identityRepository.findById(playerId).orElse(null);
+        if (identity == null || !identity.isOnboardingCompleted()) {
+            return;
+        }
+
+        PlayerProfile profile = profileRepository.findById(playerId).orElse(null);
+        if (profile == null || profile.getWakeUpTime() == null) {
+            return;
+        }
+
+        java.time.ZoneOffset zoneOffset = java.time.ZoneOffset.UTC;
+        try {
+            if (profile.getTimezoneOffset() != null && !profile.getTimezoneOffset().isEmpty()) {
+                zoneOffset = java.time.ZoneOffset.of(profile.getTimezoneOffset());
+            }
+        } catch (Exception e) {
+            log.warn("Invalid timezone offset '{}' for player {}, defaulting to UTC", profile.getTimezoneOffset(), playerId);
+        }
+
+        java.time.ZonedDateTime playerLocalNow = java.time.Instant.now().atZone(zoneOffset);
         
-        LocalDateTime tomorrowMidnight = LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.MIDNIGHT);
+        LocalTime wakeUp = profile.getWakeUpTime();
+        LocalTime resetTime = wakeUp.minusHours(2);
         
-        // Select templates based on count (Simple sublist logic for V1)
-        // E-Rank (2): Wake Up, Reflection
-        // Higher Ranks add Movement, Focus, etc.
+        java.time.ZonedDateTime todayResetLocal = playerLocalNow.with(resetTime);
+        java.time.ZonedDateTime yesterdayResetLocal = todayResetLocal.minusDays(1);
+        java.time.ZonedDateTime effectiveResetThresholdLocal = playerLocalNow.isAfter(todayResetLocal) ? todayResetLocal : yesterdayResetLocal;
+
+        LocalDateTime effectiveResetThreshold = effectiveResetThresholdLocal.withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime();
+
+        LocalDateTime lastReset = identity.getLastDailyReset();
+
+        if (lastReset == null || lastReset.isBefore(effectiveResetThreshold)) {
+            log.info("Daily Reset Triggered for player: {}. Threshold: {}", playerId, effectiveResetThreshold);
+            evaluatePreviousDay(identity);
+            triggerDailyReset(identity, effectiveResetThreshold);
+        }
+    }
+
+    private void evaluatePreviousDay(PlayerIdentity identity) {
+        UUID playerId = identity.getPlayerId();
         
-        SystemDailyTemplate[] allTemplates = SystemDailyTemplate.values();
+        java.util.List<com.lifeos.quest.domain.Quest> activeDailies = 
+            questService.getQuestRepository().findByPlayerPlayerIdAndQuestTypeAndState(
+                playerId, QuestType.DISCIPLINE, com.lifeos.quest.domain.enums.QuestState.ACTIVE)
+            .stream()
+            .filter(q -> q.getCategory() == com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
+            .toList();
+
+        java.util.List<com.lifeos.quest.domain.Quest> activeReflection = 
+            questService.getQuestRepository().findByPlayerPlayerIdAndQuestTypeAndState(
+                playerId, QuestType.REFLECTION, com.lifeos.quest.domain.enums.QuestState.ACTIVE)
+            .stream()
+            .filter(q -> q.getCategory() == com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
+            .toList();
+
+        int uncompletedDailies = activeDailies.size() + activeReflection.size();
         
-        for (int i = 0; i < Math.min(count, allTemplates.length); i++) {
-            SystemDailyTemplate tmpl = allTemplates[i];
+        int totalDailies = 3; 
+        int completedDailies = totalDailies - uncompletedDailies;
+
+        if (uncompletedDailies > 0) {
+            log.warn("Player {} failed the 100% Daily Rule (Missed {} quests)", playerId, uncompletedDailies);
             
-            Quest quest = Quest.builder()
-                    .player(state.getIdentity() != null ? com.lifeos.player.domain.PlayerIdentity.builder().playerId(playerId).build() : null) // Using simplified ref
-                    .title(tmpl.getDefaultTitle())
-                    .description("System generated daily task: " + tmpl.getDefaultTitle())
-                    .category(QuestCategory.SYSTEM_DAILY)
-                    .difficultyTier(tmpl.getDifficulty())
-                    .state(QuestState.ACTIVE)
-                    .priority(com.lifeos.quest.domain.enums.Priority.HIGH)
-                    .questType(com.lifeos.quest.domain.enums.QuestType.DISCIPLINE) // Defaulting to Discipline
-                    .assignedAt(LocalDateTime.now())
-                    .startsAt(LocalDateTime.now())
-                    .deadlineAt(tomorrowMidnight)
-                    .systemMutable(true)
-                    .build();
+            boolean hasShield = playerStateService.hasActiveFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.PENALTY_SHIELD);
             
-            questRepository.save(quest);
+            if (hasShield && completedDailies == (totalDailies - 1)) {
+                log.info("Ruler's Authority Activated! Player {} shielded from minor penalty. Consuming Shield.", playerId);
+                playerStateService.removeStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.PENALTY_SHIELD);
+                
+                activeDailies.forEach(q -> questService.expireQuest(q.getQuestId()));
+                activeReflection.forEach(q -> questService.expireQuest(q.getQuestId()));
+                
+                return;
+            } else if (hasShield) {
+                log.warn("Player {} has Shield, but completed {}/{} quests. Shield cannot bypass total failure.", playerId, completedDailies, totalDailies);
+            }
             
-            // Emit Event
-            domainEventPublisher.publish(new com.lifeos.event.concrete.DailyQuestGeneratedEvent(playerId, quest.getQuestId()));
+            activeDailies.forEach(q -> questService.failQuest(q.getQuestId()));
+            activeReflection.forEach(q -> questService.failQuest(q.getQuestId()));
+
+            boolean hasActiveExam = questService.getQuestRepository().findByPlayerPlayerIdAndQuestTypeAndState(
+                playerId, QuestType.PROMOTION_EXAM, com.lifeos.quest.domain.enums.QuestState.ACTIVE).isPresent();
+
+            if (hasActiveExam) {
+                log.info("Igris Exception Triggered: Suspending active Promotion Exam for player {}", playerId);
+                var examQuests = questService.getQuestRepository().findByPlayerPlayerIdAndQuestTypeAndState(
+                    playerId, QuestType.PROMOTION_EXAM, com.lifeos.quest.domain.enums.QuestState.ACTIVE);
+                
+                examQuests.ifPresent(q -> {
+                    q.setState(com.lifeos.quest.domain.enums.QuestState.SUSPENDED);
+                    questService.getQuestRepository().save(q);
+                });
+            }
+        }
+    }
+
+    private void triggerDailyReset(PlayerIdentity identity, LocalDateTime resetTimestamp) {
+        if (identity.isRedGateActive()) {
+            log.info("Skipping daily quest generation - player {} is in Red Gate", identity.getPlayerId());
+            return;
+        }
+
+        redGateService.checkAndTriggerRandomRedGate(identity.getPlayerId());
+
+        if (identity.isRedGateActive()) {
+            log.info("Red Gate activated for player {}, skipping daily quests", identity.getPlayerId());
+            return;
+        }
+
+        PlayerProfile profile = profileRepository.findByPlayerId(identity.getPlayerId()).orElse(null);
+        String archetype = (profile != null && profile.getArchetype() != null) ? profile.getArchetype().toUpperCase() : "BALANCE";
+        String goal = (profile != null && profile.getSixMonthGoal() != null) ? profile.getSixMonthGoal().toLowerCase() : "";
+        String weakness = (profile != null && profile.getBiggestChallenge() != null) ? profile.getBiggestChallenge().toLowerCase() : "";
+
+        String physTitle = "Daily: Physical Maintenance";
+        String physDesc = "Complete your daily movement routine.";
+        int physXp = 50;
+
+        if (archetype.equals("BRAWN")) {
+             physTitle = "Daily: Strength Training";
+             physDesc = "Complete a resistance training session. Focus on hypertrophy.";
+             physXp = 75;
+        } else if (goal.contains("weight") || goal.contains("fat") || goal.contains("slim")) {
+             physTitle = "Daily: Cardio Burn";
+             physDesc = "Complete 30 minutes of Zone 2 cardio.";
+        } else if (goal.contains("muscle") || goal.contains("bulk")) {
+             physTitle = "Daily: Hypertrophy Work";
+             physDesc = "Complete 4 sets of compound movements.";
+             physXp = 60;
+        }
+
+        questService.assignQuest(QuestRequest.builder()
+                .playerId(identity.getPlayerId())
+                .title(physTitle)
+                .description(physDesc)
+                .questType(QuestType.DISCIPLINE)
+                .category(com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
+                .difficultyTier(DifficultyTier.D)
+                .priority(Priority.HIGH)
+                .deadlineAt(resetTimestamp.plusHours(24))
+                .successXp(physXp)
+                .goldReward(20)
+                .primaryAttribute(AttributeType.STRENGTH)
+                .build());
+
+        String focusTitle = "Daily: Deep Focus Block";
+        String focusDesc = "Complete one 90-minute deep work session.";
+        AttributeType focusAttr = AttributeType.INTELLIGENCE;
+
+        if (goal.contains("code") || goal.contains("program") || goal.contains("dev")) {
+             focusTitle = "Daily: Coding Kata";
+             focusDesc = "Complete 1 hour of focused coding or algorithm practice.";
+        } else if (goal.contains("write") || goal.contains("book")) {
+             focusTitle = "Daily: Writing Sprint";
+             focusDesc = "Write 500 words or spend 45 minutes separate from distractions.";
+        } else if (goal.contains("business") || goal.contains("startup")) {
+             focusTitle = "Daily: Strategic Planning";
+             focusDesc = "Review KPIs and execute one key strategic task.";
+             focusAttr = AttributeType.SENSE;
         }
         
-        log.info("Generated {} daily quests for player {}", Math.min(count, allTemplates.length), playerId);
+        if (weakness.contains("procrastination") || weakness.contains("start")) {
+             focusTitle = focusTitle + " (Eat The Frog)";
+             focusDesc = "Do the hardest task FIRST. " + focusDesc;
+        }
+
+        questService.assignQuest(QuestRequest.builder()
+                .playerId(identity.getPlayerId())
+                .title(focusTitle)
+                .description(focusDesc)
+                .questType(QuestType.DISCIPLINE)
+                .category(com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
+                .difficultyTier(DifficultyTier.C)
+                .priority(Priority.HIGH)
+                .deadlineAt(resetTimestamp.plusHours(24))
+                .successXp(100)
+                .goldReward(30)
+                .primaryAttribute(focusAttr)
+                .build());
+
+        String reflectTitle = "Daily: Evening Reflection";
+        String reflectDesc = "Review your day's progress and plan for tomorrow.";
+        
+        if (archetype.equals("BRAINS")) {
+             reflectTitle = "Daily: Knowledge Intake";
+             reflectDesc = "Read 10 pages of a non-fiction book or research paper.";
+        }
+
+        questService.assignQuest(QuestRequest.builder()
+                .playerId(identity.getPlayerId())
+                .title(reflectTitle)
+                .description(reflectDesc)
+                .questType(QuestType.REFLECTION)
+                .category(com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
+                .difficultyTier(DifficultyTier.E)
+                .priority(Priority.NORMAL)
+                .deadlineAt(resetTimestamp.plusHours(24))
+                .successXp(30)
+                .goldReward(10)
+                .primaryAttribute(AttributeType.SENSE)
+                .build());
+
+        long daysActive = java.time.temporal.ChronoUnit.DAYS.between(identity.getCreatedAt(), LocalDateTime.now());
+        QuestRequest intelQuest = intelGenerator.generateFollowUpIntel(identity.getPlayerId(), daysActive);
+        
+        if (intelQuest != null) {
+            log.info("Triggering Follow-Up Intel Quest for player {} (Day {})", identity.getPlayerId(), daysActive);
+            questService.assignQuest(intelQuest);
+        }
+
+        identity.setLastDailyReset(LocalDateTime.now());
+        identityRepository.save(identity);
     }
 }

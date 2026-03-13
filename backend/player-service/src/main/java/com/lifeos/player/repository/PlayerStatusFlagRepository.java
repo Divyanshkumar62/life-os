@@ -5,6 +5,7 @@ import com.lifeos.player.domain.enums.StatusFlagType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,4 +13,5 @@ import java.util.UUID;
 public interface PlayerStatusFlagRepository extends JpaRepository<PlayerStatusFlag, Long> {
     List<PlayerStatusFlag> findByPlayerPlayerId(UUID playerId);
     List<PlayerStatusFlag> findByPlayerPlayerIdAndFlag(UUID playerId, StatusFlagType flag);
+    List<PlayerStatusFlag> findByPlayerPlayerIdAndExpiresAtAfter(UUID playerId, LocalDateTime dateTime);
 }

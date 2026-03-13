@@ -2,6 +2,7 @@ package com.lifeos.quest.service;
 
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.dto.QuestRequest;
+import com.lifeos.quest.repository.QuestRepository;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -17,4 +18,6 @@ public interface QuestLifecycleService {
     void failQuest(UUID questId);
     
     void expireQuest(UUID questId);
+    
+    QuestRepository getQuestRepository();
 }
