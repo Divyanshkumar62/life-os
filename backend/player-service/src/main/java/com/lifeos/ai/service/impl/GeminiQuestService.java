@@ -32,7 +32,7 @@ public class GeminiQuestService implements AIQuestService {
 
     private static final Logger log = LoggerFactory.getLogger(GeminiQuestService.class);
 
-    @Value("${spring.ai.gemini.api-key:AIzaSyATO3drTMAaxXi-DONJyBgxr_PcVXX5wek}")
+    @Value("${spring.ai.gemini.api-key}")
     private String apiKey;
 
     @Value("${spring.ai.gemini.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent}")

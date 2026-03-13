@@ -33,4 +33,5 @@ yarn-error.log*
 # Firebase/Secret configs (keep these out of version control)
 docs/*-firebase-adminsdk*.json
 docs/google-services.json
+backend/player-service/.env
 
