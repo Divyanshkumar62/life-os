@@ -45,14 +45,17 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     };
 
     const handleAnalysisNext = async (data: Record<string, string>) => {
-        // Submit "Questionnaire" (System Analysis)
+        // Submit awakening questionnaire
         if (playerId) {
             const payload = {
-                goals: [data.desire],
-                weaknesses: [data.struggle],
-                personalContext: `Survival Style: ${data.weapon}`
+                archetype: data.archetype || 'BALANCE',
+                primaryWeakness: data.struggle || '',
+                mainGoal: data.desire || '',
+                biggestChallenge: data.struggle || '',
+                availableTime: '2-4 hours',
+                focusArea: data.weapon || 'Mental'
             };
-            await apiCall(`/${playerId}/questionnaire`, 'POST', payload);
+            await apiCall(`/${playerId}/awakening`, 'POST', payload);
         }
         // Move to Loading (Calculations)
         setStep('loading');
@@ -63,14 +66,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         setStep('awakening');
     };
 
-    const handleAwakeningNext = async (stats: Record<string, number>) => {
-        // Submit Stats (Calibration)
-        if (playerId) {
-            const payload = {
-                attributeRatings: stats
-            };
-            await apiCall(`/${playerId}/calibrate`, 'POST', payload);
-        }
+    const handleAwakeningNext = async () => {
+        // Stats calibration is now handled within awakening in backend
+        // Just proceed to trial
         setStep('trial');
     };
 

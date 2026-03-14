@@ -28,6 +28,9 @@ export const QuestAPI = {
     completeQuest: async (questId: string) => {
         return await api.post(`/quests/${questId}/complete`);
     },
+    failQuest: async (questId: string) => {
+        return await api.post(`/quests/${questId}/fail`);
+    },
     getActiveQuests: async (playerId: string) => {
         return await api.get(`/quests/active?playerId=${playerId}`);
     }
@@ -99,5 +102,20 @@ export const JobChangeAPI = {
     },
     failQuest: async (questId: string) => {
         return await api.post(`/player/job-change/quest/${questId}/fail`);
+    }
+};
+
+export const ProgressionAPI = {
+    checkGate: async (playerId: string) => {
+        return await api.get(`/progression/${playerId}/check-gate`);
+    },
+    canPromote: async (playerId: string) => {
+        return await api.get(`/progression/${playerId}/can-promote`);
+    },
+    requestPromotion: async (playerId: string) => {
+        return await api.post(`/progression/${playerId}/request-promotion`);
+    },
+    processOutcome: async (playerId: string, success: boolean) => {
+        return await api.post(`/progression/${playerId}/process-outcome?success=${success}`);
     }
 };

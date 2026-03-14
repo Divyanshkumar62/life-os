@@ -53,6 +53,27 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
     // Secondary Data State (Consider abstracting these later)
     const [activeQuests, setActiveQuests] = useState<any[]>([]);
 
+    // Get user name and rank from status window
+    const playerName = statusWindow?.identity?.username || statusWindow?.identity?.title || 'Hunter';
+    const playerRank = statusWindow?.identity?.rank || 'E';
+    
+    // Map rank to system daily count
+    const rankToDailyCount: Record<string, number> = {
+        'F': 1, 'E': 2, 'D': 3, 'C': 4, 'B': 4, 'A': 5, 'S': 5
+    };
+    const maxDailyQuests = rankToDailyCount[playerRank] || 2;
+
+    // Map backend quest to UI quest
+    const mapBackendQuest = (q: any) => ({
+        id: q.questId || q.id,
+        title: q.title,
+        goal: q.description || 'Complete',
+        current: q.currentProgress || 0,
+        target: q.targetProgress || 1,
+        reward: q.successXp ? `${q.successXp} XP` : '',
+        completed: q.state === 'COMPLETED'
+    });
+
     useEffect(() => {
         if (playerId) {
             Promise.all([
@@ -130,7 +151,7 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
 
             {/* Top Bar */}
             <TopBar
-                userName={"Hunter"}
+                userName={playerName}
                 systemStatus={isRedGateActive ? "maintenance" : "online"}
             />
 
@@ -183,15 +204,7 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                     <CurrentStatusPanel />
 
                     <DailyQuestsPanel
-                        quests={activeQuests.map((q: any) => ({
-                            id: q.id,
-                            title: q.title,
-                            goal: q.goal || 'Complete',
-                            current: q.currentProgress,
-                            target: q.targetProgress,
-                            reward: q.rewardText,
-                            completed: q.completed
-                        }))}
+                        quests={activeQuests.map(mapBackendQuest)}
                         onQuestToggle={async (id, completed) => {
                             if (!completed) {
                                 try {
@@ -214,7 +227,7 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
 
                     <CapacityPanel
                         activeQuests={activeQuests.length}
-                        maxQuests={10}
+                        maxQuests={maxDailyQuests}
                         inventoryLoad={0}
                         equippedSkills={[]}
                     />

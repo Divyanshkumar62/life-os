@@ -1,10 +1,40 @@
+import { useState, useEffect } from 'react';
+import { QuestAPI } from '../../api/api';
 // import { clsx } from "clsx";
 
 interface ActiveMissionsViewProps {
     onBack?: () => void;
+    playerId?: string | null;
 }
 
-export function ActiveMissionsView({ onBack }: ActiveMissionsViewProps) {
+interface Quest {
+    questId: string;
+    title: string;
+    description: string;
+    state: string;
+    difficultyTier?: string;
+    questType?: string;
+    deadlineAt?: string;
+}
+
+export function ActiveMissionsView({ onBack, playerId }: ActiveMissionsViewProps) {
+    const [quests, setQuests] = useState<Quest[]>([]);
+
+    useEffect(() => {
+        if (playerId) {
+            QuestAPI.getActiveQuests(playerId)
+                .then((data) => {
+                    setQuests(data || []);
+                })
+                .catch((err) => {
+                    console.error("Failed to fetch quests:", err);
+                });
+        }
+    }, [playerId]);
+
+    const activeQuests = quests.filter(q => q.state === 'ACTIVE');
+    const maxSlots = 1; // Default, should come from player rank
+    const usedSlots = activeQuests.length;
     return (
         <div className="min-h-screen w-full bg-[#050911] text-white flex flex-col font-mono selection:bg-cyan-500/30 overflow-x-hidden">
 
@@ -74,24 +104,29 @@ export function ActiveMissionsView({ onBack }: ActiveMissionsViewProps) {
                             <div>
                                 <div className="text-[10px] tracking-[0.2em] text-gray-400 font-bold mb-1">SLOT UTILIZATION</div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-5xl font-mono text-white">1/1</span>
+                                    <span className="text-5xl font-mono text-white">{usedSlots}/{maxSlots}</span>
                                     <span className="text-xs tracking-widest text-purple-400 font-bold uppercase">Slots Engaged</span>
                                 </div>
                             </div>
                             <div className="text-right">
                                 <div className="text-[10px] tracking-[0.2em] text-gray-400 font-bold mb-1">SYSTEM CAPACITY LOAD</div>
-                                <div className="text-right text-cyan-400 font-bold text-sm">100%</div>
+                                <div className="text-right text-cyan-400 font-bold text-sm">{maxSlots > 0 ? Math.round((usedSlots / maxSlots) * 100) : 0}%</div>
                             </div>
                         </div>
 
                         {/* Progress Bar */}
                         <div className="relative h-4 bg-gray-900 w-full mb-3 rounded-sm overflow-hidden">
                             <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(147,51,234,0.1),rgba(147,51,234,0.1)_10px,transparent_10px,transparent_20px)] opacity-50" />
-                            <div className="h-full bg-gradient-to-r from-purple-600 to-purple-500 w-full shadow-[0_0_15px_rgba(168,85,247,0.5)] bg-[length:20px_20px] bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)]" />
+                            <div 
+                                className="h-full bg-gradient-to-r from-purple-600 to-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.5)]" 
+                                style={{ width: `${maxSlots > 0 ? (usedSlots / maxSlots) * 100 : 0}%` }}
+                            />
                         </div>
 
                         <div className="text-[9px] font-mono text-red-400 tracking-wider">
-                            &gt; WARNING: MAXIMUM CAPACITY REACHED. COMPLETE ACTIVE MISSION TO FREE RESOURCES.
+                            {usedSlots >= maxSlots 
+                                ? "> WARNING: MAXIMUM CAPACITY REACHED. COMPLETE ACTIVE MISSION TO FREE RESOURCES."
+                                : "> System capacity available. New missions can be initiated."}
                         </div>
                     </div>
 

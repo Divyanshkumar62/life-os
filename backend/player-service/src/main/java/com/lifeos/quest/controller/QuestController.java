@@ -1,6 +1,7 @@
 package com.lifeos.quest.controller;
 
 import com.lifeos.quest.domain.Quest;
+import com.lifeos.quest.domain.enums.QuestState;
 import com.lifeos.quest.dto.QuestRequest;
 import com.lifeos.quest.service.QuestLifecycleService;
 import com.lifeos.quest.service.RedGateService;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -51,6 +53,13 @@ public class QuestController {
     public ResponseEntity<Void> failRedGate(@PathVariable UUID playerId) {
         redGateService.failRedGate(playerId);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<Quest>> getActiveQuests(@RequestParam UUID playerId) {
+        log.info("Fetching active quests for player: {}", playerId);
+        List<Quest> activeQuests = questService.getActiveQuests(playerId);
+        return ResponseEntity.ok(activeQuests);
     }
 
     @PostMapping

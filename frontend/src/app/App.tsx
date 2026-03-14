@@ -115,7 +115,7 @@ function AppContent({
 
   if (currentScreen === "missions") {
     console.log("Rendering ActiveMissionsView");
-    return <ActiveMissionsView onBack={() => setCurrentScreen("dashboard")} />;
+    return <ActiveMissionsView playerId={playerId} onBack={() => setCurrentScreen("dashboard")} />;
   }
 
   if (currentScreen === "store") {

@@ -5,6 +5,7 @@ import com.lifeos.quest.dto.QuestRequest;
 import com.lifeos.quest.repository.QuestRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -18,6 +19,8 @@ public interface QuestLifecycleService {
     void failQuest(UUID questId);
     
     void expireQuest(UUID questId);
+    
+    List<Quest> getActiveQuests(UUID playerId);
     
     QuestRepository getQuestRepository();
 }

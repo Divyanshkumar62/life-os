@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -294,6 +295,12 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
 
         // Emit Event
         domainEventPublisher.publish(new QuestExpiredEvent(quest.getPlayer().getPlayerId(), questId, quest.getTitle()));
+    }
+
+    @Override
+    public List<Quest> getActiveQuests(UUID playerId) {
+        log.info("Fetching active quests for player: {}", playerId);
+        return questRepository.findByPlayerPlayerIdAndState(playerId, QuestState.ACTIVE);
     }
 
     private boolean hasBlockingQuest(UUID playerId) {
