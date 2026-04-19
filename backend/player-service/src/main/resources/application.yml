@@ -12,46 +12,16 @@ spring:
   h2:
     console:
       enabled: true
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:-test-fake-key}
+      url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent
 
 gemini:
   api:
-    key: ${GEMINI_API_KEY}
+    key: ${GEMINI_API_KEY:-test-fake-key}
     url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent
 
----
-spring:
-  config:
-    activate:
-      on-profile: mysql
-  datasource:
-    url: jdbc:mysql://localhost:3306/lifedb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        type:
-          preferred_boolean_jdbc_type: BOOLEAN
-        mapping:
-          force_enums_to_string: true
-    show-sql: true
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  datasource:
-    url: jdbc:mysql://localhost:3306/lifedb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
-    username: root
-    password: ${DB_PASSWORD}
-  jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
-    hibernate:
-      ddl-auto: validate
 ---
 spring:
   config:
@@ -66,16 +36,20 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:-test-fake-key}
+      url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent
+
 ---
 spring:
   config:
     activate:
       on-profile: test-mysql
   datasource:
-    url: jdbc:mysql://localhost:3306/lifedb_test?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: root
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
+    username: sa
+    password: password
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
@@ -86,4 +60,10 @@ spring:
           preferred_boolean_jdbc_type: BOOLEAN
         mapping:
           force_enums_to_string: true
-    show-sql: false
+  h2:
+    console:
+      enabled: false
+  ai:
+    gemini:
+      api-key: test-key-do-not-use-in-prod
+      url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent

@@ -24,7 +24,7 @@ public class JobChangeQuest {
     @JoinColumn(name = "player_id", nullable = false)
     private PlayerIdentity player;
 
-    @Column(nullable = false)
+    @Column(name = "day_number", nullable = false)
     private int day; // 1, 2, or 3
 
     @Column(nullable = false)

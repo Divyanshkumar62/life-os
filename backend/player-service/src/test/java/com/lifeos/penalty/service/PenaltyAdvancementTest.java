@@ -65,13 +65,14 @@ class PenaltyAdvancementTest {
 
     @BeforeEach
     void setUp() {
-        // Initialize DailyQuestService manually
+        // Initialize DailyQuestService manually (requires 6 params now)
         dailyQuestService = new DailyQuestService(
             identityRepository,
             profileRepository,
             questLifecycleService,
             playerStateService,
-            intelQuestGenerator
+            intelQuestGenerator,
+            mock(com.lifeos.quest.service.RedGateService.class)
         );
         
         playerId = UUID.randomUUID();
