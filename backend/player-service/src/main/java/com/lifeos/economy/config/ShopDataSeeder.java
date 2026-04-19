@@ -36,25 +36,24 @@ public class ShopDataSeeder implements CommandLineRunner {
 
         seedItemIfNotExists("RUNESTONE_STEALTH", "Runestone: Stealth",
                 "Advanced rune. (Effect: Pauses daily quest generation and streak tracking for 3 days).",
-                25000L, ShopCategory.UPGRADE, 1, PlayerRank.B, "https://example.com/icons/rune-stealth.png");
+                25000, ShopCategory.UPGRADE, PlayerRank.B);
 
         seedItemIfNotExists("RUNESTONE_MUTILATE", "Runestone: Mutilate",
                 "Violent intervention. (Effect: Instantly completes and bypasses 1 active Dungeon Floor).",
-                15000L, ShopCategory.UPGRADE, 3, PlayerRank.C, "https://example.com/icons/rune-mutilate.png");
+                15000, ShopCategory.UPGRADE, PlayerRank.C);
 
         seedItemIfNotExists("S_RANK_RED_GATE_KEY", "S-Rank Red Gate Key",
                 "A key pulsating with dark energy. (Effect: Forces entry into an S-Rank 'System Anomaly' Red Gate. High death risk).",
-                50000L, ShopCategory.KEY, 1, PlayerRank.A, "https://example.com/icons/key-red-gate.png");
+                50000, ShopCategory.KEY, PlayerRank.A);
 
         seedItemIfNotExists("COMMAND_ARISE", "Command: Arise",
                 "The Sovereign's authority. (Effect: Converts a historically failed Project into a completed 'Shadow' status).",
-                100000L, ShopCategory.UPGRADE, 1, PlayerRank.S, "https://example.com/icons/command-arise.png");
+                100000, ShopCategory.UPGRADE, PlayerRank.S);
 
         log.info("Shop Catalog Seeding Complete.");
     }
 
-    private void seedItemIfNotExists(String code, String name, String description, long cost, 
-                                     ShopCategory category, Integer stockLimit, PlayerRank rank, String imageUrl) {
+    private void seedItemIfNotExists(String code, String name, String description, long cost, ShopCategory category, PlayerRank rankRequirement) {
         if (shopItemRepository.findByCode(code).isEmpty()) {
             ShopItem item = ShopItem.builder()
                     .code(code)
@@ -62,9 +61,7 @@ public class ShopDataSeeder implements CommandLineRunner {
                     .description(description)
                     .cost(cost)
                     .category(category)
-                    .stockLimit(stockLimit)
-                    .rankRequirement(rank)
-                    .imageUrl(imageUrl)
+                    .rankRequirement(rankRequirement)
                     .build();
             shopItemRepository.save(item);
             log.info("Seeded new item: {}", name);

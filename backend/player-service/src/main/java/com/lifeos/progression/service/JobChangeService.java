@@ -16,8 +16,8 @@ import com.lifeos.progression.domain.JobChangeQuest;
 import com.lifeos.progression.repository.JobChangeQuestRepository;
 import com.lifeos.notification.service.PushNotificationService;
 import com.lifeos.project.service.ProjectService;
-import com.lifeos.shop.domain.ShopItem;
-import com.lifeos.shop.repository.ShopItemRepository;
+import com.lifeos.economy.domain.ShopItem;
+import com.lifeos.economy.repository.ShopItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -282,13 +282,13 @@ public class JobChangeService {
         log.info("Awarded {} gold to player {}", JOB_CHANGE_REWARD_GOLD, playerId);
 
         List<ShopItem> aRankItems = shopItemRepository.findAll().stream()
-                .filter(item -> "A-RANK".equals(item.getRarity()) && item.isActive())
+                .filter(item -> item.getRankRequirement() == com.lifeos.player.domain.enums.PlayerRank.A)
                 .limit(JOB_CHANGE_REWARD_A_ITEMS)
                 .toList();
 
         for (ShopItem item : aRankItems) {
             inventoryService.addItem(playerId, item.getItemId(), 1);
-            log.info("Awarded A-rank item: {} to player {}", item.getItemName(), playerId);
+            log.info("Awarded A-rank item: {} to player {}", item.getName(), playerId);
         }
 
         String themeCode = getThemeForClass(jobClass);
@@ -376,7 +376,7 @@ public class JobChangeService {
         }
 
         List<ShopItem> elixirItems = shopItemRepository.findAll().stream()
-                .filter(item -> ELIXIR_ITEM_CODE.equals(item.getItemCode()) && item.isActive())
+                .filter(item -> ELIXIR_ITEM_CODE.equals(item.getCode()))
                 .toList();
 
         if (elixirItems.isEmpty()) {

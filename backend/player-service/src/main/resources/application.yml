@@ -1,6 +1,8 @@
 spring:
   application:
     name: player-service
+  main:
+    allow-bean-definition-overriding-by-name: true
   datasource:
     url: jdbc:h2:mem:lifedb
     username: sa
