@@ -22,6 +22,10 @@ public enum SystemMessageType {
     // Streak
     STREAK_BROKEN("Streak terminated.\nConsistency record reset.", SystemVoiceMode.FAILURE, true),
     
+    // Leveling
+    LEVEL_UP("Level Up detected.\nGrade adjusted.", SystemVoiceMode.REWARD, true),
+    LEVEL_UP_REWARD("Progression milestone achieved.\nStat points allocated.", SystemVoiceMode.REWARD, false),
+
     // Generic
     SYSTEM_NOTICE("System Notice.", SystemVoiceMode.NEUTRAL, false);
 

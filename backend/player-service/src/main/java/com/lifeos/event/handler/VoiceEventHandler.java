@@ -7,18 +7,21 @@ import com.lifeos.voice.domain.enums.SystemMessageType;
 import com.lifeos.voice.service.SystemVoiceService;
 import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.player.domain.enums.StatusFlagType;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class VoiceEventHandler implements DomainEventHandler<DomainEvent> {
 
     private final SystemVoiceService voiceService;
     private final PlayerStateService playerStateService;
+
+    public VoiceEventHandler(SystemVoiceService voiceService, PlayerStateService playerStateService) {
+        this.voiceService = voiceService;
+        this.playerStateService = playerStateService;
+    }
 
     @Override
     public boolean supports(DomainEvent event) {

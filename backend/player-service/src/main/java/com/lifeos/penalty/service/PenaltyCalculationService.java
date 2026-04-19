@@ -19,13 +19,10 @@ public class PenaltyCalculationService {
         // 1. Determine Severity based on FailureReason and Quest Priority/Diff
         PenaltySeverity severity = determineSeverity(quest, reason);
 
-        // 2. Base XP Penalty
-        long xpPenalty = calculateBaseXpPenalty(quest.getDifficultyTier());
-
-        // 3. Build Definition based on Severity
+        // 2. Build Definition based on Severity (NO XP DRAIN as per v1.1 PRD)
         var builder = PenaltyDefinition.builder()
                 .severity(severity)
-                .xpDeduction(xpPenalty); // Initial base
+                .xpDeduction(0L); // Force 0 to ensure no level regression
 
         switch (severity) {
             case LOW -> {
@@ -77,6 +74,7 @@ public class PenaltyCalculationService {
             case A -> 40;
             case S -> 60;
             case RED -> 100;
+            case TIER_1, TIER_2, TIER_3, TIER_4, TIER_5, TIER_6 -> 20;
         };
     }
 

@@ -4,5 +4,6 @@ public enum ProjectStatus {
     ACTIVE,
     COMPLETED,
     FAILED,
-    ABANDONED
+    ABANDONED,
+    SUSPENDED
 }

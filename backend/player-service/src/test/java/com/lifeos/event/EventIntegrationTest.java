@@ -11,17 +11,17 @@ import com.lifeos.quest.service.QuestLifecycleService;
 import com.lifeos.quest.domain.enums.DifficultyTier;
 import com.lifeos.quest.domain.enums.Priority;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.ApplicationContext;
 
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
+@ActiveProfiles("test-mysql")
 public class EventIntegrationTest {
 
     @Autowired

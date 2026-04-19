@@ -13,24 +13,55 @@ import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.voice.domain.enums.SystemMessageType;
 import com.lifeos.voice.event.VoiceSystemEvent;
+import com.lifeos.player.repository.PlayerIdentityRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import com.lifeos.system.service.SystemVoiceService;
+import com.lifeos.system.domain.enums.SystemEventType;
+import org.springframework.context.annotation.Lazy;
 
 @Service
-@RequiredArgsConstructor
 public class ProgressionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgressionService.class);
 
     private final PlayerStateService playerStateService;
     private final PenaltyService penaltyService;
     private final QuestRepository questRepository;
     private final UserBossKeyRepository bossKeyRepository;
     private final RankExamAttemptRepository examAttemptRepository;
+    private final PlayerIdentityRepository playerIdentityRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final com.lifeos.ai.service.AIQuestService aiQuestService;
+    private final com.lifeos.quest.service.QuestLifecycleService questLifecycleService;
+    private final SystemVoiceService systemVoiceService;
+
+    public ProgressionService(PlayerStateService playerStateService, @Lazy PenaltyService penaltyService,
+                            QuestRepository questRepository, UserBossKeyRepository bossKeyRepository,
+                            RankExamAttemptRepository examAttemptRepository,
+                            PlayerIdentityRepository playerIdentityRepository,
+                            ApplicationEventPublisher eventPublisher,
+                            com.lifeos.ai.service.AIQuestService aiQuestService,
+                            @Lazy com.lifeos.quest.service.QuestLifecycleService questLifecycleService,
+                            SystemVoiceService systemVoiceService) {
+        this.playerStateService = playerStateService;
+        this.penaltyService = penaltyService;
+        this.questRepository = questRepository;
+        this.bossKeyRepository = bossKeyRepository;
+        this.examAttemptRepository = examAttemptRepository;
+        this.playerIdentityRepository = playerIdentityRepository;
+        this.eventPublisher = eventPublisher;
+        this.aiQuestService = aiQuestService;
+        this.questLifecycleService = questLifecycleService;
+        this.systemVoiceService = systemVoiceService;
+    }
 
     /**
      * Checks if player is at Rank Gate (Level == Cap).
@@ -90,7 +121,9 @@ public class ProgressionService {
      */
     @Transactional
     public RankExamAttempt requestPromotion(UUID playerId) {
+        log.info("Promotion request for player: {}", playerId);
         if (!canRequestPromotion(playerId)) {
+            log.warn("Player {} is not eligible for promotion", playerId);
             throw new IllegalStateException("Player is not eligible for promotion.");
         }
         
@@ -98,11 +131,19 @@ public class ProgressionService {
         var currentRank = state.getProgression().getRank();
         var template = com.lifeos.progression.domain.RankTransitionTemplate.from(currentRank);
         
+        log.info("Current rank: {}, Next rank: {}, Key cost: {}", currentRank, currentRank.next(), template.getBossKeyCost());
+
+        // Fetch full player entity
+        var player = playerIdentityRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalStateException("Player entity not found"));
+
         // Consume rank-specific Boss Keys
         UserBossKey bossKey = bossKeyRepository.findByPlayerPlayerIdAndRank(playerId, currentRank)
                 .orElseThrow(() -> new IllegalStateException("Boss keys not found"));
         
         if (bossKey.getKeyCount() < template.getBossKeyCost()) {
+            log.error("Player {} does not have enough boss keys. Required: {}, Found: {}", 
+                playerId, template.getBossKeyCost(), bossKey.getKeyCount());
             throw new IllegalStateException("Insufficient boss keys");
         }
         
@@ -111,45 +152,41 @@ public class ProgressionService {
         
         // Create RankExamAttempt record
         RankExamAttempt attempt = RankExamAttempt.builder()
-                .player(state.getIdentity() != null ? null : null) // TODO: Fetch full player entity
+                .player(player)
                 .fromRank(currentRank)
                 .toRank(currentRank.next())
                 .status(ExamStatus.UNLOCKED)
                 .requiredKeys(template.getBossKeyCost())
                 .consumedKeys(template.getBossKeyCost())
-                .attemptNumber(1) // TODO: Calculate actual attempt number
+                .attemptNumber(1) 
                 .unlockedAt(LocalDateTime.now())
                 .build();
         
         attempt = examAttemptRepository.save(attempt);
         
-        // SPAWN PROMOTION QUEST
-        Quest examQuest = Quest.builder()
-                .player(state.getIdentity() != null ? com.lifeos.player.domain.PlayerIdentity.builder().playerId(playerId).build() : null)
-                .title("Rank Exam: " + currentRank + " -> " + currentRank.next())
-                .description("Prove your worth. Failure results in immediate Penalty Zone.")
-                .category(com.lifeos.quest.domain.enums.QuestCategory.MAIN) // or SYSTEM_DAILY? MAIN seems appropriate for Exam.
-                .difficultyTier(com.lifeos.quest.domain.enums.DifficultyTier.RED) // Exams are hard
-                .state(com.lifeos.quest.domain.enums.QuestState.ACTIVE)
-                .priority(com.lifeos.quest.domain.enums.Priority.CRITICAL)
-                .questType(com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM)
-                .assignedAt(LocalDateTime.now())
-                .startsAt(LocalDateTime.now())
-                .deadlineAt(LocalDateTime.now().plusDays(7)) // Default 7 days, should come from Template ideally
-                .systemMutable(false)
-                .primaryAttribute(null) // No single stats, holistic
-                .build();
+        // SPAWN AI PROMOTION QUEST
+        var questRequest = aiQuestService.generatePromotionExam(playerId, currentRank, currentRank.next());
+        if (questRequest == null) {
+            log.error("Failed to generate AI promotion exam for player {}", playerId);
+            throw new IllegalStateException("System could not generate trial. Ascension delayed.");
+        }
         
-        questRepository.save(examQuest);
+        // Ensure quest type is correct
+        questRequest.setQuestType(com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM);
         
-        System.out.println(String.format("Promotion requested: %s -> %s. Keys consumed: %d. Exam Quest Spawned.", 
-            currentRank, currentRank.next(), template.getBossKeyCost()));
+        // Assign via Lifecycle Service to get links and outcome profiles
+        questLifecycleService.assignQuest(questRequest);
+        
+        log.info("Promotion initiated with AI trial for player {}. Exam ID: {}", 
+            playerId, attempt.getId());
             
-        // VOICE: PROMOTION_UNLOCKED (Quest is now Active)
+        // VOICE: PROMOTION_UNLOCKED
         eventPublisher.publishEvent(VoiceSystemEvent.builder()
                 .playerId(playerId)
                 .type(SystemMessageType.PROMOTION_UNLOCKED)
                 .build());
+                
+        systemVoiceService.emitEvent(playerId, SystemEventType.PROMOTION_UPDATE, "Promotion Exam Unlocked. Prepare yourself.");
         
         return attempt;
     }
@@ -183,13 +220,15 @@ public class ProgressionService {
             
             playerStateService.promoteRank(playerId);
             
-            System.out.println("Rank Advanced for player " + playerId);
+            log.info("Rank Advanced for player {}: {} -> {}", playerId, attempt.getFromRank(), attempt.getToRank());
             
             // VOICE: PROMOTION_PASSED
             eventPublisher.publishEvent(VoiceSystemEvent.builder()
                         .playerId(playerId)
                         .type(SystemMessageType.PROMOTION_PASSED)
                         .build());
+                        
+            systemVoiceService.emitEvent(playerId, SystemEventType.PROMOTION_UPDATE, "Promotion Successful. Your Rank has increased.");
         } else {
             // FAILURE: Mark attempt as failed
             // Keys are LOST (already consumed)
@@ -200,13 +239,15 @@ public class ProgressionService {
             
             penaltyService.enterPenaltyZone(playerId, "Failed Rank Exam: " + attempt.getFromRank() + " -> " + attempt.getToRank());
             
-            System.out.println("Promotion Failed. ENTERING PENALTY ZONE.");
+            log.warn("Promotion Failed for player {}. ENTERING PENALTY ZONE. Reason: Failed Exam", playerId);
             
             // VOICE: PROMOTION_FAILED
             eventPublisher.publishEvent(VoiceSystemEvent.builder()
                         .playerId(playerId)
                         .type(SystemMessageType.PROMOTION_FAILED)
                         .build());
+                        
+            systemVoiceService.emitEvent(playerId, SystemEventType.PENALTY_ALERT, "Promotion Failed. Penalty Zone Initiated.");
         }
     }
 }

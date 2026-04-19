@@ -2,7 +2,8 @@ package com.lifeos.player.state;
 
 import com.lifeos.event.concrete.*;
 
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,10 +12,14 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 public class PlayerStateEventHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(PlayerStateEventHandler.class);
     private final PlayerStateRepository repository;
+
+    public PlayerStateEventHandler(PlayerStateRepository repository) {
+        this.repository = repository;
+    }
 
     @EventListener
     @Transactional

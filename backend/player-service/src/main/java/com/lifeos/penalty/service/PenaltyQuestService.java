@@ -7,7 +7,6 @@ import com.lifeos.penalty.domain.enums.PenaltyQuestType;
 import com.lifeos.penalty.domain.enums.PenaltyTriggerReason;
 import com.lifeos.penalty.domain.enums.WorkSource;
 import com.lifeos.penalty.repository.PenaltyQuestRepository;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class PenaltyQuestService {
 
     private static final Logger log = LoggerFactory.getLogger(PenaltyQuestService.class);
@@ -27,6 +25,11 @@ public class PenaltyQuestService {
 
     private final PenaltyQuestRepository questRepository;
     private final DomainEventPublisher eventPublisher;
+
+    public PenaltyQuestService(PenaltyQuestRepository questRepository, DomainEventPublisher eventPublisher) {
+        this.questRepository = questRepository;
+        this.eventPublisher = eventPublisher;
+    }
 
     @Transactional
     public void generatePenaltyQuest(UUID playerId, PenaltyTriggerReason reason) {

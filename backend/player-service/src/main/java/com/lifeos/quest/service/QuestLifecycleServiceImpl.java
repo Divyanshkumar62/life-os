@@ -20,18 +20,22 @@ import com.lifeos.quest.repository.QuestOutcomeProfileRepository;
 import com.lifeos.quest.repository.QuestMutationLogRepository;
 import com.lifeos.quest.repository.PlayerQuestLinkRepository;
 import com.lifeos.player.domain.enums.StatusFlagType;
-import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class QuestLifecycleServiceImpl implements QuestLifecycleService {
 
+    private static final Logger log = LoggerFactory.getLogger(QuestLifecycleServiceImpl.class);
+    
     private final QuestRepository questRepository;
     private final QuestOutcomeProfileRepository outcomeRepository;
     private final QuestMutationLogRepository mutationLogRepository;
@@ -46,28 +50,69 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     // Event Publisher
     private final DomainEventPublisher domainEventPublisher;
 
+    public QuestLifecycleServiceImpl(QuestRepository questRepository, QuestOutcomeProfileRepository outcomeRepository,
+                                   QuestMutationLogRepository mutationLogRepository, PlayerQuestLinkRepository linkRepository,
+                                   @Lazy com.lifeos.penalty.service.PenaltyService penaltyService,
+                                   @Lazy com.lifeos.progression.service.ProgressionService progressionService,
+                                   PlayerStateService playerStateService,
+                                   com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository,
+                                   DomainEventPublisher domainEventPublisher) {
+        this.questRepository = questRepository;
+        this.outcomeRepository = outcomeRepository;
+        this.mutationLogRepository = mutationLogRepository;
+        this.linkRepository = linkRepository;
+        this.penaltyService = penaltyService;
+        this.progressionService = progressionService;
+        this.playerStateService = playerStateService;
+        this.playerIdentityRepository = playerIdentityRepository;
+        this.domainEventPublisher = domainEventPublisher;
+    }
+
+    @Override
+    public QuestRepository getQuestRepository() {
+        return questRepository;
+    }
+
 
     @Override
     @Transactional
     public Quest assignQuest(QuestRequest request) {
+        log.info("QUEST SERVICE: Assigning quest '{}' for player {}", request.getTitle(), request.getPlayerId());
+        
         var player = playerIdentityRepository.findById(request.getPlayerId())
-                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+                .orElseThrow(() -> {
+                    log.error("QUEST SERVICE: Player not found: {}", request.getPlayerId());
+                    return new IllegalArgumentException("Player not found");
+                });
+
+        log.debug("QUEST SERVICE: Found player: {}", player.getUsername());
 
         Quest quest = Quest.builder()
                 .player(player)
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .questType(request.getQuestType())
+                .category(QuestCategory.NORMAL) // Default to NORMAL if not specified
+                .primaryAttribute(request.getPrimaryAttribute())
                 .difficultyTier(request.getDifficultyTier())
                 .priority(request.getPriority())
                 .state(QuestState.ASSIGNED)
                 .deadlineAt(request.getDeadlineAt())
                 .systemMutable(request.isSystemMutable())
+                .egoBreakerFlag(request.isEgoBreakerFlag())
+                .expectedFailureProbability(request.getExpectedFailureProbability())
                 .build();
+        
+        // Blocking Logic: If a PENALTY or PROMOTION_EXAM quest is active, block everything else
+        if (request.getQuestType() != QuestType.PENALTY && request.getQuestType() != QuestType.PROMOTION_EXAM && hasBlockingQuest(player.getPlayerId())) {
+            log.warn("QUEST SERVICE: Blocking quest assignment - player has active PENALTY or PROMOTION_EXAM");
+            throw new IllegalStateException("A mandatory trial is active. You must focus on your current objective.");
+        }
         
         // Invariant check: RED -> egoBreaker handled by @PrePersist in Entity, but good to be aware.
         
         quest = questRepository.save(quest);
+        log.info("QUEST SERVICE: Quest saved with ID: {}", quest.getQuestId());
 
         // Create Outcome Profile
         QuestOutcomeProfile outcome = QuestOutcomeProfile.builder()
@@ -78,6 +123,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
                 .attributeDeltaJson(request.getAttributeDeltas())
                 .build();
         outcomeRepository.save(outcome);
+        log.debug("QUEST SERVICE: Outcome profile saved");
 
         // Create Link (Projection)
         PlayerQuestLink link = PlayerQuestLink.builder()
@@ -140,20 +186,38 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     @Override
     @Transactional
     public void completeQuest(UUID questId) {
+        log.info("=== COMPLETE QUEST called for: {}", questId);
+        
         Quest quest = questRepository.findById(questId)
-                .orElseThrow(() -> new IllegalArgumentException("Quest not found"));
+                .orElseThrow(() -> {
+                    log.error("Quest not found: {}", questId);
+                    return new IllegalArgumentException("Quest not found: " + questId);
+                });
+
+        log.info("Found quest: {} with state: {}", quest.getTitle(), quest.getState());
 
         if (quest.getState() != QuestState.ACTIVE) {
+            log.error("Quest {} is not ACTIVE, current state: {}", questId, quest.getState());
             throw new IllegalStateException("Quest must be ACTIVE to complete. Current: " + quest.getState());
         }
 
-        if (quest.getDeadlineAt() != null && LocalDateTime.now().isAfter(quest.getDeadlineAt())) {
-            throw new IllegalStateException("Quest has expired, cannot complete.");
+        // Blocking Logic: If a PENALTY or PROMOTION_EXAM quest is active, block everything else
+        if (quest.getQuestType() != QuestType.PENALTY && quest.getQuestType() != QuestType.PROMOTION_EXAM && hasBlockingQuest(quest.getPlayer().getPlayerId())) {
+            log.warn("Blocking quest completion - player has PENALTY or PROMOTION_EXAM");
+            throw new IllegalStateException("A mandatory trial is active. You must focus on your current objective.");
+        }
+
+        // SYSTEM AUTHORITY: Server-side temporal evaluation strictly enforced.
+        LocalDateTime actualServerTime = LocalDateTime.now();
+        if (quest.getDeadlineAt() != null && actualServerTime.isAfter(quest.getDeadlineAt())) {
+            log.error("Quest {} has expired. Deadline: {}, Now: {}", questId, quest.getDeadlineAt(), actualServerTime);
+            throw new com.lifeos.system.exception.SystemAuthorityException("Quest has expired relative to Server Time. Nice try, Hunter.");
         }
 
         // 1. Update Quest State
         quest.setState(QuestState.COMPLETED);
         questRepository.save(quest);
+        log.info("Quest {} state updated to COMPLETED", questId);
 
         // 2. Update Link
         var link = linkRepository.findByPlayerIdAndQuestId(quest.getPlayer().getPlayerId(), questId)
@@ -182,15 +246,20 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
                 .orElseThrow(() -> new IllegalArgumentException("Quest not found"));
 
         if (quest.getState() != QuestState.ACTIVE && quest.getState() != QuestState.ASSIGNED) {
-            // If already failed or completed, ignore? Or throw?
             throw new IllegalStateException("Quest is not in a fail-able state: " + quest.getState());
         }
 
         quest.setState(QuestState.FAILED);
         questRepository.save(quest);
 
-        // Apply Penalties
-        penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.FAILED);
+        // Apply Penalties ONLY for non-INTEL_GATHERING quests
+        // Intel quests: fail = no penalty, just blocks dungeon entry
+        if (quest.getQuestType() != QuestType.INTEL_GATHERING) {
+            log.info("Applying penalty for failed quest: {} (type: {})", quest.getTitle(), quest.getQuestType());
+            penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.FAILED);
+        } else {
+            log.info("Intel Quest failed: {} - No penalty applied, only dungeon entry blocked", quest.getTitle());
+        }
         
         // Update Link
         var link = linkRepository.findByPlayerIdAndQuestId(quest.getPlayer().getPlayerId(), questId)
@@ -226,5 +295,18 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
 
         // Emit Event
         domainEventPublisher.publish(new QuestExpiredEvent(quest.getPlayer().getPlayerId(), questId, quest.getTitle()));
+    }
+
+    @Override
+    public List<Quest> getActiveQuests(UUID playerId) {
+        log.info("Fetching active quests for player: {}", playerId);
+        return questRepository.findByPlayerPlayerIdAndState(playerId, QuestState.ACTIVE);
+    }
+
+    private boolean hasBlockingQuest(UUID playerId) {
+        return questRepository.findByPlayerPlayerIdAndQuestTypeAndState(playerId, QuestType.PENALTY, QuestState.ACTIVE).isPresent() ||
+               questRepository.findByPlayerPlayerIdAndQuestTypeAndState(playerId, QuestType.PENALTY, QuestState.ASSIGNED).isPresent() ||
+               questRepository.findByPlayerPlayerIdAndQuestTypeAndState(playerId, QuestType.PROMOTION_EXAM, QuestState.ACTIVE).isPresent() ||
+               questRepository.findByPlayerPlayerIdAndQuestTypeAndState(playerId, QuestType.PROMOTION_EXAM, QuestState.ASSIGNED).isPresent();
     }
 }

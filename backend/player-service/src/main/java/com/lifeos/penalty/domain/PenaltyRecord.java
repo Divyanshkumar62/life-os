@@ -29,11 +29,11 @@ public class PenaltyRecord {
     private UUID questId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private PenaltyType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private PenaltySeverity severity;
 
     @JdbcTypeCode(SqlTypes.JSON)

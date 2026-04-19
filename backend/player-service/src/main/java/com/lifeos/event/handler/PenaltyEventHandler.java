@@ -8,15 +8,18 @@ import com.lifeos.event.concrete.DailyQuestCompletedEvent;
 import com.lifeos.penalty.service.PenaltyService;
 import com.lifeos.penalty.service.PenaltyQuestService;
 import com.lifeos.penalty.domain.enums.WorkSource;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class PenaltyEventHandler implements DomainEventHandler<DomainEvent> {
 
     private final PenaltyService penaltyService;
     private final PenaltyQuestService penaltyQuestService;
+
+    public PenaltyEventHandler(PenaltyService penaltyService, PenaltyQuestService penaltyQuestService) {
+        this.penaltyService = penaltyService;
+        this.penaltyQuestService = penaltyQuestService;
+    }
 
     @Override
     public boolean supports(DomainEvent event) {

@@ -22,7 +22,6 @@ import java.util.UUID;
 import com.lifeos.economy.service.EconomyService;
 
 @Service
-@RequiredArgsConstructor
 public class RewardService {
 
     private final RewardRecordRepository rewardRepository;
@@ -32,7 +31,19 @@ public class RewardService {
     private final EconomyService economyService;
     private final StreakService streakService;
     private final ApplicationEventPublisher eventPublisher;
-    // OutcomeRepo needed? CalculationService uses it. RewardService just passes ID/Entity.
+
+    public RewardService(RewardRecordRepository rewardRepository, RewardCalculationService calculationService,
+                       PlayerStateService playerStateService, QuestRepository questRepository,
+                       EconomyService economyService, StreakService streakService,
+                       ApplicationEventPublisher eventPublisher) {
+        this.rewardRepository = rewardRepository;
+        this.calculationService = calculationService;
+        this.playerStateService = playerStateService;
+        this.questRepository = questRepository;
+        this.economyService = economyService;
+        this.streakService = streakService;
+        this.eventPublisher = eventPublisher;
+    }
     
     @Transactional
     public void applyReward(UUID questId, UUID playerId) {

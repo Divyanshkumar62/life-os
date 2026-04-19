@@ -26,24 +26,37 @@ public class PlayerProgression {
     private long currentXp;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "`rank`", nullable = false, columnDefinition = "VARCHAR(255)")
     private PlayerRank rank;
 
     @Column(name = "rank_progress_score")
     private double rankProgressScore;
 
+    @Column(name = "hunter_class")
+    private String hunterClass;
+
     @Column(name = "xp_frozen", nullable = false)
     private boolean xpFrozen = false;
+
+    @Column(name = "total_xp_accumulated")
+    private long totalXpAccumulated = 0;
+
+    @Column(name = "free_stat_points")
+    private int freeStatPoints = 0;
+    
+    @Column(name = "gold_balance")
+    private long gold = 0;
     
     public PlayerProgression() {}
 
-    public PlayerProgression(Long id, PlayerIdentity player, int level, long currentXp, PlayerRank rank, double rankProgressScore, boolean xpFrozen) {
+    public PlayerProgression(Long id, PlayerIdentity player, int level, long currentXp, PlayerRank rank, double rankProgressScore, String hunterClass, boolean xpFrozen) {
         this.id = id;
         this.player = player;
         this.level = level;
         this.currentXp = currentXp;
         this.rank = rank;
         this.rankProgressScore = rankProgressScore;
+        this.hunterClass = hunterClass;
         this.xpFrozen = xpFrozen;
     }
 
@@ -60,8 +73,16 @@ public class PlayerProgression {
     public void setRank(PlayerRank rank) { this.rank = rank; }
     public double getRankProgressScore() { return rankProgressScore; }
     public void setRankProgressScore(double rankProgressScore) { this.rankProgressScore = rankProgressScore; }
+    public String getHunterClass() { return hunterClass; }
+    public void setHunterClass(String hunterClass) { this.hunterClass = hunterClass; }
     public boolean isXpFrozen() { return xpFrozen; }
     public void setXpFrozen(boolean xpFrozen) { this.xpFrozen = xpFrozen; }
+    public long getTotalXpAccumulated() { return totalXpAccumulated; }
+    public void setTotalXpAccumulated(long totalXpAccumulated) { this.totalXpAccumulated = totalXpAccumulated; }
+    public int getFreeStatPoints() { return freeStatPoints; }
+    public void setFreeStatPoints(int freeStatPoints) { this.freeStatPoints = freeStatPoints; }
+    public long getGold() { return gold; }
+    public void setGold(long gold) { this.gold = gold; }
 
     public static PlayerProgressionBuilder builder() {
         return new PlayerProgressionBuilder();
@@ -72,8 +93,9 @@ public class PlayerProgression {
         private PlayerIdentity player;
         private int level;
         private long currentXp;
-        private PlayerRank rank;
+        private PlayerRank rank = PlayerRank.E;
         private double rankProgressScore;
+        private String hunterClass;
         private boolean xpFrozen = false;
 
         public PlayerProgressionBuilder id(Long id) { this.id = id; return this; }
@@ -82,10 +104,11 @@ public class PlayerProgression {
         public PlayerProgressionBuilder currentXp(long currentXp) { this.currentXp = currentXp; return this; }
         public PlayerProgressionBuilder rank(PlayerRank rank) { this.rank = rank; return this; }
         public PlayerProgressionBuilder rankProgressScore(double rankProgressScore) { this.rankProgressScore = rankProgressScore; return this; }
+        public PlayerProgressionBuilder hunterClass(String hunterClass) { this.hunterClass = hunterClass; return this; }
         public PlayerProgressionBuilder xpFrozen(boolean xpFrozen) { this.xpFrozen = xpFrozen; return this; }
 
         public PlayerProgression build() {
-            return new PlayerProgression(id, player, level, currentXp, rank, rankProgressScore, xpFrozen);
+            return new PlayerProgression(id, player, level, currentXp, rank, rankProgressScore, hunterClass, xpFrozen);
         }
     }
 }

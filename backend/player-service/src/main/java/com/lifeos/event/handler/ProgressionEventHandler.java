@@ -10,10 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class ProgressionEventHandler implements DomainEventHandler<DomainEvent> {
 
     private final ProgressionService progressionService;
+
+    public ProgressionEventHandler(ProgressionService progressionService) {
+        this.progressionService = progressionService;
+    }
 
     @Override
     public boolean supports(DomainEvent event) {

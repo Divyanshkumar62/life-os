@@ -18,13 +18,20 @@ import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class StreakService {
 
     private final PlayerStreakRepository streakRepository;
     private final PlayerStateService playerStateService;
     private final RankExamAttemptRepository examRepository; // For checking Exam status
     private final ApplicationEventPublisher eventPublisher;
+
+    public StreakService(PlayerStreakRepository streakRepository, PlayerStateService playerStateService,
+                        RankExamAttemptRepository examRepository, ApplicationEventPublisher eventPublisher) {
+        this.streakRepository = streakRepository;
+        this.playerStateService = playerStateService;
+        this.examRepository = examRepository;
+        this.eventPublisher = eventPublisher;
+    }
 
     /**
      * Called at Daily Reset to update streak status for the previous day.

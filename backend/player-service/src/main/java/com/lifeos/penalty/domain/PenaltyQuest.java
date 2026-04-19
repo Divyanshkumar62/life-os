@@ -20,11 +20,11 @@ public class PenaltyQuest {
     private UUID playerId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private PenaltyQuestType type;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private PenaltyTriggerReason triggerReason;
 
     @Column(nullable = false)
@@ -37,7 +37,7 @@ public class PenaltyQuest {
     private int todayWorkUnits;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private PenaltyQuestStatus status;
 
     @Column(nullable = false)

@@ -8,6 +8,7 @@ public enum StatusFlagType {
     HIGH_RISK,
     EGO_EXPOSED,
     PENALTY_ZONE,
+    PENALTY_SHIELD,
     DAILY_FAILED_TODAY,
     WARNING
 }

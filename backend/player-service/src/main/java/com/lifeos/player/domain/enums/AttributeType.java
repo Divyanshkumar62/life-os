@@ -12,5 +12,11 @@ public enum AttributeType {
     STR,
     INT,
     VIT,
-    SEN
+    SEN,
+    
+    // Aliases for compatibility
+    STRENGTH,
+    INTELLIGENCE,
+    VITALITY,
+    SENSE
 }

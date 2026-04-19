@@ -31,27 +31,27 @@ public class Quest {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private QuestType questType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private QuestCategory category;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "primary_attribute")
+    @Column(name = "primary_attribute", columnDefinition = "VARCHAR(255)")
     private AttributeType primaryAttribute;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private DifficultyTier difficultyTier;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private Priority priority;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private QuestState state;
 
     private LocalDateTime assignedAt;

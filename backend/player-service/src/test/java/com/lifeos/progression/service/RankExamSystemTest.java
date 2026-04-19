@@ -20,6 +20,7 @@ import com.lifeos.quest.domain.enums.QuestType;
 import com.lifeos.quest.repository.QuestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -47,8 +48,11 @@ class RankExamSystemTest {
     @Mock private UserBossKeyRepository bossKeyRepository;
     @Mock private RankExamAttemptRepository examAttemptRepository;
     @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
-
-    @InjectMocks
+    @Mock private com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository;
+    @Mock private com.lifeos.ai.service.AIQuestService aiQuestService;
+    @Mock private com.lifeos.quest.service.QuestLifecycleService questLifecycleService;
+    @Mock private com.lifeos.system.service.SystemVoiceService systemVoiceService;
+    
     private ProgressionService progressionService;
 
     private UUID playerId;
@@ -56,7 +60,21 @@ class RankExamSystemTest {
 
     @BeforeEach
     void setUp() {
-         playerId = UUID.randomUUID();
+        // Create service manually with all mocks
+        progressionService = new ProgressionService(
+            playerStateService,
+            penaltyService,
+            questRepository,
+            bossKeyRepository,
+            examAttemptRepository,
+            playerIdentityRepository,
+            eventPublisher,
+            aiQuestService,
+            questLifecycleService,
+            systemVoiceService
+        );
+        
+        playerId = UUID.randomUUID();
          
          // Mock Player State
          playerState = PlayerStateResponse.builder()
@@ -76,6 +94,13 @@ class RankExamSystemTest {
     @Test
     void testRequestPromotion_Success() {
         // Given
+        // Setup player identity mock
+        com.lifeos.player.domain.PlayerIdentity identity = com.lifeos.player.domain.PlayerIdentity.builder()
+                .playerId(playerId)
+                .username("test")
+                .build();
+        when(playerIdentityRepository.findById(playerId)).thenReturn(Optional.of(identity));
+        
         when(playerStateService.getPlayerState(playerId)).thenReturn(playerState);
         
         // Mock Keys
@@ -85,6 +110,17 @@ class RankExamSystemTest {
                 .build();
         when(bossKeyRepository.findByPlayerPlayerIdAndRank(playerId, PlayerRank.E))
                 .thenReturn(Optional.of(bossKey));
+        
+        // Mock AI Quest Service
+        com.lifeos.quest.dto.QuestRequest questRequest = com.lifeos.quest.dto.QuestRequest.builder()
+                .playerId(playerId)
+                .title("Promotion Exam")
+                .questType(com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM)
+                .build();
+        when(aiQuestService.generatePromotionExam(any(), any(), any())).thenReturn(questRequest);
+        
+        // Mock QuestLifecycleService
+        when(questLifecycleService.assignQuest(any())).thenReturn(mock(com.lifeos.quest.domain.Quest.class));
         
         // Mock Saving
         when(examAttemptRepository.save(any())).thenAnswer(i -> i.getArguments()[0]);
@@ -99,10 +135,8 @@ class RankExamSystemTest {
         // 2. Exam Created
         assertEquals(ExamStatus.UNLOCKED, attempt.getStatus());
         
-        // 3. Quest Spawned
-        ArgumentCaptor<Quest> questCaptor = ArgumentCaptor.forClass(Quest.class);
-        verify(questRepository).save(questCaptor.capture());
-        assertEquals(QuestType.PROMOTION_EXAM, questCaptor.getValue().getQuestType());
+        // 3. Quest assigned via lifecycle service
+        verify(questLifecycleService).assignQuest(any());
     }
 
     @Test

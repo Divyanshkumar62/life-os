@@ -4,14 +4,16 @@ import com.lifeos.event.DomainEvent;
 import com.lifeos.event.DomainEventHandler;
 import com.lifeos.event.concrete.QuestCompletedEvent;
 import com.lifeos.reward.service.RewardService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class RewardEventHandler implements DomainEventHandler<DomainEvent> {
 
     private final RewardService rewardService;
+
+    public RewardEventHandler(RewardService rewardService) {
+        this.rewardService = rewardService;
+    }
 
     @Override
     public boolean supports(DomainEvent event) {

@@ -1,6 +1,5 @@
 package com.lifeos.player.state;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,10 +8,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class PlayerReadService {
 
     private final PlayerStateRepository repository;
+
+    public PlayerReadService(PlayerStateRepository repository) {
+        this.repository = repository;
+    }
 
     @Transactional(readOnly = true)
     public PlayerStateSnapshot getSnapshot(UUID playerId) {

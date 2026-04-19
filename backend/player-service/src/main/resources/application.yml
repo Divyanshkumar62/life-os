@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: player-service
+  main:
+    allow-bean-definition-overriding-by-name: true
+  datasource:
+    url: jdbc:h2:mem:lifedb
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+  h2:
+    console:
+      enabled: true
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:-test-fake-key}
+      url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:-test-fake-key}
+    url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:mem:lifedb
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:-test-fake-key}
+      url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test-mysql
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        type:
+          preferred_boolean_jdbc_type: BOOLEAN
+        mapping:
+          force_enums_to_string: true
+  h2:
+    console:
+      enabled: false
+  ai:
+    gemini:
+      api-key: test-key-do-not-use-in-prod
+      url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent

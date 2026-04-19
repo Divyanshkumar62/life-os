@@ -28,4 +28,7 @@ public interface PlayerStateService {
     
     // Progression Methods
     void promoteRank(UUID playerId);
+    void setLevel(UUID playerId, int level);
+    void addFreeStatPoints(UUID playerId, int amount);
+    void allocateFreeStatPoint(UUID playerId, com.lifeos.player.domain.enums.AttributeType stat, int amount);
 }

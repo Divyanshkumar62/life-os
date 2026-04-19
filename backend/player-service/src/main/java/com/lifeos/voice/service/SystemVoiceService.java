@@ -14,12 +14,15 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
-@Service
-@RequiredArgsConstructor
+@Service("voiceSystemService")
 public class SystemVoiceService {
 
     private static final Logger log = LoggerFactory.getLogger(SystemVoiceService.class);
     private final SystemMessageRepository messageRepository;
+
+    public SystemVoiceService(SystemMessageRepository messageRepository) {
+        this.messageRepository = messageRepository;
+    }
 
     /**
      * Generates and persists a system message based on type and payload.

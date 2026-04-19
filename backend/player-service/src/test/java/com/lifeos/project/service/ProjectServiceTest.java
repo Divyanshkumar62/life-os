@@ -34,8 +34,10 @@ public class ProjectServiceTest {
     @Mock private PlayerProgressionRepository progressionRepository;
     @Mock private UserBossKeyRepository bossKeyRepository;
     @Mock private com.lifeos.player.service.PlayerStateService playerStateService;
+    @Mock private com.lifeos.project.service.DungeonArchitectService dungeonArchitectService;
+    @Mock private com.lifeos.quest.service.QuestLifecycleService questLifecycleService;
+    @Mock private com.lifeos.event.DomainEventPublisher domainEventPublisher;
 
-    @InjectMocks
     private ProjectService projectService;
 
     private UUID playerId;
@@ -45,6 +47,18 @@ public class ProjectServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Create service manually with all mocks
+        projectService = new ProjectService(
+            projectRepository,
+            questRepository,
+            progressionRepository,
+            bossKeyRepository,
+            playerStateService,
+            dungeonArchitectService,
+            questLifecycleService,
+            domainEventPublisher
+        );
+        
         playerId = UUID.randomUUID();
         player = PlayerIdentity.builder().playerId(playerId).build();
         

@@ -7,17 +7,19 @@ import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.domain.QuestOutcomeProfile;
 import com.lifeos.quest.domain.enums.DifficultyTier;
 import com.lifeos.quest.repository.QuestOutcomeProfileRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 public class RewardCalculationService {
 
     private final QuestOutcomeProfileRepository outcomeRepository;
+
+    public RewardCalculationService(QuestOutcomeProfileRepository outcomeRepository) {
+        this.outcomeRepository = outcomeRepository;
+    }
 
     public RewardDefinition calculateReward(Quest quest, PlayerStateResponse playerState) {
         // 1. Fetch Base Rewards

@@ -22,7 +22,7 @@ public class QuestMutationLog {
     private Quest quest;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private MutationType mutationType;
 
     private String reason;

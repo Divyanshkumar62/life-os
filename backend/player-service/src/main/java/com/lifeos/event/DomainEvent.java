@@ -37,4 +37,8 @@ public abstract class DomainEvent {
     public EventCategory getCategory() {
         return category;
     }
+    
+    public String getType() {
+        return this.getClass().getSimpleName();
+    }
 }
