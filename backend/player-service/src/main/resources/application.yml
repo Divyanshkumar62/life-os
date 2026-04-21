@@ -1,8 +1,6 @@
 spring:
   application:
     name: player-service
-  main:
-    allow-bean-definition-overriding-by-name: true
   datasource:
     url: jdbc:h2:mem:lifedb
     username: sa
@@ -14,6 +12,8 @@ spring:
   h2:
     console:
       enabled: true
+  main:
+    allow-bean-definition-overriding: true
   ai:
     gemini:
       api-key: ${GEMINI_API_KEY:-test-fake-key}
@@ -21,8 +21,48 @@ spring:
 
 gemini:
   api:
-    key: ${GEMINI_API_KEY:-test-fake-key}
+    key: ${GEMINI_API_KEY}
     url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent
+
+---
+spring:
+  config:
+    activate:
+      on-profile: mysql
+  datasource:
+    url: jdbc:mysql://localhost:3306/lifedb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        type:
+          preferred_boolean_jdbc_type: BOOLEAN
+        mapping:
+          force_enums_to_string: true
+    show-sql: true
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY}
+      url: https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: jdbc:mysql://localhost:3306/lifedb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: ${DB_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: validate
 
 ---
 spring:
@@ -49,11 +89,11 @@ spring:
     activate:
       on-profile: test-mysql
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
     username: sa
     password: password
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
+    database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: create-drop
     properties:

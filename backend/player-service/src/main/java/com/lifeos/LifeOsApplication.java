@@ -17,12 +17,12 @@ import org.springframework.web.client.RestTemplate;
     "com.lifeos.penalty.domain", "com.lifeos.progression.domain",
     "com.lifeos.project.domain", "com.lifeos.streak.domain", "com.lifeos.reward.domain",
     "com.lifeos.onboarding.domain", "com.lifeos.system.domain", "com.lifeos.event.domain", 
-    "com.lifeos.voice.domain", "com.lifeos.economy.domain"})
+    "com.lifeos.voice.domain", "com.lifeos.economy.domain", "com.lifeos.shop.domain"})
 @EnableJpaRepositories({"com.lifeos.player.repository", "com.lifeos.player.state", 
     "com.lifeos.quest.repository", "com.lifeos.penalty.repository",
     "com.lifeos.progression.repository", "com.lifeos.project.repository", "com.lifeos.streak.repository",
     "com.lifeos.reward.repository", "com.lifeos.onboarding.repository", "com.lifeos.system.repository",
-    "com.lifeos.voice.repository", "com.lifeos.economy.repository"})
+    "com.lifeos.voice.repository", "com.lifeos.economy.repository", "com.lifeos.shop.repository"})
 @ComponentScan(basePackages = "com.lifeos")
 public class LifeOsApplication {
     @Bean
