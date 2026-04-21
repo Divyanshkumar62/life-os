@@ -85,6 +85,13 @@ public class ShopItem {
     public void setEffectPayload(Map<String, Object> effectPayload) { this.effectPayload = effectPayload; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    
+    // Aliases for RedGateService compatibility
+    public String getItemCode() { return code; }
+    public String getItemName() { return name; }
+    public String getItemType() { return category != null ? category.name() : null; }
+    public int getGoldCost() { return (int) cost; }
+    public boolean isActive() { return true; } // All items in shop are active by default
 
     public static ShopItemBuilder builder() {
         return new ShopItemBuilder();
