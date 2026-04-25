@@ -35,3 +35,5 @@ docs/*-firebase-adminsdk*.json
 docs/google-services.json
 backend/player-service/.env
 
+graphify-out
+

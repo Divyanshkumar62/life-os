@@ -6,12 +6,19 @@ import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.progression.service.JobChangeService;
 import com.lifeos.voice.domain.enums.SystemMessageType;
 import com.lifeos.voice.event.VoiceSystemEvent;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class LevelUpRewardHandler {
 
     private final PlayerStateService playerStateService;
@@ -19,50 +26,56 @@ public class LevelUpRewardHandler {
     private final JobChangeService jobChangeService;
     private final ApplicationEventPublisher eventPublisher;
 
-    public LevelUpRewardHandler(PlayerStateService playerStateService, PenaltyService penaltyService, 
-                                JobChangeService jobChangeService, ApplicationEventPublisher eventPublisher) {
-        this.playerStateService = playerStateService;
-        this.penaltyService = penaltyService;
-        this.jobChangeService = jobChangeService;
-        this.eventPublisher = eventPublisher;
+    @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onLevelUp(LevelUpEvent event) {
+        UUID playerId = event.getPlayerId();
+        int newLevel = event.getNewLevel();
+        
+        log.info("Processing level-up for player {} to level {}", playerId, newLevel);
+        
+        try {
+            clearTemporaryDebuffs(playerId);
+            playerStateService.addFreeStatPoints(playerId, 3);
+            log.debug("Granted 3 free stat points to player {}", playerId);
+            
+            if (newLevel == 40) {
+                jobChangeService.triggerJobChangeGauntlet(playerId);
+                log.info("Triggered job change gauntlet for player {}", playerId);
+            }
+            
+            sendLevelUpNotifications(playerId);
+            
+            log.info("Level-up processing complete for player {} at level {}", playerId, newLevel);
+            
+        } catch (Exception e) {
+            log.error("Level-up failed for player {}: {}. Rolling back all changes.", playerId, e.getMessage(), e);
+            throw new RuntimeException("Level-up failed: " + e.getMessage(), e);
+        }
     }
 
-    @EventListener
-    @Transactional
-    public void onLevelUp(LevelUpEvent event) {
-        // 1. Full Restore: Clear Temporary Debuffs
+    private void clearTemporaryDebuffs(UUID playerId) {
+        penaltyService.clearTemporaryDebuffs(playerId);
+        log.debug("Cleared temporary debuffs for player {}", playerId);
+    }
+
+    private void sendLevelUpNotifications(UUID playerId) {
         try {
-            // Check if PenaltyService has this method (Refactor might be needed if not present)
-            // Plan says: "Call PenaltyService.clearTemporaryDebuffs"
-            // I need to verify if this exists. If not, I'll log a TODO or assume it does for now.
-            // But I should check.
-             // penaltyService.clearTemporaryDebuffs(event.getPlayerId());
-             // For now, let's assume it doesn't exist and I'll add it or skip it.
-             // I'll skip it for this step and add it later if needed.
-             // But wait, "Full Restore" is a key feature.
-             // Let's assume I need to ADD it to PenaltyService.
+            eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                    .playerId(playerId)
+                    .type(SystemMessageType.LEVEL_UP)
+                    .build());
         } catch (Exception e) {
-            System.err.println("Failed to clear debuffs: " + e.getMessage());
+            log.warn("Failed to send LEVEL_UP notification: {}", e.getMessage());
         }
-
-        // 2. Grant Free Stat Points
-        // 5 points per level is standard RPG. Or 3? Plan says: "Free stat point (Manual Allocation)".
-        // Quantity? Plan doesn't specify. Let's say 3.
-        playerStateService.addFreeStatPoints(event.getPlayerId(), 3);
-
-        // 3. Notify User
-        eventPublisher.publishEvent(VoiceSystemEvent.builder()
-                .playerId(event.getPlayerId())
-                .type(SystemMessageType.LEVEL_UP)
-                .build());
-                
-        // 4. Secondary Notification for Rewards
-        eventPublisher.publishEvent(VoiceSystemEvent.builder()
-                .playerId(event.getPlayerId())
-                .type(SystemMessageType.LEVEL_UP_REWARD)
-                .build());
-                
-        // 5. Check if Level 40: Trigger Job Change Quest
-        jobChangeService.checkAndTriggerJobChange(event.getPlayerId(), event.getNewLevel());
+        
+        try {
+            eventPublisher.publishEvent(VoiceSystemEvent.builder()
+                    .playerId(playerId)
+                    .type(SystemMessageType.LEVEL_UP_REWARD)
+                    .build());
+        } catch (Exception e) {
+            log.warn("Failed to send LEVEL_UP_REWARD notification: {}", e.getMessage());
+        }
     }
 }
