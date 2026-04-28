@@ -385,19 +385,17 @@ public class JobChangeService {
 
         ShopItem elixir = elixirItems.get(0);
 
-        Optional<Object> inventoryItem = Optional.empty();
         try {
             var method = InventoryService.class.getMethod("hasItem", UUID.class, UUID.class);
-            inventoryItem = Optional.ofNullable(method.invoke(inventoryService, playerId, elixir.getItemId()));
+            Boolean hasItem = (Boolean) method.invoke(inventoryService, playerId, elixir.getItemId());
+            if (hasItem == null || !hasItem) {
+                throw new IllegalStateException("Player does not have Elixir of Second Awakening");
+            }
+            inventoryService.addItem(playerId, elixir.getItemId(), -1);
         } catch (Exception e) {
-            log.warn("Could not check inventory, assuming no item: {}", e.getMessage());
+            log.warn("Reflection check failed: {}", e.getMessage());
+            throw new IllegalStateException("Could not verify inventory state");
         }
-
-        if (inventoryItem.isEmpty()) {
-            throw new IllegalStateException("Player does not have Elixir of Second Awakening");
-        }
-
-        inventoryService.addItem(playerId, elixir.getItemId(), -1);
 
         identity.setJobChangeCooldownUntil(LocalDateTime.now().minusMinutes(1));
         identity.setJobChangeStatus("AWAITING_ACCEPTANCE");
