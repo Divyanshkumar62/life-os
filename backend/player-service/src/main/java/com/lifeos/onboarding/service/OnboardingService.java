@@ -412,4 +412,30 @@ public class OnboardingService {
         // Bypass or map to new flow
         return getStatus(playerId);
     }
+    
+    /**
+     * Unlock the JOB_CHANGE stage in onboarding for a player.
+     * Called when player reaches Level 40.
+     */
+    @Transactional
+    public void unlockJobChangeStage(UUID playerId) {
+        var progress = onboardingRepository.findById(playerId).orElse(null);
+        if (progress == null) {
+            log.warn("No onboarding progress found for player {}", playerId);
+            return;
+        }
+        
+        // Only unlock if currently in earlier stage
+        if (progress.getCurrentStage() == OnboardingStage.COMPLETED) {
+            log.info("Player {} already completed onboarding", playerId);
+            return;
+        }
+        
+        // Allow unlock from any stage
+        log.info("Unlocking JOB_CHANGE stage for player {}", playerId);
+        progress.setCurrentStage(OnboardingStage.JOB_CHANGE);
+        onboardingRepository.save(progress);
+        
+        log.info("JOB_CHANGE stage unlocked for player {}", playerId);
+    }
 }

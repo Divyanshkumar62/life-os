@@ -10,13 +10,14 @@ import com.lifeos.player.service.PlayerStateService;
 import com.lifeos.streak.service.StreakService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class ShopService {
+n    private static final Logger log = LoggerFactory.getLogger(ShopService.class);
 
     private final ShopItemRepository itemRepository;
     private final EconomyService economyService;
@@ -139,7 +140,7 @@ public class ShopService {
         // 9. Apply Immediate Effects
         // Effect handling moved strictly to ConsumableService to enable inventory staging.
 
-        System.out.println("Item " + item.getName() + " purchased and added to inventory.");
+        log.info("Item {} purchased and added to inventory.", item.getName());
     }
 
     private boolean isShopLocked(UUID playerId) {

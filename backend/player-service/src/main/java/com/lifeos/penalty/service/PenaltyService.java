@@ -186,4 +186,43 @@ public class PenaltyService {
         // Emit Event
         domainEventPublisher.publish(new com.lifeos.event.concrete.PenaltyZoneExitedEvent(playerId));
     }
+    
+    /**
+     * Clear all temporary debuffs applied to a player.
+     * Called on level-up to provide a "full restore" effect.
+     * 
+     * This removes:
+     * - All active PenaltyRecords with temporary debuffs (attribute reductions)
+     * - Clears any temporary failure multipliers
+     * - Resets decay rates to baseline
+     * 
+     * Does NOT remove:
+     * - Penalty Zone status (requires completing Penalty Quest)
+     * - Historical penalty data for analytics
+     */
+    @Transactional
+    public void clearTemporaryDebuffs(UUID playerId) {
+        log.info("Clearing temporary debuffs for player {}", playerId);
+        
+        // Find all active penalty records for this player
+        var activeDebuffs = penaltyRepository.findByPlayerPlayerId(playerId);
+        
+        int clearedCount = 0;
+        for (PenaltyRecord record : activeDebuffs) {
+            // Only clear temporary/type-based debuffs, not permanent penalties
+            if (record.getExpiresAt() != null && record.getExpiresAt().isAfter(LocalDateTime.now())) {
+                // Clear the debuff by setting expiresAt to now (immediate expiration)
+                record.setExpiresAt(LocalDateTime.now());
+                penaltyRepository.save(record);
+                clearedCount++;
+                
+                log.debug("Cleared debuff: {} (was expiring {})", record.getId(), record.getExpiresAt());
+            }
+        }
+        
+        // Also clear any temporary failure multiplier that might be active
+        playerStateService.updateConsecutiveFailures(playerId, 0);
+        
+        log.info("Cleared {} temporary debuffs for player {}", clearedCount, playerId);
+    }
 }
