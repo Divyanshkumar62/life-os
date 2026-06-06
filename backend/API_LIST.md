@@ -24,13 +24,13 @@ http://localhost:8080
 
 ## 1. Player Creation
 
-### 1.1 POST /players - Create New Player
+### 1.1 POST /api/player - Create New Player
 
 **Description:** Initialize a new player with username
 
 **Request:**
 ```bash
-curl -X POST "http://localhost:8080/players?username=yourname"
+curl -X POST "http://localhost:8080/api/player?username=yourname"
 ```
 
 **Response:** Returns player state with playerId (save this UUID!)
@@ -261,7 +261,7 @@ curl -X POST "http://localhost:8080/api/projects/create" \
   -H "Content-Type: application/json" \
   -d '{
     "playerId": "uuid",
-    "goal": "Build a todo app",
+    "goal": "Build app",
     "userRank": "F"
   }'
 ```
@@ -307,12 +307,16 @@ curl -X GET "http://localhost:8080/api/projects?playerId={playerId}"
 
 ### 4.6 GET /api/projects/{projectId} - Get Project Details
 
+**Description:** Get project details
+
 **Request:**
 ```bash
 curl -X GET "http://localhost:8080/api/projects/{projectId}"
 ```
 
 ### 4.7 GET /api/projects/{projectId}/quests - Get Project Quests
+
+**Description:** Get all quests in a project
 
 **Request:**
 ```bash
@@ -359,6 +363,8 @@ curl -X POST "http://localhost:8080/api/shop/purchase/RUNESTONE_STEALTH?playerId
 
 ### 5.3 GET /api/shop/inventory - Get Player Inventory
 
+**Description:** Get player's shop inventory
+
 **Request:**
 ```bash
 curl -X GET "http://localhost:8080/api/shop/inventory?playerId={playerId}"
@@ -388,6 +394,8 @@ curl -X GET "http://localhost:8080/api/progression/{playerId}/check-gate"
 
 ### 6.2 GET /api/progression/{playerId}/can-promote - Check Promotion Eligibility
 
+**Description:** Check if player can be promoted
+
 **Request:**
 ```bash
 curl -X GET "http://localhost:8080/api/progression/{playerId}/can-promote"
@@ -404,6 +412,8 @@ curl -X POST "http://localhost:8080/api/progression/{playerId}/request-promotion
 
 ### 6.4 POST /api/progression/{playerId}/process-outcome - Process Promotion Outcome
 
+**Description:** Process promotion exam results
+
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/progression/{playerId}/process-outcome?success=true"
@@ -418,12 +428,16 @@ curl -X POST "http://localhost:8080/api/progression/{playerId}/process-outcome?s
 
 ### 7.1 GET /api/player/job-change/{playerId}/status - Get Job Change Status
 
+**Description:** Get current job change status
+
 **Request:**
 ```bash
 curl -X GET "http://localhost:8080/api/player/job-change/{playerId}/status"
 ```
 
 ### 7.2 GET /api/player/job-change/{playerId}/quests - Get Job Change Quests
+
+**Description:** Get active job change quests
 
 **Request:**
 ```bash
@@ -432,6 +446,8 @@ curl -X GET "http://localhost:8080/api/player/job-change/{playerId}/quests"
 
 ### 7.3 POST /api/player/job-change/{playerId}/accept - Accept Job Change
 
+**Description:** Accept job change transformation
+
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/player/job-change/{playerId}/accept"
@@ -439,30 +455,38 @@ curl -X POST "http://localhost:8080/api/player/job-change/{playerId}/accept"
 
 ### 7.4 POST /api/player/job-change/{playerId}/delay - Delay Job Change
 
+**Description:** Delay job change cooldown
+
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/player/job-change/{playerId}/delay"
 ```
 
-### 7.5 POST /api/player/job-change/quest/{questId}/complete - Complete Job Change Quest
+### 7.5 POST /api/player/job-change/{playerId}/skip-cooldown - Skip Cooldown
+
+**Description:** Skip job change cooldown
+
+**Request:**
+```bash
+curl -X POST "http://localhost:8080/api/player/job-change/{playerId}/skip-cooldown"
+```
+
+### 7.6 POST /api/player/job-change/quest/{questId}/complete - Complete Job Change Quest
+
+**Description:** Complete a job change quest
 
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/player/job-change/quest/{questId}/complete"
 ```
 
-### 7.6 POST /api/player/job-change/quest/{questId}/fail - Fail Job Change Quest
+### 7.7 POST /api/player/job-change/quest/{questId}/fail - Fail Job Change Quest
+
+**Description:** Fail a job change quest
 
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/player/job-change/quest/{questId}/fail"
-```
-
-### 7.7 POST /api/player/job-change/{playerId}/skip-cooldown - Skip Cooldown
-
-**Request:**
-```bash
-curl -X POST "http://localhost:8080/api/player/job-change/{playerId}/skip-cooldown"
 ```
 
 ---
@@ -471,6 +495,8 @@ curl -X POST "http://localhost:8080/api/player/job-change/{playerId}/skip-cooldo
 
 ### 8.1 GET /players/{playerId}/state - Get Player State
 
+**Description:** Get player state and progress
+
 **Request:**
 ```bash
 curl -X GET "http://localhost:8080/players/{playerId}/state"
@@ -478,12 +504,16 @@ curl -X GET "http://localhost:8080/players/{playerId}/state"
 
 ### 8.2 PUT /players/{playerId}/fcm-token - Update FCM Token
 
+**Description:** Update player's FCM notification token
+
 **Request:**
 ```bash
 curl -X PUT "http://localhost:8080/players/{playerId}/fcm-token?token={token}"
 ```
 
 ### 8.3 PUT /players/{playerId}/notifications - Update Notifications
+
+**Description:** Enable/disable notifications
 
 **Request:**
 ```bash
@@ -496,6 +526,8 @@ curl -X PUT "http://localhost:8080/players/{playerId}/notifications?enabled=true
 
 ### 9.1 GET /api/player/status-window/{playerId} - Get Status Window
 
+**Description:** Get player status window data
+
 **Request:**
 ```bash
 curl -X GET "http://localhost:8080/api/player/status-window/{playerId}"
@@ -507,6 +539,8 @@ curl -X GET "http://localhost:8080/api/player/status-window/{playerId}"
 
 ### 10.1 POST /api/admin/players/{playerId}/level - Set Player Level
 
+**Description:** Set player level
+
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/admin/players/{playerId}/level?level=5"
@@ -514,12 +548,16 @@ curl -X POST "http://localhost:8080/api/admin/players/{playerId}/level?level=5"
 
 ### 10.2 POST /api/admin/players/{playerId}/add-xp - Add XP
 
+**Description:** Add experience points to player
+
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/admin/players/{playerId}/add-xp?amount=1000"
 ```
 
 ### 10.3 POST /api/admin/players/{playerId}/update-attribute - Update Attribute
+
+**Description:** Update player attribute
 
 **Request:**
 ```bash
@@ -530,12 +568,16 @@ curl -X POST "http://localhost:8080/api/admin/players/{playerId}/update-attribut
 
 ### 10.4 POST /api/admin/players/{playerId}/boss-keys - Grant Boss Keys
 
+**Description:** Grant boss keys to player
+
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/admin/players/{playerId}/boss-keys?rank=S&count=1"
 ```
 
 ### 10.5 POST /api/admin/players/{playerId}/penalty/enter - Enter Penalty Zone
+
+**Description:** Enter penalty zone
 
 **Request:**
 ```bash
@@ -544,12 +586,16 @@ curl -X POST "http://localhost:8080/api/admin/players/{playerId}/penalty/enter?r
 
 ### 10.6 POST /api/admin/players/{playerId}/penalty/exit - Exit Penalty Zone
 
+**Description:** Exit penalty zone
+
 **Request:**
 ```bash
 curl -X POST "http://localhost:8080/api/admin/players/{playerId}/penalty/exit"
 ```
 
 ### 10.7 POST /api/admin/migration/recalculate-levels - Recalculate Levels
+
+**Description:** Recalculate all player levels
 
 **Request:**
 ```bash
@@ -562,6 +608,8 @@ curl -X POST "http://localhost:8080/api/admin/migration/recalculate-levels"
 
 ### 11.1 GET /api/system/alerts/{playerId} - Get System Alerts
 
+**Description:** Get system alerts for player
+
 **Request:**
 ```bash
 curl -X GET "http://localhost:8080/api/system/alerts/{playerId}"
@@ -573,16 +621,16 @@ curl -X GET "http://localhost:8080/api/system/alerts/{playerId}"
 
 ```bash
 # Step 1: Create Player
-curl -X POST "http://localhost:8080/players?username=testuser"
+curl -X POST "http://localhost:8080/api/player?username=testuser"
 
 # Step 2: Start Onboarding
 curl -X POST "http://localhost:8080/api/onboarding/start?username=testuser"
 
 # Step 3: Complete Trial Quest (need playerId from Step 2)
-curl -X POST "http://localhost:8080/api/onboarding/PLAYER_ID/trial/complete"
+curl -X POST "http://localhost:8080/api/onboarding/{playerId}/trial/complete"
 
 # Step 4: Submit Awakening
-curl -X POST "http://localhost:8080/api/onboarding/PLAYER_ID/awakening" \
+curl -X POST "http://localhost:8080/api/onboarding/ee78ac54-ad57-4c3c-b70e-752babefb67f/awakening" \
   -H "Content-Type: application/json" \
   -d '{
     "archetype":"BRAINS",
@@ -641,13 +689,3 @@ curl -X GET "http://localhost:8080/api/progression/PLAYER_ID/check-gate"
 # Step 12: Get Player State
 curl -X GET "http://localhost:8080/players/PLAYER_ID/state"
 ```
-
----
-
-## Notes
-
-- All UUIDs in format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`
-- Dates in ISO 8601: `2026-04-23T08:00:00`
-- Times in HH:mm: "06:30"
-- Enums are case-sensitive strings
-- Save returned UUIDs from each step for next steps

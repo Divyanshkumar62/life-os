@@ -12,4 +12,6 @@ public interface PenaltyRecordRepository extends JpaRepository<PenaltyRecord, UU
 
     @org.springframework.data.jpa.repository.Query("SELECT p FROM PenaltyRecord p WHERE p.playerId = :playerId AND p.type = 'STAT_DEBUFF' AND p.expiresAt > CURRENT_TIMESTAMP")
     java.util.List<PenaltyRecord> findActiveDebuffs(UUID playerId);
+
+    java.util.List<PenaltyRecord> findByPlayerId(UUID playerId);
 }

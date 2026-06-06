@@ -35,7 +35,7 @@ public class GeminiQuestService implements AIQuestService {
     @Value("${spring.ai.gemini.api-key}")
     private String apiKey;
 
-    @Value("${spring.ai.gemini.url:https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent}")
+    @Value("${spring.ai.gemini.url:https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-8b:generateContent}")
     private String apiUrl;
 
     private RestClient restClient = RestClient.builder().build();
@@ -273,10 +273,11 @@ public class GeminiQuestService implements AIQuestService {
             // We use a Set or List to avoid duplicates if apiUrl matches one of the defaults
             java.util.Set<String> probeUrls = new java.util.LinkedHashSet<>();
             probeUrls.add(apiUrl); // User configured URL first
-            probeUrls.add("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent");
-            probeUrls.add("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent");
-            probeUrls.add("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent");
+            probeUrls.add("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-8b:generateContent");
+            probeUrls.add("https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent");
+            probeUrls.add("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent");
 
+            List<QuestRequest> quests = null;
             for (String probeUrl : probeUrls) {
                 try {
                     log.info("Attempting Gemini API call to: {}", probeUrl);
@@ -289,19 +290,24 @@ public class GeminiQuestService implements AIQuestService {
 
                     if (response != null && response.getCandidates() != null && !response.getCandidates().isEmpty()) {
                         String contentResult = response.getCandidates().get(0).getContent().getParts().get(0).getText();
-                        return parseQuests(contentResult, playerId);
+                        quests = parseQuests(contentResult, playerId);
+                        if (quests != null && !quests.isEmpty()) {
+                            log.info("Successfully generated {} quests using {}", quests.size(), probeUrl);
+                            return quests;
+                        }
                     }
-                } catch (Exception e) {
+} catch (Exception e) {
                     log.warn("Gemini call failed for URL {}: {}", probeUrl, e.getMessage());
-                    // Continue to next probe
                 }
             }
 
+            // If all AI calls failed, generate fallback quests
+            log.warn("All Gemini API calls failed. Generating fallback quests for player {}", playerId);
+            return generateFallbackQuests(playerId, count);
         } catch (Exception e) {
-            log.error("Failed to generate AI quests after multiple attempts", e);
+            log.error("Failed to generate AI quests: {}", e.getMessage(), e);
+            return generateFallbackQuests(playerId, count);
         }
-
-        return Collections.emptyList();
     }
 
     private List<QuestRequest> parseQuests(String jsonContent, UUID playerId) {
@@ -431,4 +437,49 @@ public class GeminiQuestService implements AIQuestService {
         public void setXpPenalty(int xpPenalty) { this.xpPenalty = xpPenalty; }
     }
 
+    private List<QuestRequest> generateFallbackQuests(UUID playerId, int count) {
+        log.info("Generating {} fallback quests for player {} (AI unavailable)", count, playerId);
+        List<QuestRequest> fallbackQuests = new java.util.ArrayList<>();
+
+        String[] fallbackTitles = {
+            "Discipline: Complete Your First Task",
+            "Focus: Deep Work Session",
+            "Self-Assessment: Honest Evaluation"
+        };
+        String[] fallbackDescriptions = {
+            "The System requires action. Complete one meaningful task from your to-do list. No excuses. Report completion within 24 hours.",
+            "Enter a focused work session for 2 hours. No distractions. The System watches. Document your output.",
+            "Honestly assess your current situation. What have you achieved? What have you avoided? Write a candid self-report."
+        };
+        com.lifeos.player.domain.enums.AttributeType[] attributes = {
+            com.lifeos.player.domain.enums.AttributeType.DISCIPLINE,
+            com.lifeos.player.domain.enums.AttributeType.FOCUS,
+            com.lifeos.player.domain.enums.AttributeType.LEARNING_SPEED
+        };
+        DifficultyTier[] tiers = { DifficultyTier.E, DifficultyTier.E, DifficultyTier.E };
+
+        for (int i = 0; i < Math.min(count, fallbackTitles.length); i++) {
+            QuestRequest qr = QuestRequest.builder()
+                    .playerId(playerId)
+                    .title(fallbackTitles[i])
+                    .description(fallbackDescriptions[i])
+                    .questType(QuestType.DISCIPLINE)
+                    .difficultyTier(tiers[i])
+                    .priority(Priority.NORMAL)
+                    .deadlineAt(LocalDateTime.now().plusHours(24))
+                    .successXp(100)
+                    .failureXp(10)
+                    .goldReward(50)
+                    .attributeDeltas(java.util.Map.of(attributes[i].name(), 1.0))
+                    .systemMutable(true)
+                    .egoBreakerFlag(false)
+                    .expectedFailureProbability(0.3)
+                    .primaryAttribute(attributes[i])
+                    .build();
+            fallbackQuests.add(qr);
+            log.info("Created fallback quest: {}", fallbackTitles[i]);
+        }
+
+        return fallbackQuests;
+    }
 }

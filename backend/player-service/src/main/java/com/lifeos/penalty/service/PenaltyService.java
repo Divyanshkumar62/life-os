@@ -205,7 +205,7 @@ public class PenaltyService {
         log.info("Clearing temporary debuffs for player {}", playerId);
         
         // Find all active penalty records for this player
-        var activeDebuffs = penaltyRepository.findByPlayerPlayerId(playerId);
+        var activeDebuffs = penaltyRepository.findByPlayerId(playerId);
         
         int clearedCount = 0;
         for (PenaltyRecord record : activeDebuffs) {
