@@ -37,3 +37,5 @@ backend/player-service/.env
 
 graphify-out
 
+.archive-docs
+*.md
