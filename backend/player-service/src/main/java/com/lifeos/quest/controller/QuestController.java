@@ -24,6 +24,7 @@ public class QuestController {
 
     private final QuestLifecycleService questService;
     private final RedGateService redGateService;
+    private final com.lifeos.system.repository.SystemEventRepository systemEventRepository;
 
     @GetMapping("/red-gate/{playerId}/status")
     public ResponseEntity<RedGateStatusResponse> getRedGateStatus(@PathVariable UUID playerId) {
@@ -56,20 +57,37 @@ public class QuestController {
     }
 
     @GetMapping("/active")
-    public ResponseEntity<List<Quest>> getActiveQuests(@RequestParam UUID playerId) {
+    public ResponseEntity<com.lifeos.quest.dto.QuestResponse> getActiveQuests(@RequestParam UUID playerId) {
         log.info("Fetching active quests for player: {}", playerId);
         List<Quest> activeQuests = questService.getActiveQuests(playerId);
-        return ResponseEntity.ok(activeQuests);
+        
+        List<com.lifeos.system.domain.SystemEvent> unconsumedEvents = systemEventRepository.findByPlayerIdAndIsConsumedFalseOrderByCreatedAtAsc(playerId);
+        List<String> systemMessages = new java.util.ArrayList<>();
+        if (unconsumedEvents != null && !unconsumedEvents.isEmpty()) {
+            for (com.lifeos.system.domain.SystemEvent event : unconsumedEvents) {
+                systemMessages.add(event.getMessage());
+                event.setConsumed(true);
+            }
+            systemEventRepository.saveAll(unconsumedEvents);
+        }
+
+        return ResponseEntity.ok(com.lifeos.quest.dto.QuestResponse.builder()
+                .quests(activeQuests)
+                .systemMessages(systemMessages)
+                .build());
     }
 
     @PostMapping
-    public ResponseEntity<Quest> assignQuest(@RequestBody QuestRequest request) {
+    public ResponseEntity<com.lifeos.quest.dto.QuestResponse> assignQuest(@RequestBody QuestRequest request) {
         log.info("Assigning quest: {} to player: {}", request.getTitle(), request.getPlayerId());
-        return ResponseEntity.ok(questService.assignQuest(request));
+        Quest assigned = questService.assignQuest(request);
+        return ResponseEntity.ok(com.lifeos.quest.dto.QuestResponse.builder()
+                .quest(assigned)
+                .build());
     }
 
     @PostMapping("/{questId}/complete")
-    public ResponseEntity<Void> completeQuest(@PathVariable String questId) {
+    public ResponseEntity<com.lifeos.quest.dto.QuestResponse> completeQuest(@PathVariable String questId) {
         log.info("=== API: Completing quest: {}", questId);
         try {
             UUID uuid = parseUUID(questId);
@@ -77,9 +95,9 @@ public class QuestController {
                 log.error("Invalid quest ID format: {}", questId);
                 return ResponseEntity.badRequest().build();
             }
-            questService.completeQuest(uuid);
+            com.lifeos.quest.dto.QuestResponse response = questService.completeQuest(uuid);
             log.info("=== API: Quest completed successfully: {}", uuid);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("=== API ERROR completing quest {}: {} - {}", questId, e.getClass().getSimpleName(), e.getMessage(), e);
             return ResponseEntity.badRequest().build();
@@ -87,7 +105,7 @@ public class QuestController {
     }
 
     @PostMapping("/{questId}/fail")
-    public ResponseEntity<Void> failQuest(@PathVariable String questId) {
+    public ResponseEntity<com.lifeos.quest.dto.QuestResponse> failQuest(@PathVariable String questId) {
         log.info("=== API: Failing quest: {}", questId);
         try {
             UUID uuid = parseUUID(questId);
@@ -95,9 +113,9 @@ public class QuestController {
                 log.error("Invalid quest ID format: {}", questId);
                 return ResponseEntity.badRequest().build();
             }
-            questService.failQuest(uuid);
+            com.lifeos.quest.dto.QuestResponse response = questService.failQuest(uuid);
             log.info("=== API: Quest failed successfully: {}", uuid);
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("=== API ERROR failing quest {}: {} - {}", questId, e.getClass().getSimpleName(), e.getMessage(), e);
             return ResponseEntity.badRequest().build();

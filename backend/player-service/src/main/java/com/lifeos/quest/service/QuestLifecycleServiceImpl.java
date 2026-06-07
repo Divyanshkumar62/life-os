@@ -49,6 +49,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     
     // Event Publisher
     private final DomainEventPublisher domainEventPublisher;
+    private final com.lifeos.system.repository.SystemEventRepository systemEventRepository;
 
     public QuestLifecycleServiceImpl(QuestRepository questRepository, QuestOutcomeProfileRepository outcomeRepository,
                                    QuestMutationLogRepository mutationLogRepository, PlayerQuestLinkRepository linkRepository,
@@ -56,7 +57,8 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
                                    @Lazy com.lifeos.progression.service.ProgressionService progressionService,
                                    PlayerStateService playerStateService,
                                    com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository,
-                                   DomainEventPublisher domainEventPublisher) {
+                                   DomainEventPublisher domainEventPublisher,
+                                   com.lifeos.system.repository.SystemEventRepository systemEventRepository) {
         this.questRepository = questRepository;
         this.outcomeRepository = outcomeRepository;
         this.mutationLogRepository = mutationLogRepository;
@@ -66,6 +68,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         this.playerStateService = playerStateService;
         this.playerIdentityRepository = playerIdentityRepository;
         this.domainEventPublisher = domainEventPublisher;
+        this.systemEventRepository = systemEventRepository;
     }
 
     @Override
@@ -92,7 +95,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .questType(request.getQuestType())
-                .category(QuestCategory.NORMAL) // Default to NORMAL if not specified
+                .category(request.getCategory() != null ? request.getCategory() : QuestCategory.NORMAL)
                 .primaryAttribute(request.getPrimaryAttribute())
                 .difficultyTier(request.getDifficultyTier())
                 .priority(request.getPriority())
@@ -185,12 +188,10 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
 
     @Override
     @Transactional
-    public void completeQuest(UUID questId) {
-        log.info("=== COMPLETE QUEST called for: {}", questId);
-        
+    public com.lifeos.quest.dto.QuestResponse completeQuest(UUID questId) {
         Quest quest = questRepository.findById(questId)
                 .orElseThrow(() -> {
-                    log.error("Quest not found: {}", questId);
+                    log.error("Quest not found for ID: {}", questId);
                     return new IllegalArgumentException("Quest not found: " + questId);
                 });
 
@@ -235,13 +236,16 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
             domainEventPublisher.publish(new DailyQuestCompletedEvent(quest.getPlayer().getPlayerId()));
         }
         
-        // Note: RewardService, Stats, Progression, Penalty Work are now handled by EventHandlers listing to these events.
-        // Legacy direct calls removed.
+        List<String> systemMessages = consumeSystemMessages(quest.getPlayer().getPlayerId());
+        return com.lifeos.quest.dto.QuestResponse.builder()
+                .quest(quest)
+                .systemMessages(systemMessages)
+                .build();
     }
 
     @Override
     @Transactional
-    public void failQuest(UUID questId) {
+    public com.lifeos.quest.dto.QuestResponse failQuest(UUID questId) {
         Quest quest = questRepository.findById(questId)
                 .orElseThrow(() -> new IllegalArgumentException("Quest not found"));
 
@@ -252,13 +256,13 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         quest.setState(QuestState.FAILED);
         questRepository.save(quest);
 
-        // Apply Penalties ONLY for non-INTEL_GATHERING quests
-        // Intel quests: fail = no penalty, just blocks dungeon entry
-        if (quest.getQuestType() != QuestType.INTEL_GATHERING) {
+        // Apply Penalties ONLY for non-INTEL_GATHERING and non-Architect's Trial quests
+        // Intel quests & Architect's Trial: fail = no penalty
+        if (quest.getQuestType() != QuestType.INTEL_GATHERING && !"[HIDDEN] The Architect's Original Trial".equals(quest.getTitle())) {
             log.info("Applying penalty for failed quest: {} (type: {})", quest.getTitle(), quest.getQuestType());
             penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.FAILED);
         } else {
-            log.info("Intel Quest failed: {} - No penalty applied, only dungeon entry blocked", quest.getTitle());
+            log.info("Quest failed with no penalty: {} (type: {})", quest.getTitle(), quest.getQuestType());
         }
         
         // Update Link
@@ -270,6 +274,25 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
 
         // Emit Event
         domainEventPublisher.publish(new QuestFailedEvent(quest.getPlayer().getPlayerId(), questId, quest.getTitle(), quest.getQuestType()));
+        
+        List<String> systemMessages = consumeSystemMessages(quest.getPlayer().getPlayerId());
+        return com.lifeos.quest.dto.QuestResponse.builder()
+                .quest(quest)
+                .systemMessages(systemMessages)
+                .build();
+    }
+
+    private List<String> consumeSystemMessages(UUID playerId) {
+        List<com.lifeos.system.domain.SystemEvent> unconsumedEvents = systemEventRepository.findByPlayerIdAndIsConsumedFalseOrderByCreatedAtAsc(playerId);
+        List<String> systemMessages = new java.util.ArrayList<>();
+        if (unconsumedEvents != null && !unconsumedEvents.isEmpty()) {
+            for (com.lifeos.system.domain.SystemEvent event : unconsumedEvents) {
+                systemMessages.add(event.getMessage());
+                event.setConsumed(true);
+            }
+            systemEventRepository.saveAll(unconsumedEvents);
+        }
+        return systemMessages;
     }
 
     @Override
@@ -285,8 +308,12 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         quest.setState(QuestState.EXPIRED);
         questRepository.save(quest);
         
-        // Apply Penalties (Expiration)
-        penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.EXPIRED);
+        // Apply Penalties (Expiration) ONLY if not Architect's Trial
+        if (!"[HIDDEN] The Architect's Original Trial".equals(quest.getTitle())) {
+            penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.EXPIRED);
+        } else {
+            log.info("Quest expired with no penalty: {}", quest.getTitle());
+        }
         
         var link = linkRepository.findByPlayerIdAndQuestId(quest.getPlayer().getPlayerId(), questId)
                 .orElse(new PlayerQuestLink());

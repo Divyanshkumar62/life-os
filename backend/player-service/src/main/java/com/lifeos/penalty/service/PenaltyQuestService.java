@@ -21,7 +21,6 @@ import java.util.UUID;
 public class PenaltyQuestService {
 
     private static final Logger log = LoggerFactory.getLogger(PenaltyQuestService.class);
-    private static final int MAX_DAILY_WORK_UNITS = 3;
 
     private final PenaltyQuestRepository questRepository;
     private final DomainEventPublisher eventPublisher;
@@ -44,7 +43,7 @@ public class PenaltyQuestService {
                 .playerId(playerId)
                 .type(PenaltyQuestType.SURVIVAL)
                 .triggerReason(reason)
-                .requiredCount(10) // V1 Fixed limit
+                .requiredCount(1) // Single survival trial
                 .completedCount(0)
                 .todayWorkUnits(0)
                 .status(PenaltyQuestStatus.ACTIVE)
@@ -73,30 +72,12 @@ public class PenaltyQuestService {
             return;
         }
 
-        LocalDate today = LocalDate.now();
-
-        // Guard #2: Daily Cap Logic
-        if (quest.getLastWorkDate() == null || !quest.getLastWorkDate().equals(today)) {
-            // New day, reset counter
-            quest.setTodayWorkUnits(0);
-            quest.setLastWorkDate(today);
-        }
-
-        if (quest.getTodayWorkUnits() >= MAX_DAILY_WORK_UNITS) {
-            log.info("Daily penalty work cap reached for player {}. Units ignored.", playerId);
-            return;
-        }
-
-        // Apply partial work if units > remaining cap (though usually units=1)
-        int allowedUnits = Math.min(workUnits, MAX_DAILY_WORK_UNITS - quest.getTodayWorkUnits());
-        
-        if (allowedUnits <= 0) return;
-
-        quest.setCompletedCount(quest.getCompletedCount() + allowedUnits);
-        quest.setTodayWorkUnits(quest.getTodayWorkUnits() + allowedUnits);
+        // Apply work directly
+        quest.setCompletedCount(quest.getCompletedCount() + workUnits);
+        quest.setLastWorkDate(LocalDate.now());
 
         log.info("Recorded {} work units for player {}. Progress: {}/{}", 
-                allowedUnits, playerId, quest.getCompletedCount(), quest.getRequiredCount());
+                workUnits, playerId, quest.getCompletedCount(), quest.getRequiredCount());
 
         if (quest.getCompletedCount() >= quest.getRequiredCount()) {
             quest.setStatus(PenaltyQuestStatus.COMPLETED);
@@ -117,8 +98,8 @@ public class PenaltyQuestService {
                     map.put("type", q.getType().name());
                     map.put("completed", q.getCompletedCount());
                     map.put("required", q.getRequiredCount());
-                    map.put("todayWork", q.getTodayWorkUnits());
-                    map.put("maxDaily", MAX_DAILY_WORK_UNITS);
+                    map.put("todayWork", q.getCompletedCount());
+                    map.put("maxDaily", 1);
                     return map;
                 })
                 .orElse(Map.of("active", false));

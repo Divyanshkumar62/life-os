@@ -14,9 +14,9 @@ public interface QuestLifecycleService {
     
     void updateQuest(UUID questId, Map<String, Object> updates, String reason);
     
-    void completeQuest(UUID questId);
+    com.lifeos.quest.dto.QuestResponse completeQuest(UUID questId);
     
-    void failQuest(UUID questId);
+    com.lifeos.quest.dto.QuestResponse failQuest(UUID questId);
     
     void expireQuest(UUID questId);
     

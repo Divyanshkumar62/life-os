@@ -33,17 +33,20 @@ public class DailyQuestService {
     private final PlayerStateService playerStateService;
     private final IntelQuestGenerator intelGenerator;
     private final RedGateService redGateService;
+    private final com.lifeos.ai.service.AIQuestService aiQuestService;
 
     @Autowired
     public DailyQuestService(PlayerIdentityRepository identityRepository, PlayerProfileRepository profileRepository,
                            QuestLifecycleService questService, PlayerStateService playerStateService,
-                           IntelQuestGenerator intelGenerator, RedGateService redGateService) {
+                           IntelQuestGenerator intelGenerator, RedGateService redGateService,
+                           com.lifeos.ai.service.AIQuestService aiQuestService) {
         this.identityRepository = identityRepository;
         this.profileRepository = profileRepository;
         this.questService = questService;
         this.playerStateService = playerStateService;
         this.intelGenerator = intelGenerator;
         this.redGateService = redGateService;
+        this.aiQuestService = aiQuestService;
     }
 
     @Transactional
@@ -100,6 +103,7 @@ public class DailyQuestService {
                 playerId, QuestType.DISCIPLINE, com.lifeos.quest.domain.enums.QuestState.ACTIVE)
             .stream()
             .filter(q -> q.getCategory() == com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
+            .filter(q -> !q.getTitle().equals("[HIDDEN] The Architect's Original Trial"))
             .toList();
 
         java.util.List<com.lifeos.quest.domain.Quest> activeReflection = 
@@ -107,6 +111,7 @@ public class DailyQuestService {
                 playerId, QuestType.REFLECTION, com.lifeos.quest.domain.enums.QuestState.ACTIVE)
             .stream()
             .filter(q -> q.getCategory() == com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
+            .filter(q -> !q.getTitle().equals("[HIDDEN] The Architect's Original Trial"))
             .toList();
 
         int uncompletedDailies = activeDailies.size() + activeReflection.size();
@@ -116,6 +121,8 @@ public class DailyQuestService {
 
         if (uncompletedDailies > 0) {
             log.warn("Player {} failed the 100% Daily Rule (Missed {} quests)", playerId, uncompletedDailies);
+            
+            playerStateService.accumulateDailyRestDebt(playerId, 20.0 * uncompletedDailies);
             
             boolean hasShield = playerStateService.hasActiveFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.PENALTY_SHIELD);
             
@@ -148,6 +155,16 @@ public class DailyQuestService {
                 });
             }
         }
+
+        // Clean up (expire) any active/assigned Architect's Trial from the previous reset period
+        java.util.List<com.lifeos.quest.domain.Quest> activeArchitectTrial = 
+            questService.getQuestRepository().findByPlayerPlayerIdAndQuestTypeAndState(
+                playerId, QuestType.PHYSICAL, com.lifeos.quest.domain.enums.QuestState.ACTIVE)
+            .stream()
+            .filter(q -> q.getTitle().equals("[HIDDEN] The Architect's Original Trial"))
+            .toList();
+            
+        activeArchitectTrial.forEach(q -> questService.expireQuest(q.getQuestId()));
     }
 
     private void triggerDailyReset(PlayerIdentity identity, LocalDateTime resetTimestamp) {
@@ -163,97 +180,31 @@ public class DailyQuestService {
             return;
         }
 
-        PlayerProfile profile = profileRepository.findByPlayerId(identity.getPlayerId()).orElse(null);
-        String archetype = (profile != null && profile.getArchetype() != null) ? profile.getArchetype().toUpperCase() : "BALANCE";
-        String goal = (profile != null && profile.getSixMonthGoal() != null) ? profile.getSixMonthGoal().toLowerCase() : "";
-        String weakness = (profile != null && profile.getBiggestChallenge() != null) ? profile.getBiggestChallenge().toLowerCase() : "";
+        // Clear DAILY_CLEAR_REWARDED status flag
+        playerStateService.removeStatusFlag(identity.getPlayerId(), com.lifeos.player.domain.enums.StatusFlagType.DAILY_CLEAR_REWARDED);
 
-        String physTitle = "Daily: Physical Maintenance";
-        String physDesc = "Complete your daily movement routine.";
-        int physXp = 50;
-
-        if (archetype.equals("BRAWN")) {
-             physTitle = "Daily: Strength Training";
-             physDesc = "Complete a resistance training session. Focus on hypertrophy.";
-             physXp = 75;
-        } else if (goal.contains("weight") || goal.contains("fat") || goal.contains("slim")) {
-             physTitle = "Daily: Cardio Burn";
-             physDesc = "Complete 30 minutes of Zone 2 cardio.";
-        } else if (goal.contains("muscle") || goal.contains("bulk")) {
-             physTitle = "Daily: Hypertrophy Work";
-             physDesc = "Complete 4 sets of compound movements.";
-             physXp = 60;
-        }
-
-        questService.assignQuest(QuestRequest.builder()
-                .playerId(identity.getPlayerId())
-                .title(physTitle)
-                .description(physDesc)
-                .questType(QuestType.DISCIPLINE)
-                .category(com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
-                .difficultyTier(DifficultyTier.D)
-                .priority(Priority.HIGH)
-                .deadlineAt(resetTimestamp.plusHours(24))
-                .successXp(physXp)
-                .goldReward(20)
-                .primaryAttribute(AttributeType.STRENGTH)
-                .build());
-
-        String focusTitle = "Daily: Deep Focus Block";
-        String focusDesc = "Complete one 90-minute deep work session.";
-        AttributeType focusAttr = AttributeType.INTELLIGENCE;
-
-        if (goal.contains("code") || goal.contains("program") || goal.contains("dev")) {
-             focusTitle = "Daily: Coding Kata";
-             focusDesc = "Complete 1 hour of focused coding or algorithm practice.";
-        } else if (goal.contains("write") || goal.contains("book")) {
-             focusTitle = "Daily: Writing Sprint";
-             focusDesc = "Write 500 words or spend 45 minutes separate from distractions.";
-        } else if (goal.contains("business") || goal.contains("startup")) {
-             focusTitle = "Daily: Strategic Planning";
-             focusDesc = "Review KPIs and execute one key strategic task.";
-             focusAttr = AttributeType.SENSE;
-        }
+        // Call GeminiQuestService to generate the 3 daily quests!
+        java.util.List<com.lifeos.quest.dto.QuestRequest> aiQuests = aiQuestService.generateQuests(identity.getPlayerId(), 3);
         
-        if (weakness.contains("procrastination") || weakness.contains("start")) {
-             focusTitle = focusTitle + " (Eat The Frog)";
-             focusDesc = "Do the hardest task FIRST. " + focusDesc;
+        for (com.lifeos.quest.dto.QuestRequest qr : aiQuests) {
+            qr.setCategory(com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY);
+            qr.setDeadlineAt(resetTimestamp.plusHours(24));
+            questService.assignQuest(qr);
         }
 
+        // Append the 4th optional quest
         questService.assignQuest(QuestRequest.builder()
                 .playerId(identity.getPlayerId())
-                .title(focusTitle)
-                .description(focusDesc)
-                .questType(QuestType.DISCIPLINE)
+                .title("[HIDDEN] The Architect's Original Trial")
+                .description("Objective: 100 Push-ups, 100 Sit-ups, 100 Squats, 10km Run")
+                .questType(QuestType.PHYSICAL)
                 .category(com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
-                .difficultyTier(DifficultyTier.C)
-                .priority(Priority.HIGH)
-                .deadlineAt(resetTimestamp.plusHours(24))
-                .successXp(100)
-                .goldReward(30)
-                .primaryAttribute(focusAttr)
-                .build());
-
-        String reflectTitle = "Daily: Evening Reflection";
-        String reflectDesc = "Review your day's progress and plan for tomorrow.";
-        
-        if (archetype.equals("BRAINS")) {
-             reflectTitle = "Daily: Knowledge Intake";
-             reflectDesc = "Read 10 pages of a non-fiction book or research paper.";
-        }
-
-        questService.assignQuest(QuestRequest.builder()
-                .playerId(identity.getPlayerId())
-                .title(reflectTitle)
-                .description(reflectDesc)
-                .questType(QuestType.REFLECTION)
-                .category(com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY)
-                .difficultyTier(DifficultyTier.E)
+                .difficultyTier(DifficultyTier.S)
                 .priority(Priority.NORMAL)
                 .deadlineAt(resetTimestamp.plusHours(24))
-                .successXp(30)
-                .goldReward(10)
-                .primaryAttribute(AttributeType.SENSE)
+                .successXp(0)
+                .goldReward(0L)
+                .primaryAttribute(AttributeType.STR)
                 .build());
 
         long daysActive = java.time.temporal.ChronoUnit.DAYS.between(identity.getCreatedAt(), LocalDateTime.now());
@@ -268,3 +219,4 @@ public class DailyQuestService {
         identityRepository.save(identity);
     }
 }
+

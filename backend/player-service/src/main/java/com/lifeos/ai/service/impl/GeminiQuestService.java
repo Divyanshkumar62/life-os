@@ -9,6 +9,7 @@ import com.lifeos.quest.domain.enums.Priority;
 import com.lifeos.quest.domain.enums.QuestType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.lifeos.quest.dto.QuestRequest;
+import com.lifeos.onboarding.dto.QuestionnaireRequest;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -42,11 +43,15 @@ public class GeminiQuestService implements AIQuestService {
     private PlayerContextService contextService;
     private ObjectMapper objectMapper;
     private com.lifeos.quest.repository.QuestRepository questRepository;
+    private com.lifeos.player.service.PlayerStateService playerStateService;
     
-    public GeminiQuestService(PlayerContextService contextService, ObjectMapper objectMapper, com.lifeos.quest.repository.QuestRepository questRepository) {
+    public GeminiQuestService(PlayerContextService contextService, ObjectMapper objectMapper,
+                               com.lifeos.quest.repository.QuestRepository questRepository,
+                               com.lifeos.player.service.PlayerStateService playerStateService) {
         this.contextService = contextService;
         this.objectMapper = objectMapper;
         this.questRepository = questRepository;
+        this.playerStateService = playerStateService;
     }
 
 
@@ -220,24 +225,38 @@ public class GeminiQuestService implements AIQuestService {
         }
 
         String playerContext = contextService.buildContextPrompt(playerId);
-        String systemPrompt = """
+
+        // --- AGI ATTRIBUTE UTILITY: Reduce 4-hour minimum by 1.5 minutes per AGI point ---
+        int agiValue = getAgiValue(playerId);
+        // Base = 240 minutes (4 hours). Reduction = AGI * 1.5 min, floored at 60 minutes minimum.
+        int adjustedMinutes = Math.max(60, 240 - (int)(agiValue * 1.5));
+        int adjustedHours = adjustedMinutes / 60;
+        int adjustedRemMins = adjustedMinutes % 60;
+        String timeConstraint = adjustedRemMins == 0
+            ? String.format("%d hours", adjustedHours)
+            : String.format("%d hours and %d minutes", adjustedHours, adjustedRemMins);
+
+        String systemPrompt = ("""
             You are the SYSTEM from Solo Leveling. You generate BRUTAL, LIFE-THREATENING quests that push players to their absolute limits.
             
             CRITICAL REQUIREMENTS:
             1. Generate %d quests that are INTENSELY PERSONALIZED to exploit the player's specific weaknesses and past failures
             2. DIFFICULTY SCALING: Check the player's 'Current Rank' in the context.
                - If generating 3 quests: Two must be ONE rank higher, One must be TWO ranks higher than current. (e.g. If E-Rank: 2 D-Rank, 1 C-Rank)
-            3. Use their biggest challenges and quit reasons to design quests that force them to confront what they fear most
-            4. Make quests SPECIFIC and ACTIONABLE - no vague goals
-            5. Set TIGHT 24-hour deadlines to create pressure
-            6. Include PAINFUL failure penalties (Penalty Zone references)
-            7. Set 'egoBreaker' to TRUE if the quest specifically targets their arrogance or specific insecurity.
-            8. Set 'expectedFailureProbability' (0.0 - 1.0) based on how difficult the task is for their current level.
-            9. REWARDS SCALING:
+            3. PROGRESSIVE SCALING: Scale the complexity, effort, and duration of the quests based on the player's current LEVEL and RANK. Ensure that as a player levels up, the tasks required become progressively more demanding, high-stakes, and challenging (never generate trivial, easy, or low-level tasks for a high-level/high-rank player).
+            4. Use their biggest challenges and quit reasons to design quests that force them to confront what they fear most
+            5. Make quests SPECIFIC and ACTIONABLE - no vague goals
+            6. Set TIGHT 24-hour deadlines to create pressure
+            7. Include PAINFUL failure penalties (Penalty Zone references)
+            8. Set 'egoBreaker' to TRUE if the quest specifically targets their arrogance or specific insecurity.
+            9. Set 'expectedFailureProbability' (0.0 - 1.0) based on how difficult the task is for their current level.
+            10. REWARDS SCALING:
                - Rewards MUST match the Difficulty + Failure Probability.
                - Higher Failure Probability = Higher XP & Gold.
                - Gold Reward: Base 100 * Tier Multiplier (E=1, D=2, C=4, B=8, A=16, S=32).
-            10. Set 'primaryAttribute' to the main stat being trained (DISCIPLINE, STR, INT, FOCUS, etc.)
+            11. Set 'primaryAttribute' to the main stat being trained (DISCIPLINE, STR, INT, FOCUS, AGI, etc.)
+            12. TIME CONSTRAINT: The combined estimated time for the 3 daily quests MUST be a minimum of %s (adjusted for this player's AGI Reaction stat). If the user lacks time, the system demands they sacrifice sleep or leisure to meet this minimum.
+            13. ATTRIBUTE REWARDS LIMITATION: You must strictly align attribute rewards to the nature of the quest (e.g., physical tasks grant STR, mental tasks grant INT). The AI must award exactly 1.0 (a whole number) to the specific attribute related to the quest the player completes. Never award any other value or fractional numbers.
             
             TONE: Cold, clinical, threatening. Use phrases like:
             - "The System has detected weakness in..."
@@ -256,15 +275,15 @@ public class GeminiQuestService implements AIQuestService {
                 "difficultyTier": "E | D | C | B | A | S",
                 "xpReward": Integer (100-300),
                 "goldReward": Integer,
-                "primaryAttribute": "DISCIPLINE | FOCUS | PHYSICAL_ENERGY | MENTAL_RESILIENCE | STR | INT | VIT | SEN",
-                "attributeRewards": { "DISCIPLINE": 2.0, "STRENGTH": 1.0 },
+                "primaryAttribute": "DISCIPLINE | FOCUS | PHYSICAL_ENERGY | MENTAL_RESILIENCE | STR | INT | VIT | SEN | AGI",
+                "attributeRewards": { "STR": 1.0 },
                 "egoBreaker": boolean,
                 "failureProbability": double (0.0-1.0)
               }
             ]
             
             NEVER generate easy quests matching their current rank. ALWAYS +1 or +2 Ranks. Make them SUFFER to grow.
-            """.formatted(count);
+            """).formatted(count, timeConstraint);
 
         try {
             GeminiRequest requestBody = new GeminiRequest(systemPrompt + "\n\nPlayer Profile:\n" + playerContext);
@@ -481,5 +500,116 @@ public class GeminiQuestService implements AIQuestService {
         }
 
         return fallbackQuests;
+    }
+
+    @Override
+    public QuestionnaireRequest inferQuestionnaire(QuestionnaireRequest request) {
+        log.info("Calling Gemini to infer questionnaire for challenge: {}", request.getBiggestChallenge());
+        
+        if (apiKey == null || apiKey.trim().isEmpty() || apiKey.equals("placeholder")) {
+            log.warn("Gemini API Key is missing. Using fallback for questionnaire inference.");
+            return createFallbackQuestionnaire(request);
+        }
+
+        String prompt = contextService.buildInferencePrompt(request);
+        GeminiRequest requestBody = new GeminiRequest(prompt);
+        
+        java.util.Set<String> probeUrls = new java.util.LinkedHashSet<>();
+        probeUrls.add(apiUrl);
+        probeUrls.add("https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-8b:generateContent");
+        probeUrls.add("https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent");
+
+        for (String probeUrl : probeUrls) {
+            try {
+                log.info("Attempting Gemini call for questionnaire inference at URL: {}", probeUrl);
+                GeminiResponse response = restClient.post()
+                        .uri(probeUrl + "?key=" + apiKey)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(requestBody)
+                        .retrieve()
+                        .body(GeminiResponse.class);
+
+                if (response != null && response.getCandidates() != null && !response.getCandidates().isEmpty()) {
+                    String contentResult = response.getCandidates().get(0).getContent().getParts().get(0).getText();
+                    String cleanJson = cleanJsonResponse(contentResult);
+                    InferredQuestionnaireSchema schema = objectMapper.readValue(cleanJson, InferredQuestionnaireSchema.class);
+                    
+                    java.time.LocalTime wakeTime;
+                    try {
+                        wakeTime = java.time.LocalTime.parse(schema.getWakeUpTime());
+                    } catch (Exception e) {
+                        wakeTime = java.time.LocalTime.of(6, 0);
+                    }
+                    
+                    log.info("Successfully inferred questionnaire: archetype={}, wakeUpTime={}", 
+                        schema.getArchetype(), schema.getWakeUpTime());
+                    
+                    request.setArchetype(schema.getArchetype());
+                    request.setWakeUpTime(wakeTime);
+                    return request;
+                }
+            } catch (Exception e) {
+                log.warn("Gemini call failed for questionnaire inference at URL {}: {}", probeUrl, e.getMessage());
+            }
+        }
+
+        log.warn("All Gemini calls failed for questionnaire inference. Using fallback.");
+        return createFallbackQuestionnaire(request);
+    }
+
+    private QuestionnaireRequest createFallbackQuestionnaire(QuestionnaireRequest request) {
+        String inferredArchetype = "BALANCE";
+        String weapon = request.getFocusArea();
+        
+        if ("Physical strength".equalsIgnoreCase(weapon) || "Physical".equalsIgnoreCase(weapon)) {
+            inferredArchetype = "BRAWN";
+        } else if ("Mental sharpness".equalsIgnoreCase(weapon) || "Mental".equalsIgnoreCase(weapon)) {
+            inferredArchetype = "BRAINS";
+        }
+        
+        request.setArchetype(inferredArchetype);
+        request.setWakeUpTime(java.time.LocalTime.of(6, 0));
+        return request;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class InferredQuestionnaireSchema {
+        private String archetype;
+        private String availableTime;
+        private String wakeUpTime;
+        private String biggestChallenge;
+        private String focusArea;
+
+        public InferredQuestionnaireSchema() {}
+
+        public String getArchetype() { return archetype; }
+        public void setArchetype(String archetype) { this.archetype = archetype; }
+        public String getAvailableTime() { return availableTime; }
+        public void setAvailableTime(String availableTime) { this.availableTime = availableTime; }
+        public String getWakeUpTime() { return wakeUpTime; }
+        public void setWakeUpTime(String wakeUpTime) { this.wakeUpTime = wakeUpTime; }
+        public String getBiggestChallenge() { return biggestChallenge; }
+        public void setBiggestChallenge(String biggestChallenge) { this.biggestChallenge = biggestChallenge; }
+        public String getFocusArea() { return focusArea; }
+        public void setFocusArea(String focusArea) { this.focusArea = focusArea; }
+    }
+
+    /**
+     * Retrieves the player's AGI stat for time constraint reduction.
+     * Returns 0 safely if not found.
+     */
+    private int getAgiValue(UUID playerId) {
+        try {
+            com.lifeos.player.dto.PlayerStateResponse state = playerStateService.getPlayerState(playerId);
+            if (state.getAttributes() == null) return 0;
+            return state.getAttributes().stream()
+                    .filter(a -> com.lifeos.player.domain.enums.AttributeType.AGI == a.getAttributeType())
+                    .mapToInt(a -> (int) a.getCurrentValue())
+                    .findFirst()
+                    .orElse(0);
+        } catch (Exception e) {
+            log.warn("Could not fetch AGI for player {}: {}", playerId, e.getMessage());
+            return 0;
+        }
     }
 }
