@@ -54,6 +54,12 @@ public class Project {
     @Column(nullable = false)
     private int bossKeyReward = 1;
 
+    @Column(name = "base_xp_reward")
+    private int baseXpReward = 1000;
+
+    @Column(name = "base_gold_reward")
+    private int baseGoldReward = 0;
+
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
 
@@ -69,7 +75,7 @@ public class Project {
     
     public Project() {}
 
-    public Project(UUID projectId, PlayerIdentity player, String title, String description, PlayerRank rankRequirement, int difficultyTier, ProjectStatus status, int minSubtasks, int durationDays, LocalDateTime startDate, LocalDateTime hardDeadline, int bossKeyReward, LocalDateTime createdAt, LocalDateTime completedAt, LocalDateTime lastActivityAt, ProjectStability stabilityStatus, double finalXpMultiplier) {
+    public Project(UUID projectId, PlayerIdentity player, String title, String description, PlayerRank rankRequirement, int difficultyTier, ProjectStatus status, int minSubtasks, int durationDays, LocalDateTime startDate, LocalDateTime hardDeadline, int bossKeyReward, int baseXpReward, int baseGoldReward, LocalDateTime createdAt, LocalDateTime completedAt, LocalDateTime lastActivityAt, ProjectStability stabilityStatus, double finalXpMultiplier) {
         this.projectId = projectId;
         this.player = player;
         this.title = title;
@@ -82,6 +88,8 @@ public class Project {
         this.startDate = startDate;
         this.hardDeadline = hardDeadline;
         this.bossKeyReward = bossKeyReward;
+        this.baseXpReward = baseXpReward;
+        this.baseGoldReward = baseGoldReward;
         this.createdAt = createdAt;
         this.completedAt = completedAt;
         this.lastActivityAt = lastActivityAt;
@@ -123,6 +131,10 @@ public class Project {
     public void setHardDeadline(LocalDateTime hardDeadline) { this.hardDeadline = hardDeadline; }
     public int getBossKeyReward() { return bossKeyReward; }
     public void setBossKeyReward(int bossKeyReward) { this.bossKeyReward = bossKeyReward; }
+    public int getBaseXpReward() { return baseXpReward; }
+    public void setBaseXpReward(int baseXpReward) { this.baseXpReward = baseXpReward; }
+    public int getBaseGoldReward() { return baseGoldReward; }
+    public void setBaseGoldReward(int baseGoldReward) { this.baseGoldReward = baseGoldReward; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
@@ -151,6 +163,8 @@ public class Project {
         private LocalDateTime startDate;
         private LocalDateTime hardDeadline;
         private int bossKeyReward = 1;
+        private int baseXpReward = 1000;
+        private int baseGoldReward = 0;
         private LocalDateTime createdAt;
         private LocalDateTime completedAt;
         private LocalDateTime lastActivityAt;
@@ -169,6 +183,8 @@ public class Project {
         public ProjectBuilder startDate(LocalDateTime startDate) { this.startDate = startDate; return this; }
         public ProjectBuilder hardDeadline(LocalDateTime hardDeadline) { this.hardDeadline = hardDeadline; return this; }
         public ProjectBuilder bossKeyReward(int bossKeyReward) { this.bossKeyReward = bossKeyReward; return this; }
+        public ProjectBuilder baseXpReward(int baseXpReward) { this.baseXpReward = baseXpReward; return this; }
+        public ProjectBuilder baseGoldReward(int baseGoldReward) { this.baseGoldReward = baseGoldReward; return this; }
         public ProjectBuilder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
         public ProjectBuilder completedAt(LocalDateTime completedAt) { this.completedAt = completedAt; return this; }
         public ProjectBuilder lastActivityAt(LocalDateTime lastActivityAt) { this.lastActivityAt = lastActivityAt; return this; }
@@ -176,7 +192,7 @@ public class Project {
         public ProjectBuilder finalXpMultiplier(double finalXpMultiplier) { this.finalXpMultiplier = finalXpMultiplier; return this; }
 
         public Project build() {
-            return new Project(projectId, player, title, description, rankRequirement, difficultyTier, status, minSubtasks, durationDays, startDate, hardDeadline, bossKeyReward, createdAt, completedAt, lastActivityAt, stabilityStatus, finalXpMultiplier);
+            return new Project(projectId, player, title, description, rankRequirement, difficultyTier, status, minSubtasks, durationDays, startDate, hardDeadline, bossKeyReward, baseXpReward, baseGoldReward, createdAt, completedAt, lastActivityAt, stabilityStatus, finalXpMultiplier);
         }
     }
 }

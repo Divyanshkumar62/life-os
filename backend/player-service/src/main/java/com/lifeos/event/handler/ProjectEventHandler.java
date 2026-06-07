@@ -15,11 +15,13 @@ public class ProjectEventHandler {
     private final ProjectService projectService;
     private final QuestRepository questRepository;
     private final PlayerStateService playerStateService;
+    private final com.lifeos.economy.service.EconomyService economyService;
 
-    public ProjectEventHandler(ProjectService projectService, QuestRepository questRepository, PlayerStateService playerStateService) {
+    public ProjectEventHandler(ProjectService projectService, QuestRepository questRepository, PlayerStateService playerStateService, com.lifeos.economy.service.EconomyService economyService) {
         this.projectService = projectService;
         this.questRepository = questRepository;
         this.playerStateService = playerStateService;
+        this.economyService = economyService;
     }
 
     @EventListener
@@ -33,14 +35,21 @@ public class ProjectEventHandler {
 
     @EventListener
     public void handleProjectCompleted(ProjectCompletedEvent event) {
-        // Award Massive XP
-        // V1 Standard Reward: 1000 XP
-        // Future: Scale with Rank (E=1000, D=2000...)
-        long xpReward = 1000;
-        playerStateService.addXp(event.getPlayerId(), xpReward);
+        // Award Dynamic AI Loot
+        long xpReward = event.getBaseXpReward();
+        long goldReward = event.getBaseGoldReward();
+        
+        if (xpReward > 0) {
+            playerStateService.addXp(event.getPlayerId(), xpReward);
+        }
+        
+        if (goldReward > 0) {
+            economyService.addGold(event.getPlayerId(), goldReward, "Dungeon Clear: " + event.getProjectId());
+        }
         
         System.out.println("DUNGEON CLEARED! Player " + event.getPlayerId() + " completed Project " + event.getProjectId());
         System.out.println("Boss Key Acquired: " + event.getBossKeyReward());
         System.out.println("XP Awarded: " + xpReward);
+        System.out.println("Gold Awarded: " + goldReward);
     }
 }

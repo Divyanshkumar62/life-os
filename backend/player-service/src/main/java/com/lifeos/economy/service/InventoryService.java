@@ -69,6 +69,31 @@ public class InventoryService {
     }
 
     /**
+     * Consumes (removes) an item from the user's inventory by item code.
+     */
+    @Transactional
+    public void consumeItemByCode(UUID playerId, String itemCode, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+
+        UserInventory inventoryItem = inventoryRepository.findByPlayerIdAndItemCode(playerId, itemCode)
+                .orElseThrow(() -> new IllegalStateException("Gate access denied. Required Rank Key is missing."));
+
+        if (inventoryItem.getQuantity() < quantity) {
+            throw new IllegalStateException("Gate access denied. Required Rank Key is missing.");
+        }
+
+        int newQuantity = inventoryItem.getQuantity() - quantity;
+        if (newQuantity == 0) {
+            inventoryRepository.delete(inventoryItem);
+        } else {
+            inventoryItem.setQuantity(newQuantity);
+            inventoryRepository.save(inventoryItem);
+        }
+    }
+
+    /**
      * Retrieves all items in the user's inventory.
      */
     @Transactional(readOnly = true)

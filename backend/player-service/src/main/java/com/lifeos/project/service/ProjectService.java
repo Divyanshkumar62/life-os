@@ -39,6 +39,7 @@ public class ProjectService {
     private final DungeonArchitectService dungeonArchitect;
     private final com.lifeos.quest.service.QuestLifecycleService questLifecycleService;
     private final com.lifeos.event.DomainEventPublisher domainEventPublisher;
+    private final com.lifeos.economy.service.InventoryService inventoryService;
     private static final Logger log = LoggerFactory.getLogger(ProjectService.class);
 
     public ProjectService(ProjectRepository projectRepository, QuestRepository questRepository, 
@@ -46,7 +47,8 @@ public class ProjectService {
                          com.lifeos.player.service.PlayerStateService playerStateService,
                          DungeonArchitectService dungeonArchitect,
                          com.lifeos.quest.service.QuestLifecycleService questLifecycleService,
-                         com.lifeos.event.DomainEventPublisher domainEventPublisher) {
+                         com.lifeos.event.DomainEventPublisher domainEventPublisher,
+                         com.lifeos.economy.service.InventoryService inventoryService) {
         this.projectRepository = projectRepository;
         this.questRepository = questRepository;
         this.progressionRepository = progressionRepository;
@@ -55,6 +57,7 @@ public class ProjectService {
         this.dungeonArchitect = dungeonArchitect;
         this.questLifecycleService = questLifecycleService;
         this.domainEventPublisher = domainEventPublisher;
+        this.inventoryService = inventoryService;
     }
     
     @Transactional
@@ -146,7 +149,9 @@ public class ProjectService {
         domainEventPublisher.publish(new com.lifeos.event.concrete.ProjectCompletedEvent(
             project.getPlayer().getPlayerId(),
             project.getProjectId(),
-            project.getBossKeyReward()
+            project.getBossKeyReward(),
+            project.getBaseXpReward(),
+            project.getBaseGoldReward()
         ));
     }
     
@@ -207,6 +212,14 @@ public class ProjectService {
             throw new IllegalArgumentException("Project goal is too vague. Defines specific clear conditions.");
         }
 
+        // Consume the matching Rank Key from inventory
+        String requiredKey = "KEY_" + request.getUserRank() + "_RANK";
+        try {
+            inventoryService.consumeItemByCode(request.getPlayerId(), requiredKey, 1);
+        } catch (IllegalStateException e) {
+            throw new IllegalStateException("Gate access denied. Required Rank Key is missing.");
+        }
+
         DungeonResponse response = dungeonArchitect.generateDungeon(request.getPlayerId(), request.getGoal(), request.getUserRank());
         
         if (!response.isValid()) {
@@ -229,7 +242,9 @@ public class ProjectService {
                 .durationDays(dungeonData.getEstimatedDurationDays())
                 .startDate(LocalDateTime.now())
                 .hardDeadline(LocalDateTime.now().plusDays(dungeonData.getEstimatedDurationDays()))
-                .bossKeyReward(1)
+                .bossKeyReward(dungeonData.getLoot() != null ? dungeonData.getLoot().getBossKeys() : 1)
+                .baseXpReward(dungeonData.getLoot() != null ? dungeonData.getLoot().getXpTotal() : 1000)
+                .baseGoldReward(dungeonData.getLoot() != null ? dungeonData.getLoot().getGold() : 0)
                 .lastActivityAt(LocalDateTime.now())
                 .stabilityStatus(ProjectStability.STABLE)
                 .finalXpMultiplier(1.0)
