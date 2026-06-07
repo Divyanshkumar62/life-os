@@ -93,6 +93,12 @@ export const ProjectAPI = {
     },
     equipQuest: async (projectId: string, questId: string) => {
         return await api.post(`/projects/${projectId}/equip/${questId}`);
+    },
+    getProject: async (projectId: string) => {
+        return await api.get(`/projects/${projectId}`);
+    },
+    getProjectQuests: async (projectId: string) => {
+        return await api.get(`/projects/${projectId}/quests`);
     }
 };
 

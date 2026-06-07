@@ -8,9 +8,10 @@ import { Radar, ShieldAlert } from 'lucide-react';
 interface SystemGateViewProps {
     playerId: string | null;
     onBack: () => void;
+    onEnterDungeon: (projectId: string) => void;
 }
 
-export function SystemGateView({ playerId, onBack }: SystemGateViewProps) {
+export function SystemGateView({ playerId, onBack, onEnterDungeon }: SystemGateViewProps) {
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [scanning, setScanning] = useState(false);
@@ -48,7 +49,7 @@ export function SystemGateView({ playerId, onBack }: SystemGateViewProps) {
         setTimeout(() => {
             console.log(`Entering Gate: ${projectId}`);
             setEnteringGateId(null);
-            // In future, navigate to /dungeon/:id
+            onEnterDungeon(projectId);
         }, 3000);
     };
 

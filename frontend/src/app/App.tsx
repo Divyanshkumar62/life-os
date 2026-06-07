@@ -17,6 +17,7 @@ import { RedGatePopup } from "../components/features/RedGate/RedGatePopup";
 import { JobChangePopup } from "../components/features/JobChange/JobChangePopup";
 import { useSystemAudio } from "../hooks/useSystemAudio";
 import { SystemToast } from "../components/system";
+import { DungeonView } from "../screens/Dungeon/DungeonView";
 
 type Screen =
   | "dashboard"
@@ -27,7 +28,8 @@ type Screen =
   | "onboarding"
   | "store"
   | "inventory"
-  | "system_gate";
+  | "system_gate"
+  | "dungeon";
 
 function AppContent({
   playerId,
@@ -37,6 +39,7 @@ function AppContent({
   setPlayerId: (id: string) => void;
 }) {
   const [currentScreen, setCurrentScreen] = useState<Screen>("onboarding");
+  const [activeDungeonId, setActiveDungeonId] = useState<string | null>(null);
   const { statusWindow, jobClass, theme } = useSystemContext();
   const { redGate, jobChange, isShopLocked, isInventoryLocked } = useRedGateContext();
   const { playRedGateAlarm } = useSystemAudio();
@@ -192,6 +195,23 @@ function AppContent({
       <SystemGateView
         playerId={playerId}
         onBack={() => setCurrentScreen("dashboard")}
+        onEnterDungeon={(id) => {
+          setActiveDungeonId(id);
+          setCurrentScreen("dungeon");
+        }}
+      />
+    );
+  }
+
+  if (currentScreen === "dungeon" && activeDungeonId) {
+    return (
+      <DungeonView 
+        playerId={playerId} 
+        projectId={activeDungeonId} 
+        onBack={() => {
+          setActiveDungeonId(null);
+          setCurrentScreen("system_gate");
+        }} 
       />
     );
   }

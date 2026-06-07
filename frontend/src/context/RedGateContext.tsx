@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { RedGateAPI, JobChangeAPI } from "../api/api";
+import { RedGateAPI, JobChangeAPI, QuestAPI } from "../api/api";
 
 interface RedGateState {
     isActive: boolean;
@@ -63,9 +63,12 @@ export const RedGateProvider: React.FC<{
         if (!playerId) return;
         try {
             const data = await RedGateAPI.getStatus(playerId);
+            const activeQuests = await QuestAPI.getActiveQuests(playerId);
+            const hasInvasion = activeQuests.some((q: any) => q.title?.includes('[INVASION]'));
+
             setRedGate({
-                isActive: data.active,
-                quest: data.quest,
+                isActive: data.active || hasInvasion,
+                quest: data.quest || (hasInvasion ? activeQuests.find((q: any) => q.title.includes('[INVASION]')) : null),
                 remainingSeconds: data.quest?.deadlineAt ? 
                     Math.max(0, new Date(data.quest.deadlineAt).getTime() - Date.now()) / 1000 : null,
                 loading: false
