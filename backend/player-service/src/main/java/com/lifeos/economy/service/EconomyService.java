@@ -27,7 +27,7 @@ public class EconomyService {
         if (amount < 0) throw new IllegalArgumentException("Amount must be positive");
         BigDecimal amountBd = BigDecimal.valueOf(amount);
 
-        PlayerEconomy economy = economyRepository.findById(playerId)
+        PlayerEconomy economy = economyRepository.findByPlayerPlayerId(playerId)
                 .orElseGet(() -> createInitialEconomy(playerId));
 
         economy.setGoldBalance(economy.getGoldBalance().add(amountBd));
@@ -42,7 +42,7 @@ public class EconomyService {
         if (amount < 0) throw new IllegalArgumentException("Amount must be positive");
         BigDecimal amountBd = BigDecimal.valueOf(amount);
 
-        PlayerEconomy economy = economyRepository.findById(playerId)
+        PlayerEconomy economy = economyRepository.findByPlayerPlayerId(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player economy data not found"));
 
         if (economy.getGoldBalance().compareTo(amountBd) < 0) {
@@ -58,7 +58,7 @@ public class EconomyService {
     
     @Transactional(readOnly = true)
     public PlayerEconomy getEconomyState(UUID playerId) {
-         return economyRepository.findById(playerId)
+         return economyRepository.findByPlayerPlayerId(playerId)
                 .orElseGet(() -> createInitialEconomy(playerId));
     }
 

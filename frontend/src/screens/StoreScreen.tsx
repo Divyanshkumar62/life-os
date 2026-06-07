@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShopItemCard } from '../components/economy/ShopItemCard';
-import { ShoppingBag, Loader } from 'lucide-react';
+import { ShoppingBag, Loader, Lock } from 'lucide-react';
 import { EconomyAPI } from '../api/api';
 import { useSystemContext } from '../context/SystemContext';
 
@@ -27,6 +27,7 @@ export const StoreScreen = ({ playerId }: StoreScreenProps) => {
     const { statusWindow, refreshSystem } = useSystemContext();
     const playerGold = statusWindow?.economy?.gold || 0;
     const playerRank = statusWindow?.identity?.rank || 'E-RANK';
+    const playerLevel = statusWindow?.identity?.level || 1;
 
     const fetchData = async () => {
         if (!playerId) return;
@@ -78,6 +79,44 @@ export const StoreScreen = ({ playerId }: StoreScreenProps) => {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center text-solo-blue-500">
                 <Loader className="animate-spin mr-2" /> Loading System Store...
+            </div>
+        );
+    }
+
+    if (playerLevel < 10) {
+        return (
+            <div className="min-h-screen bg-black text-white p-6 relative overflow-hidden flex flex-col items-center justify-center">
+                {/* Background Ambience */}
+                <div className="absolute top-0 left-0 w-full h-full bg-grid-pattern opacity-5 pointer-events-none" />
+                <div className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[600px] h-[600px] bg-solo-red-950/10 rounded-full blur-3xl pointer-events-none" />
+
+                {/* Restrict Sign */}
+                <div className="relative z-10 text-center max-w-lg mx-auto p-8 rounded-2xl bg-gray-900/80 border border-solo-red-900/50 shadow-glow-red flex flex-col items-center">
+                    <div className="w-20 h-20 bg-solo-red-950/40 border border-solo-red-500/30 rounded-full flex items-center justify-center mb-6 animate-pulse text-solo-red-500 shadow-glow-red">
+                        <Lock size={40} className="stroke-[1.5]" />
+                    </div>
+                    
+                    <h2 className="text-sm font-mono tracking-widest text-solo-red-500 font-bold uppercase mb-2">
+                        [ SYSTEM RESTRICTION ]
+                    </h2>
+                    
+                    <h1 className="text-3xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-solo-red-400 mb-4">
+                        SYSTEM STORE LOCKED
+                    </h1>
+                    
+                    <p className="text-base text-gray-400 mb-6 leading-relaxed font-sans">
+                        The System Store remains locked until Level 10.
+                    </p>
+
+                    <div className="flex items-center space-x-3 bg-black border border-solo-red-900/40 px-4 py-2 rounded-lg">
+                        <span className="text-xs font-mono text-gray-500">CURRENT STATUS:</span>
+                        <span className="text-sm font-bold text-solo-red-400 font-mono">Lvl {playerLevel} / 10</span>
+                    </div>
+
+                    <div className="mt-8 text-[11px] font-mono text-gray-600 tracking-wider">
+                        Increase your stats and clear quests to unlock the store.
+                    </div>
+                </div>
             </div>
         );
     }

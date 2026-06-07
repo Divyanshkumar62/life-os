@@ -30,6 +30,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.lifeos.player.dto.PlayerProgressionDTO;
+
 @ExtendWith(MockitoExtension.class)
 class EconomySystemTest {
 
@@ -37,6 +39,7 @@ class EconomySystemTest {
     @Mock private ShopItemRepository shopRepository;
     @Mock private PurchaseTransactionRepository transactionRepository;
     @Mock private PlayerStateService playerStateService;
+    @Mock private com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository;
 
     @InjectMocks private EconomyService economyService;
     @InjectMocks private ShopService shopService;
@@ -47,18 +50,18 @@ class EconomySystemTest {
     @BeforeEach
     void setUp() {
         playerId = UUID.randomUUID();
-        // Since ShopService injects EconomyService, we need to handle that.
-        // But here we are unit testing ShopService which uses EconomyService.
-        // Ideally we Mock EconomyService for ShopServiceTest.
-        // Let's create a combined test or use a spy?
-        // Let's restructure: define mocked EconomyService for ShopService.
+        PlayerIdentity identity = PlayerIdentity.builder()
+                .playerId(playerId)
+                .onboardingCompleted(true)
+                .build();
+        lenient().when(playerIdentityRepository.findById(playerId)).thenReturn(Optional.of(identity));
     }
 
     @Test
     void testAddGold() {
         // Setup
         var economy = PlayerEconomy.builder().player(PlayerIdentity.builder().playerId(playerId).build()).goldBalance(BigDecimal.valueOf(100)).totalGoldEarned(BigDecimal.valueOf(100)).build();
-        when(economyRepository.findById(playerId)).thenReturn(Optional.of(economy));
+        when(economyRepository.findByPlayerPlayerId(playerId)).thenReturn(Optional.of(economy));
 
         // Execute
         economyService.addGold(playerId, 50, "Quest");
@@ -72,7 +75,7 @@ class EconomySystemTest {
     @Test
     void testDeductGold_Success() {
         var economy = PlayerEconomy.builder().player(PlayerIdentity.builder().playerId(playerId).build()).goldBalance(BigDecimal.valueOf(100)).totalGoldSpent(BigDecimal.ZERO).build();
-        when(economyRepository.findById(playerId)).thenReturn(Optional.of(economy));
+        when(economyRepository.findByPlayerPlayerId(playerId)).thenReturn(Optional.of(economy));
 
         economyService.deductGold(playerId, 40, "Shop");
 
@@ -83,7 +86,7 @@ class EconomySystemTest {
     @Test
     void testDeductGold_Insufficient() {
         var economy = PlayerEconomy.builder().player(PlayerIdentity.builder().playerId(playerId).build()).goldBalance(BigDecimal.valueOf(10)).build();
-        when(economyRepository.findById(playerId)).thenReturn(Optional.of(economy));
+        when(economyRepository.findByPlayerPlayerId(playerId)).thenReturn(Optional.of(economy));
 
         assertThrows(IllegalStateException.class, () ->
             economyService.deductGold(playerId, 20, "Shop")
@@ -100,6 +103,7 @@ class EconomySystemTest {
         
         PlayerStateResponse response = PlayerStateResponse.builder()
                 .activeFlags(List.of(penaltyFlag))
+                .progression(PlayerProgressionDTO.builder().level(10).build())
                 .build();
         
         when(playerStateService.getPlayerState(playerId)).thenReturn(response);
@@ -115,9 +119,32 @@ class EconomySystemTest {
     }
 
     @Test
+    void testShopLocked_BelowLevel10() {
+        // Mock Level < 10
+        PlayerStateResponse response = PlayerStateResponse.builder()
+                .activeFlags(List.of())
+                .progression(PlayerProgressionDTO.builder().level(9).build())
+                .build();
+        
+        when(playerStateService.getPlayerState(playerId)).thenReturn(response);
+
+        // Execute & Verify
+        assertThrows(IllegalStateException.class, () -> 
+            shopService.listItems(playerId)
+        );
+        
+        assertThrows(IllegalStateException.class, () -> 
+            shopService.purchaseItem(playerId, "POTION_FOCUS")
+        );
+    }
+
+    @Test
     void testPurchase_Success() {
-        // Mock No Penalty
-        PlayerStateResponse response = PlayerStateResponse.builder().activeFlags(List.of()).build();
+        // Mock No Penalty, Level 10
+        PlayerStateResponse response = PlayerStateResponse.builder()
+                .activeFlags(List.of())
+                .progression(PlayerProgressionDTO.builder().level(10).build())
+                .build();
         when(playerStateService.getPlayerState(playerId)).thenReturn(response);
 
         // Mock Item
@@ -130,16 +157,18 @@ class EconomySystemTest {
                 .build();
         when(shopRepository.findByCode("POTION_FOCUS")).thenReturn(Optional.of(potion));
 
-        // Mock Economy Service inside ShopService? 
-        // We set up ShopService manually to inject the REAL economyService? 
-        // Or we Mock it?
-        // Ideally unit tests verify interactions. 
-        // Let's rebuild ShopService with MOCK EconomyService for this test.
+        // Mock Economy Service inside ShopService
         EconomyService mockEcon = mock(EconomyService.class);
         StreakService mockStreak = mock(StreakService.class);
         InventoryService mockInventory = mock(InventoryService.class);
-        com.lifeos.economy.repository.PurchaseCooldownRepository mockCooldown = mock(com.lifeos.economy.repository.PurchaseCooldownRepository.class);
         com.lifeos.player.repository.PlayerIdentityRepository mockIdentity = mock(com.lifeos.player.repository.PlayerIdentityRepository.class);
+        com.lifeos.economy.repository.PurchaseCooldownRepository mockCooldown = mock(com.lifeos.economy.repository.PurchaseCooldownRepository.class);
+        PlayerIdentity identity = PlayerIdentity.builder()
+                .playerId(playerId)
+                .onboardingCompleted(true)
+                .build();
+        when(mockIdentity.findById(playerId)).thenReturn(Optional.of(identity));
+
         ShopService shopSvc = new ShopService(
             shopRepository, 
             mockEcon, 
