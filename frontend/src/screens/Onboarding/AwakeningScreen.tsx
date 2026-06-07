@@ -5,10 +5,10 @@ import { GlowButton } from '../../components/onboarding/GlowButton';
 // As requested, starting everyone flat at 10
 const INITIAL_STATS = {
     'DISCIPLINE': 10,
-    'STRENGTH': 10,
-    'INTELLECT': 10,
-    'VITALITY': 10,
-    'SENSE': 10
+    'STR': 10,
+    'INT': 10,
+    'VIT': 10,
+    'SEN': 10
 };
 
 interface AwakeningScreenProps {

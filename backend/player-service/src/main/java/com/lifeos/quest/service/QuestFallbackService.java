@@ -27,7 +27,7 @@ public class QuestFallbackService {
                 .successXp(150)
                 .failureXp(0)
                 .goldReward(0)
-                .attributeDeltas(Map.of("STRENGTH", 1.0, "VITALITY", 0.5))
+                .attributeDeltas(Map.of("STR", 1.0))
                 .systemMutable(true)
                 .build(),
             
@@ -42,7 +42,7 @@ public class QuestFallbackService {
                 .successXp(150)
                 .failureXp(0)
                 .goldReward(0)
-                .attributeDeltas(Map.of("INTELLECT", 1.0, "DISCIPLINE", 0.5))
+                .attributeDeltas(Map.of("INT", 1.0))
                 .systemMutable(true)
                 .build(),
                 
@@ -57,7 +57,7 @@ public class QuestFallbackService {
                 .successXp(200)
                 .failureXp(0)
                 .goldReward(0)
-                .attributeDeltas(Map.of("DISCIPLINE", 1.5, "SENSE", 0.5))
+                .attributeDeltas(Map.of("DISCIPLINE", 1.0))
                 .systemMutable(true)
                 .build()
         );

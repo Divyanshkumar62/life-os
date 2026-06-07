@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Transient object returned by calculation service.
@@ -23,10 +24,11 @@ public class PenaltyDefinition {
     private LocalDateTime debuffExpiresAt;
     private boolean resetStreak;
     private boolean enterPenaltyZone;
+    private List<String> systemMessages;
     
     public PenaltyDefinition() {}
 
-    public PenaltyDefinition(PenaltyType type, PenaltySeverity severity, long xpDeduction, AttributeType debuffAttribute, double debuffAmount, LocalDateTime debuffExpiresAt, boolean resetStreak, boolean enterPenaltyZone) {
+    public PenaltyDefinition(PenaltyType type, PenaltySeverity severity, long xpDeduction, AttributeType debuffAttribute, double debuffAmount, LocalDateTime debuffExpiresAt, boolean resetStreak, boolean enterPenaltyZone, List<String> systemMessages) {
         this.type = type;
         this.severity = severity;
         this.xpDeduction = xpDeduction;
@@ -35,6 +37,7 @@ public class PenaltyDefinition {
         this.debuffExpiresAt = debuffExpiresAt;
         this.resetStreak = resetStreak;
         this.enterPenaltyZone = enterPenaltyZone;
+        this.systemMessages = systemMessages;
     }
     
     // Getters and Setters
@@ -54,6 +57,8 @@ public class PenaltyDefinition {
     public void setResetStreak(boolean resetStreak) { this.resetStreak = resetStreak; }
     public boolean isEnterPenaltyZone() { return enterPenaltyZone; }
     public void setEnterPenaltyZone(boolean enterPenaltyZone) { this.enterPenaltyZone = enterPenaltyZone; }
+    public List<String> getSystemMessages() { return systemMessages; }
+    public void setSystemMessages(List<String> systemMessages) { this.systemMessages = systemMessages; }
 
     public static PenaltyDefinitionBuilder builder() {
         return new PenaltyDefinitionBuilder();
@@ -68,6 +73,7 @@ public class PenaltyDefinition {
         private LocalDateTime debuffExpiresAt;
         private boolean resetStreak;
         private boolean enterPenaltyZone;
+        private List<String> systemMessages;
 
         public PenaltyDefinitionBuilder type(PenaltyType type) { this.type = type; return this; }
         public PenaltyDefinitionBuilder severity(PenaltySeverity severity) { this.severity = severity; return this; }
@@ -77,9 +83,10 @@ public class PenaltyDefinition {
         public PenaltyDefinitionBuilder debuffExpiresAt(LocalDateTime debuffExpiresAt) { this.debuffExpiresAt = debuffExpiresAt; return this; }
         public PenaltyDefinitionBuilder resetStreak(boolean resetStreak) { this.resetStreak = resetStreak; return this; }
         public PenaltyDefinitionBuilder enterPenaltyZone(boolean enterPenaltyZone) { this.enterPenaltyZone = enterPenaltyZone; return this; }
+        public PenaltyDefinitionBuilder systemMessages(List<String> systemMessages) { this.systemMessages = systemMessages; return this; }
 
         public PenaltyDefinition build() {
-            return new PenaltyDefinition(type, severity, xpDeduction, debuffAttribute, debuffAmount, debuffExpiresAt, resetStreak, enterPenaltyZone);
+            return new PenaltyDefinition(type, severity, xpDeduction, debuffAttribute, debuffAmount, debuffExpiresAt, resetStreak, enterPenaltyZone, systemMessages);
         }
     }
 }

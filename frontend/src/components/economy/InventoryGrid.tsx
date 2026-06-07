@@ -1,4 +1,4 @@
-import React from 'react';
+import { motion } from 'framer-motion';
 import { Package, Zap } from 'lucide-react';
 
 interface InventoryItem {
@@ -48,13 +48,15 @@ export const InventoryGrid: React.FC<InventoryGridProps> = ({ items, onUseItem }
                     <p className="text-center text-[10px] text-gray-500 mb-3 h-8 overflow-hidden">{item.description}</p>
 
                     {/* Action */}
-                    <button
+                    <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        whileHover={{ rotate: [0, -5, 5, -5, 5, 0] }}
                         onClick={() => onUseItem(item.itemCode)}
                         className="w-full flex items-center justify-center py-1.5 rounded bg-solo-blue-900/30 text-solo-blue-400 text-xs font-medium hover:bg-solo-blue-600 hover:text-white transition-colors border border-transparent hover:border-solo-blue-400/50"
                     >
                         <Zap size={12} className="mr-1" />
                         USE
-                    </button>
+                    </motion.button>
                 </div>
             ))}
         </div>

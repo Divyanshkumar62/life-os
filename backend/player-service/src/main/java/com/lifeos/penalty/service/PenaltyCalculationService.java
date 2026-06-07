@@ -5,24 +5,68 @@ import com.lifeos.penalty.domain.enums.FailureReason;
 import com.lifeos.penalty.domain.enums.PenaltySeverity;
 import com.lifeos.penalty.domain.enums.PenaltyType;
 import com.lifeos.player.domain.enums.AttributeType;
+import com.lifeos.player.dto.PlayerStateResponse;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.domain.enums.DifficultyTier;
 import com.lifeos.quest.domain.enums.QuestType;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 @Service
 public class PenaltyCalculationService {
 
-    public PenaltyDefinition calculatePenalty(Quest quest, FailureReason reason) {
+    private final Random random = new Random();
+
+    /**
+     * Calculate the penalty for a failed quest without player attribute context.
+     * Uses default 25% XP deduction with no AGI dodge.
+     */
+    public PenaltyDefinition calculatePenalty(Quest quest, FailureReason reason, long currentXp) {
+        return calculatePenalty(quest, reason, currentXp, null);
+    }
+
+    /**
+     * Calculate the penalty for a failed quest.
+     * AGI stat grants a (AGI * 0.5)% chance (capped at 30%) to completely dodge
+     * the XP and Gold drain portions of the penalty.
+     *
+     * @param playerState optional — if null, AGI dodge is skipped
+     */
+    public PenaltyDefinition calculatePenalty(Quest quest, FailureReason reason, long currentXp,
+                                               PlayerStateResponse playerState) {
+        List<String> systemMessages = new ArrayList<>();
+
+        // --- AGI DODGE CHECK ---
+        boolean dodgePenaltyDrain = false;
+        if (playerState != null) {
+            int agiValue = getAttributeValue(playerState, AttributeType.AGI);
+            if (agiValue > 0) {
+                double dodgeChance = Math.min(agiValue * 0.005, 0.30); // cap at 30%
+                if (random.nextDouble() < dodgeChance) {
+                    dodgePenaltyDrain = true;
+                    systemMessages.add(String.format(
+                        "[SYSTEM] High AGI (%d) successfully evaded Penalty Drain. XP and Gold drain nullified.",
+                        agiValue
+                    ));
+                }
+            }
+        }
+
         // 1. Determine Severity based on FailureReason and Quest Priority/Diff
         PenaltySeverity severity = determineSeverity(quest, reason);
 
-        // 2. Build Definition based on Severity (NO XP DRAIN as per v1.1 PRD)
+        // Deduct 25% of the player's current XP (nullified if AGI dodge succeeded)
+        long xpDeduction = dodgePenaltyDrain ? 0L : (long) (currentXp * 0.25);
+
+        // 2. Build Definition based on Severity
         var builder = PenaltyDefinition.builder()
                 .severity(severity)
-                .xpDeduction(0L); // Force 0 to ensure no level regression
+                .xpDeduction(xpDeduction)
+                .systemMessages(systemMessages);
 
         switch (severity) {
             case LOW -> {
@@ -51,7 +95,7 @@ public class PenaltyCalculationService {
 
     private PenaltySeverity determineSeverity(Quest quest, FailureReason reason) {
         if (reason == FailureReason.ABANDONED) return PenaltySeverity.LOW;
-        
+
         // Critical failures
         if (quest.getDifficultyTier() == DifficultyTier.RED || quest.getDifficultyTier() == DifficultyTier.S) {
             return PenaltySeverity.CRITICAL;
@@ -61,7 +105,7 @@ public class PenaltyCalculationService {
         if (quest.getDifficultyTier().ordinal() >= DifficultyTier.B.ordinal()) {
             return PenaltySeverity.HIGH;
         }
-        
+
         return PenaltySeverity.MEDIUM;
     }
 
@@ -79,9 +123,19 @@ public class PenaltyCalculationService {
     }
 
     private AttributeType pickRandomAttribute() {
-        // V1: Simple deterministic pick or random. 
-        // For distinctness, let's pick based on time to be deterministic without seed.
-        // Or just hardcode DISCIPLINE for v1 as it represents "willpower failure".
-        return AttributeType.DISCIPLINE; 
+        // V1: DISCIPLINE for willpower failure
+        return AttributeType.DISCIPLINE;
+    }
+
+    /**
+     * Safely retrieves an integer attribute value from player state.
+     */
+    private int getAttributeValue(PlayerStateResponse state, AttributeType type) {
+        if (state.getAttributes() == null) return 0;
+        return state.getAttributes().stream()
+                .filter(a -> type == a.getAttributeType())
+                .mapToInt(a -> (int) a.getCurrentValue())
+                .findFirst()
+                .orElse(0);
     }
 }

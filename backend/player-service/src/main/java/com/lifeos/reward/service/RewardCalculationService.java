@@ -6,10 +6,13 @@ import com.lifeos.reward.dto.RewardDefinition;
 import com.lifeos.quest.domain.Quest;
 import com.lifeos.quest.domain.QuestOutcomeProfile;
 import com.lifeos.quest.domain.enums.DifficultyTier;
+import com.lifeos.quest.domain.enums.QuestType;
 import com.lifeos.quest.repository.QuestOutcomeProfileRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -34,23 +37,30 @@ public class RewardCalculationService {
         int momentum = playerState.getPsychState().getMomentum();
         int complacency = playerState.getPsychState().getComplacency();
         int confidence = playerState.getPsychState().getConfidenceBias();
-        int streak = playerState.getTemporalState().getActiveStreakDays();
 
         // 3. Apply Multipliers (Elastic Matrix)
-        
         // Low Momentum Catch-up
         if (momentum < 30) {
             multiplier += 0.20; // +20% XP
         }
 
-        // High Complacency Penalty
-        if (complacency > 70) {
-            multiplier -= 0.30; // -30% XP
+        // --- ATTRIBUTE UTILITY ENGINE ---
+        // STR Bonus: +1% XP per STR point for PHYSICAL quests
+        // INT Bonus: +1% XP per INT point for COGNITIVE quests
+        List<String> systemMessages = new ArrayList<>();
+        int strValue = getAttributeValue(playerState, AttributeType.STR);
+        int intValue = getAttributeValue(playerState, AttributeType.INT);
+
+        if (quest.getQuestType() == QuestType.PHYSICAL && strValue > 0) {
+            double strBonus = strValue * 0.01;
+            multiplier += strBonus;
+            systemMessages.add(String.format("[SYSTEM] STR stat (%d) applied +%.0f%% XP bonus to Physical quest.", strValue, strBonus * 100));
         }
 
-        // Long Streak Diminishing Returns (Encourage harder quests)
-        if (streak > 10) {
-            multiplier -= 0.10; // -10% XP
+        if (quest.getQuestType() == QuestType.COGNITIVE && intValue > 0) {
+            double intBonus = intValue * 0.01;
+            multiplier += intBonus;
+            systemMessages.add(String.format("[SYSTEM] INT stat (%d) applied +%.0f%% XP bonus to Cognitive quest.", intValue, intBonus * 100));
         }
 
         // 4. Calculate Final XP
@@ -61,38 +71,29 @@ public class RewardCalculationService {
         // 5. Calculate Attributes
         // Rule: PROMOTION_EXAM does not give individual attribute growth (handled by ProgressionService)
         Map<AttributeType, Double> finalAttribs = new HashMap<>();
-        if (baseAttribs != null && quest.getQuestType() != com.lifeos.quest.domain.enums.QuestType.PROMOTION_EXAM) {
+        if (baseAttribs != null && quest.getQuestType() != QuestType.PROMOTION_EXAM) {
             for (Map.Entry<String, Double> entry : baseAttribs.entrySet()) {
                 try {
                     AttributeType type = AttributeType.valueOf(entry.getKey());
                     double val = entry.getValue();
-                    if (momentum < 30) {
-                        val *= 1.10;
-                    }
                     // Guard: Attribute Delta Floor
                     if (val < 0) val = 0;
                     finalAttribs.put(type, val);
                 } catch (IllegalArgumentException e) {
-                    // Ignore invalid enum keys
+                    throw new IllegalArgumentException("Invalid attribute type received from AI: " + entry.getKey(), e);
                 }
             }
         }
 
         // 6. Psych Logic
-        // Momentum Boost: Standard small boost, maybe higher if difficulty is high
         int momentumBoost = 2; // Default
         if (quest.getDifficultyTier() == DifficultyTier.RED) momentumBoost = 10;
-        // Clamp 0-100 handling done in storage usually, but here just defining delta.
 
-        // Streak Extension
-        // Rule: Only if NOT Ego Breaker (RED?) and not barely passing (assumed binary success for now).
-        // Let's assume RED tier is Ego Breaker.
         boolean extendStreak = (quest.getDifficultyTier() != DifficultyTier.RED);
 
-        // Confidence Correction
-        // Rule: HARD+ difficulty AND (High Bias (>80) OR High Complacency (>70))
+        // Confidence Correction: HARD+ difficulty AND (High Bias (>80) OR High Complacency (>70))
         boolean confidenceCorrection = false;
-        if (quest.getDifficultyTier().ordinal() >= DifficultyTier.B.ordinal()) { 
+        if (quest.getDifficultyTier().ordinal() >= DifficultyTier.B.ordinal()) {
             if (confidence > 80 || complacency > 70) {
                 confidenceCorrection = true;
             }
@@ -100,9 +101,7 @@ public class RewardCalculationService {
 
         // 7. Gold Logic
         long baseGold = outcome.getGoldReward() != null ? outcome.getGoldReward() : 0L;
-        // V1: Direct pass-through. No logic mapping for now unless Difficulty mapped in Profile creation.
-        // Assuming Profile has correct value.
-        
+
         return RewardDefinition.builder()
                 .xpGain(finalXp)
                 .goldGain(baseGold)
@@ -110,6 +109,20 @@ public class RewardCalculationService {
                 .momentumBoost(momentumBoost)
                 .streakExtended(extendStreak)
                 .confidenceCorrection(confidenceCorrection)
+                .systemMessages(systemMessages)
                 .build();
+    }
+
+    /**
+     * Safely retrieves the integer value of a core stat from a PlayerStateResponse.
+     * Falls back to 0 if the stat cannot be found.
+     */
+    private int getAttributeValue(PlayerStateResponse state, AttributeType type) {
+        if (state.getAttributes() == null) return 0;
+        return state.getAttributes().stream()
+                .filter(a -> type == a.getAttributeType())
+                .mapToInt(a -> (int) a.getCurrentValue())
+                .findFirst()
+                .orElse(0);
     }
 }

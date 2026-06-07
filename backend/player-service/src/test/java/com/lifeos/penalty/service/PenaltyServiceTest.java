@@ -47,6 +47,7 @@ public class PenaltyServiceTest {
     @Mock private com.lifeos.penalty.repository.PenaltyQuestRepository penaltyQuestRepository;
     @Mock private com.lifeos.system.service.SystemVoiceService systemVoiceService;
     @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    @Mock private com.lifeos.economy.service.EconomyService economyService;
 
     private PenaltyService penaltyService;
 
@@ -67,7 +68,8 @@ public class PenaltyServiceTest {
             penaltyQuestService,
             penaltyQuestRepository,
             domainEventPublisher,
-            systemVoiceService
+            systemVoiceService,
+            economyService
         );
         
         questId = UUID.randomUUID();
@@ -97,6 +99,12 @@ public class PenaltyServiceTest {
         when(penaltyRepository.existsByQuestId(questId)).thenReturn(false);
         when(questRepository.findById(questId)).thenReturn(Optional.of(quest));
         
+        com.lifeos.player.dto.PlayerStateResponse state = com.lifeos.player.dto.PlayerStateResponse.builder()
+                .progression(com.lifeos.player.dto.PlayerProgressionDTO.builder().currentXp(100L).build())
+                .activeFlags(java.util.Collections.emptyList())
+                .build();
+        when(playerStateService.getPlayerState(playerId)).thenReturn(state);
+        
         // When
         penaltyService.applyPenalty(questId, playerId, FailureReason.ABANDONED);
 
@@ -118,6 +126,12 @@ public class PenaltyServiceTest {
                 .activeFlags(java.util.Collections.emptyList())
                 .build();
         when(playerStateService.getPlayerState(any())).thenReturn(state);
+        
+        // Stub economy state to prevent NPE on Gold drain
+        com.lifeos.economy.domain.PlayerEconomy mockEconomy = com.lifeos.economy.domain.PlayerEconomy.builder()
+                .goldBalance(java.math.BigDecimal.valueOf(100L))
+                .build();
+        when(economyService.getEconomyState(any())).thenReturn(mockEconomy);
 
         // When
         penaltyService.enterPenaltyZone(playerId, "Test Reason");

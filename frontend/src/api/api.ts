@@ -1,10 +1,29 @@
 export const API_BASE_URL = 'http://localhost:8080/api';
 
+type MessageListener = (messages: string[]) => void;
+const listeners = new Set<MessageListener>();
+
+export const systemMessageEmitter = {
+    subscribe(listener: MessageListener) {
+        listeners.add(listener);
+        return () => {
+            listeners.delete(listener);
+        };
+    },
+    emit(messages: string[]) {
+        listeners.forEach((listener) => listener(messages));
+    }
+};
+
 export const api = {
     async get(endpoint: string) {
         const res = await fetch(`${API_BASE_URL}${endpoint}`);
         if (!res.ok) throw new Error(`API GET ${endpoint} Failed`);
-        return await res.json();
+        const json = await res.json();
+        if (json && typeof json === 'object' && Array.isArray(json.systemMessages) && json.systemMessages.length > 0) {
+            systemMessageEmitter.emit(json.systemMessages);
+        }
+        return json;
     },
 
     async post(endpoint: string, body?: any) {
@@ -14,7 +33,11 @@ export const api = {
             body: body ? JSON.stringify(body) : undefined
         });
         if (!res.ok) throw new Error(`API POST ${endpoint} Failed`);
-        return await res.json();
+        const json = await res.json();
+        if (json && typeof json === 'object' && Array.isArray(json.systemMessages) && json.systemMessages.length > 0) {
+            systemMessageEmitter.emit(json.systemMessages);
+        }
+        return json;
     }
 };
 
@@ -26,19 +49,23 @@ export const DashboardAPI = {
 
 export const QuestAPI = {
     completeQuest: async (questId: string) => {
-        return await api.post(`/quests/${questId}/complete`);
+        const res = await api.post(`/quests/${questId}/complete`);
+        return res.quest;
     },
     failQuest: async (questId: string) => {
-        return await api.post(`/quests/${questId}/fail`);
+        const res = await api.post(`/quests/${questId}/fail`);
+        return res.quest;
     },
     getActiveQuests: async (playerId: string) => {
-        return await api.get(`/quests/active?playerId=${playerId}`);
+        const res = await api.get(`/quests/active?playerId=${playerId}`);
+        return res.quests || [];
     }
 };
 
 export const EconomyAPI = {
     fetchShopItems: async (playerId: string) => {
-        return await api.get(`/shop/items?playerId=${playerId}`);
+        const res = await api.get(`/shop/items?playerId=${playerId}`);
+        return res.items || [];
     },
     purchaseItem: async (playerId: string, itemCode: string) => {
         return await api.post(`/shop/purchase/${itemCode}?playerId=${playerId}`);
@@ -48,6 +75,9 @@ export const EconomyAPI = {
     },
     useConsumable: async (playerId: string, itemCode: string) => {
         return await api.post(`/consumables/use/${itemCode}?playerId=${playerId}`);
+    },
+    openBox: async (playerId: string, boxCode: string) => {
+        return await api.post(`/inventory/open-box/${boxCode}?playerId=${playerId}`);
     }
 };
 
@@ -119,3 +149,10 @@ export const ProgressionAPI = {
         return await api.post(`/progression/${playerId}/process-outcome?success=${success}`);
     }
 };
+
+export const PenaltyAPI = {
+    submitConfession: async (playerId: string, text: string) => {
+        return await api.post(`/penalty/confess?playerId=${playerId}`, { text });
+    }
+};
+

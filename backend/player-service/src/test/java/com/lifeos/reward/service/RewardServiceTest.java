@@ -41,6 +41,7 @@ public class RewardServiceTest {
     @Mock private com.lifeos.economy.service.EconomyService economyService; // Mock Economy
     @Mock private com.lifeos.streak.service.StreakService streakService;
     @Mock private ApplicationEventPublisher eventPublisher; // Added for Voice
+    @Mock private com.lifeos.system.service.SystemVoiceService systemVoiceService;
     
     @InjectMocks
     private RewardService rewardService;
@@ -74,7 +75,8 @@ public class RewardServiceTest {
                 questRepository, 
                 economyService,
                 streakService,
-                eventPublisher
+                eventPublisher,
+                systemVoiceService
         );
 
         quest = Quest.builder()
@@ -143,8 +145,8 @@ public class RewardServiceTest {
         // Expect Bonus XP (+20%) -> 120
         verify(playerStateService).addXp(eq(playerId), eq(120L));
         
-        // Expect Bonus Attributes (+10%) -> 1.1
-        verify(playerStateService).updateAttribute(eq(playerId), any(), eq(1.1));
+        // Expect Bonus Attributes (+0%) -> 1.0 (Momemtum bonus removed for stats)
+        verify(playerStateService).updateAttribute(eq(playerId), any(), eq(1.0));
     }
 
     @Test
@@ -159,8 +161,8 @@ public class RewardServiceTest {
 
         rewardService.applyReward(questId, playerId);
         
-        // Expect Reduced XP (-30%) -> 70
-        verify(playerStateService).addXp(eq(playerId), eq(70L));
+        // Expect Standard XP (100L) since complacency tax is removed
+        verify(playerStateService).addXp(eq(playerId), eq(100L));
     }
     
     @Test

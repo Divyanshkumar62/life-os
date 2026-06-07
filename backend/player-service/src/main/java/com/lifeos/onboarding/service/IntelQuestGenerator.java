@@ -26,8 +26,8 @@ public class IntelQuestGenerator {
                 .successXp(50)
                 .goldReward(0)
                 .systemMutable(false)
-                .primaryAttribute(com.lifeos.player.domain.enums.AttributeType.STRENGTH)
-                .attributeDeltas(Map.of("STRENGTH", 1.0))
+                .primaryAttribute(com.lifeos.player.domain.enums.AttributeType.STR)
+                .attributeDeltas(Map.of("STR", 1.0))
                 .build();
     }
     
@@ -52,8 +52,8 @@ public class IntelQuestGenerator {
                 .successXp(75)
                 .goldReward(0)
                 .systemMutable(false)
-                .primaryAttribute(com.lifeos.player.domain.enums.AttributeType.INTELLIGENCE)
-                .attributeDeltas(Map.of("INTELLIGENCE", 1.0))
+                .primaryAttribute(com.lifeos.player.domain.enums.AttributeType.INT)
+                .attributeDeltas(Map.of("INT", 1.0))
                 .build();
     }
 
@@ -69,8 +69,8 @@ public class IntelQuestGenerator {
                 .successXp(100)
                 .goldReward(0)
                 .systemMutable(false)
-                .primaryAttribute(com.lifeos.player.domain.enums.AttributeType.SENSE)
-                .attributeDeltas(Map.of("SENSE", 1.0))
+                .primaryAttribute(com.lifeos.player.domain.enums.AttributeType.SEN)
+                .attributeDeltas(Map.of("SEN", 1.0))
                 .build();
     }
 }

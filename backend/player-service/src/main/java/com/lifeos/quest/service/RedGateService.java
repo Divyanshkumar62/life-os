@@ -201,8 +201,8 @@ public class RedGateService {
         }
 
         String jobClass = identity.getJobClass();
-        AttributeType primaryAttr = "SCHOLAR".equals(jobClass) ? AttributeType.INTELLIGENCE :
-                                   "VANGUARD".equals(jobClass) ? AttributeType.STRENGTH : AttributeType.INTELLIGENCE;
+        AttributeType primaryAttr = "SCHOLAR".equals(jobClass) ? AttributeType.INT :
+                                   "VANGUARD".equals(jobClass) ? AttributeType.STR : AttributeType.INT;
         attributeRepository.findByPlayerPlayerIdAndAttributeType(playerId, primaryAttr).ifPresent(attr -> {
             attr.setCurrentValue(attr.getCurrentValue() + 2);
             attributeRepository.save(attr);

@@ -2,6 +2,7 @@ package com.lifeos.ai.service;
 
 import com.lifeos.onboarding.domain.PlayerProfile;
 import com.lifeos.onboarding.repository.PlayerProfileRepository;
+import com.lifeos.onboarding.dto.QuestionnaireRequest;
 import com.lifeos.player.domain.PlayerProgression;
 import com.lifeos.player.repository.PlayerProgressionRepository;
 import lombok.RequiredArgsConstructor;
@@ -93,6 +94,37 @@ public class PlayerContextService {
         return sb.toString();
     }
     
+    
+    public String buildInferencePrompt(QuestionnaireRequest request) {
+        return """
+            You are the SYSTEM from Solo Leveling. A player is undergoing awakening evaluation.
+            They have provided 5 narrative answers to system analysis:
+            1. The Beast (their core challenge): %s
+            2. The Graveyard (why they failed/quit before): %s
+            3. The Weapon (their preferred focus: Physical, Mental, or Career): %s
+            4. The Throne (their ultimate 6-month goal): %s
+            5. The Hourglass (how much time they can commit daily): %s
+            
+            Evaluate these inputs and infer their missing psychological profile fields:
+            1. archetype: Choose one: "BRAINS" (if they chose Mental sharpness/intellect), "BRAWN" (if they chose Physical strength), or "BALANCE" (default if mixed or Relentless ambition).
+            2. wakeUpTime: In HH:mm format, choose a plausible wake-up time (e.g., "05:00", "06:00", "07:00", "08:00").
+            
+            OUTPUT FORMAT:
+            Return ONLY a valid JSON object. Do not include markdown code block formatting.
+            Schema:
+            {
+              "archetype": "BRAINS | BRAWN | BALANCE",
+              "wakeUpTime": "HH:mm"
+            }
+            """.formatted(
+                request.getBiggestChallenge(),
+                request.getPastFailures(),
+                request.getFocusArea(),
+                request.getSixMonthGoal(),
+                request.getAvailableTime()
+            );
+    }
+
     private String safeGet(String value) {
         return value != null ? value : "Not specified";
     }

@@ -28,11 +28,6 @@ public class OnboardingController {
         return ResponseEntity.ok(onboardingService.startOnboarding(username));
     }
 
-    @PostMapping("/{playerId}/trial/complete")
-    public ResponseEntity<OnboardingResponse> completeTrial(@PathVariable UUID playerId) {
-        log.info("Request to complete trial for player: {}", playerId);
-        return ResponseEntity.ok(onboardingService.completeTrialQuest(playerId));
-    }
 
     @PostMapping("/{playerId}/awakening")
     public ResponseEntity<OnboardingResponse> submitAwakening(

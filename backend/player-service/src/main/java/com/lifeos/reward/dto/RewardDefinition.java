@@ -5,6 +5,7 @@ import com.lifeos.reward.domain.enums.RewardComponentType;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
 import java.util.Map;
 
 @Data // Assuming @Data might still work for hashCode/equals if Lombok is partially working, but safer to add getters manuall yif compilation failed. 
@@ -17,16 +18,18 @@ public class RewardDefinition {
     private int momentumBoost;
     private boolean streakExtended;
     private boolean confidenceCorrection;
+    private List<String> systemMessages;
     
     public RewardDefinition() {}
 
-    public RewardDefinition(long xpGain, long goldGain, Map<AttributeType, Double> attributeGrowth, int momentumBoost, boolean streakExtended, boolean confidenceCorrection) {
+    public RewardDefinition(long xpGain, long goldGain, Map<AttributeType, Double> attributeGrowth, int momentumBoost, boolean streakExtended, boolean confidenceCorrection, List<String> systemMessages) {
         this.xpGain = xpGain;
         this.goldGain = goldGain;
         this.attributeGrowth = attributeGrowth;
         this.momentumBoost = momentumBoost;
         this.streakExtended = streakExtended;
         this.confidenceCorrection = confidenceCorrection;
+        this.systemMessages = systemMessages;
     }
 
     // Getters and Setters
@@ -42,6 +45,8 @@ public class RewardDefinition {
     public void setStreakExtended(boolean streakExtended) { this.streakExtended = streakExtended; }
     public boolean isConfidenceCorrection() { return confidenceCorrection; }
     public void setConfidenceCorrection(boolean confidenceCorrection) { this.confidenceCorrection = confidenceCorrection; }
+    public List<String> getSystemMessages() { return systemMessages; }
+    public void setSystemMessages(List<String> systemMessages) { this.systemMessages = systemMessages; }
 
     // Helper to convert to JSON-friendly payload for persistence
     public Map<String, Object> toPayloadMap() {
@@ -66,6 +71,7 @@ public class RewardDefinition {
         private int momentumBoost;
         private boolean streakExtended;
         private boolean confidenceCorrection;
+        private List<String> systemMessages;
 
         public RewardDefinitionBuilder xpGain(long xpGain) { this.xpGain = xpGain; return this; }
         public RewardDefinitionBuilder goldGain(long goldGain) { this.goldGain = goldGain; return this; }
@@ -73,9 +79,10 @@ public class RewardDefinition {
         public RewardDefinitionBuilder momentumBoost(int momentumBoost) { this.momentumBoost = momentumBoost; return this; }
         public RewardDefinitionBuilder streakExtended(boolean streakExtended) { this.streakExtended = streakExtended; return this; }
         public RewardDefinitionBuilder confidenceCorrection(boolean confidenceCorrection) { this.confidenceCorrection = confidenceCorrection; return this; }
+        public RewardDefinitionBuilder systemMessages(List<String> systemMessages) { this.systemMessages = systemMessages; return this; }
 
         public RewardDefinition build() {
-            return new RewardDefinition(xpGain, goldGain, attributeGrowth, momentumBoost, streakExtended, confidenceCorrection);
+            return new RewardDefinition(xpGain, goldGain, attributeGrowth, momentumBoost, streakExtended, confidenceCorrection, systemMessages);
         }
     }
 }

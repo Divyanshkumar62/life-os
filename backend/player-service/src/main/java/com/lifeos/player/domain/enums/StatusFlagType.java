@@ -10,5 +10,6 @@ public enum StatusFlagType {
     PENALTY_ZONE,
     PENALTY_SHIELD,
     DAILY_FAILED_TODAY,
-    WARNING
+    WARNING,
+    DAILY_CLEAR_REWARDED
 }

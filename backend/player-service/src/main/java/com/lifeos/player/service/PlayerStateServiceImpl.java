@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class PlayerStateServiceImpl implements PlayerStateService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(PlayerStateServiceImpl.class);
 
     private final PlayerIdentityRepository identityRepository;
     private final PlayerProgressionRepository progressionRepository;
@@ -28,6 +29,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
     private final PlayerHistoryRepository historyRepository;
     private final com.lifeos.penalty.repository.PenaltyRecordRepository penaltyRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private final com.lifeos.system.repository.SystemEventRepository systemEventRepository;
 
     public PlayerStateServiceImpl(
             PlayerIdentityRepository identityRepository,
@@ -39,7 +41,8 @@ public class PlayerStateServiceImpl implements PlayerStateService {
             PlayerTemporalStateRepository temporalStateRepository,
             PlayerHistoryRepository historyRepository,
             com.lifeos.penalty.repository.PenaltyRecordRepository penaltyRepository,
-            org.springframework.context.ApplicationEventPublisher eventPublisher) {
+            org.springframework.context.ApplicationEventPublisher eventPublisher,
+            com.lifeos.system.repository.SystemEventRepository systemEventRepository) {
         this.identityRepository = identityRepository;
         this.progressionRepository = progressionRepository;
         this.attributeRepository = attributeRepository;
@@ -50,6 +53,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         this.historyRepository = historyRepository;
         this.penaltyRepository = penaltyRepository;
         this.eventPublisher = eventPublisher;
+        this.systemEventRepository = systemEventRepository;
     }
 
     @Override
@@ -80,8 +84,8 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         // Create Attributes (Default set)
         List<PlayerAttribute> attributes = new ArrayList<>();
         for (AttributeType type : AttributeType.values()) {
-            boolean isCoreStat = type == AttributeType.STR || type == AttributeType.INT || type == AttributeType.VIT || type == AttributeType.SEN;
-            double startValue = isCoreStat ? 0.0 : 10.0;
+            boolean isCoreStat = type == AttributeType.STR || type == AttributeType.INT || type == AttributeType.VIT || type == AttributeType.SEN || type == AttributeType.AGI;
+            double startValue = 0.0;
             double decay = isCoreStat ? 0.0 : 0.01;
 
             attributes.add(PlayerAttribute.builder()
@@ -122,6 +126,8 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .activeStreakDays(0)
                 .restDebt(0.0)
                 .burnoutRiskScore(0.0)
+                .failedConfessionAttempts(0)
+                .penaltyLockoutUntil(null)
                 .build();
         temporalStateRepository.save(temporalState);
 
@@ -139,7 +145,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public PlayerStateResponse getPlayerState(UUID playerId) {
         PlayerIdentity identity = identityRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
@@ -462,6 +468,12 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .freeStatPoints(progression.getFreeStatPoints())
                 .build();
 
+        int vitValue = attributes.stream()
+                .filter(a -> a.getAttributeType() == AttributeType.VIT)
+                .mapToInt(a -> (int) a.getCurrentValue())
+                .findFirst()
+                .orElse(0);
+
         var attributeDtos = attributes.stream()
                 .map(attr -> {
                     // Calculate debuff
@@ -470,6 +482,11 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                                       && attr.getAttributeType().name().equals(p.getValuePayload().get("debuffAttr")))
                             .mapToDouble(p -> (Double) p.getValuePayload().get("debuffAmount"))
                             .sum();
+
+                    // Reduce debuff severity by VIT * 0.1%
+                    if (debuffAmount > 0 && vitValue > 0) {
+                        debuffAmount = debuffAmount * (1.0 - (vitValue * 0.001));
+                    }
 
                     // Apply debuff (percentage reduction usually, but here model says "amount")
                     // If amount is a percentage (e.g. 5.0 for 5%), calculation differs.
@@ -521,6 +538,8 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .restDebt(temporal.getRestDebt())
                 .burnoutRiskScore(temporal.getBurnoutRiskScore())
                 .consecutiveDailyFailures(temporal.getConsecutiveDailyFailures())
+                .failedConfessionAttempts(temporal.getFailedConfessionAttempts())
+                .penaltyLockoutUntil(temporal.getPenaltyLockoutUntil())
                 .build();
 
         var historyDto = PlayerHistoryDTO.builder()
@@ -529,6 +548,17 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .failedQuests(history.getFailedQuests())
                 .notableEvents(history.getNotableEvents())
                 .build();
+
+        // Fetch and consume background system events
+        List<com.lifeos.system.domain.SystemEvent> unconsumedEvents = systemEventRepository.findByPlayerIdAndIsConsumedFalseOrderByCreatedAtAsc(identity.getPlayerId());
+        List<String> systemMessages = new ArrayList<>();
+        if (unconsumedEvents != null && !unconsumedEvents.isEmpty()) {
+            for (com.lifeos.system.domain.SystemEvent event : unconsumedEvents) {
+                systemMessages.add(event.getMessage());
+                event.setConsumed(true);
+            }
+            systemEventRepository.saveAll(unconsumedEvents);
+        }
 
         return PlayerStateResponse.builder()
                 .identity(identityDto)
@@ -539,6 +569,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .activeFlags(flagDtos)
                 .temporalState(temporalDto)
                 .history(historyDto)
+                .systemMessages(systemMessages)
                 .build();
     }
 
@@ -569,5 +600,38 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         
         // Increment Stat
         incrementStat(playerId, stat, amount);
+    }
+
+    @Override
+    @Transactional
+    public void restoreFatigue(UUID playerId) {
+        var temporal = temporalStateRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        temporal.setRestDebt(0.0);
+        temporal.setBurnoutRiskScore(0.0);
+        temporalStateRepository.save(temporal);
+        removeStatusFlag(playerId, com.lifeos.player.domain.enums.StatusFlagType.FATIGUED);
+    }
+
+    @Override
+    @Transactional
+    public void accumulateDailyRestDebt(UUID playerId, double baseFatigue) {
+        var temporal = temporalStateRepository.findByPlayerPlayerId(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
+        
+        var attributes = attributeRepository.findByPlayerPlayerId(playerId);
+        int vitValue = attributes.stream()
+                .filter(a -> a.getAttributeType() == AttributeType.VIT)
+                .mapToInt(a -> (int) a.getCurrentValue())
+                .findFirst()
+                .orElse(0);
+        
+        double reduction = vitValue * 0.01;
+        double accumulated = baseFatigue * (1.0 - Math.min(1.0, reduction));
+        
+        temporal.setRestDebt(temporal.getRestDebt() + accumulated);
+        temporalStateRepository.save(temporal);
+        log.info("Player {} accumulated {} rest debt (base fatigue: {}, VIT: {}, reduced by {}%)",
+            playerId, accumulated, baseFatigue, vitValue, reduction * 100);
     }
 }

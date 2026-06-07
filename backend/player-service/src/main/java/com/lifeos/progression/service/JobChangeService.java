@@ -240,10 +240,10 @@ public class JobChangeService {
             throw new IllegalArgumentException("Player not found");
         }
 
-        int str = getAttributeValue(playerId, AttributeType.STRENGTH);
-        int intel = getAttributeValue(playerId, AttributeType.INTELLIGENCE);
-        int vit = getAttributeValue(playerId, AttributeType.VITALITY);
-        int sen = getAttributeValue(playerId, AttributeType.SENSE);
+        int str = getAttributeValue(playerId, AttributeType.STR);
+        int intel = getAttributeValue(playerId, AttributeType.INT);
+        int vit = getAttributeValue(playerId, AttributeType.VIT);
+        int sen = getAttributeValue(playerId, AttributeType.SEN);
 
         double physicalRatio = calculatePhysicalQuestRatio(playerId);
 

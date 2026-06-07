@@ -45,20 +45,47 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
     }
 
     @Transactional(readOnly = true)
-    public List<ShopItem> listItems(UUID playerId) {
-        if (isShopLocked(playerId)) {
-            throw new IllegalStateException("Shop is locked due to Penalty Zone active.");
+    public com.lifeos.economy.dto.ShopResponse listItems(UUID playerId) {
+        checkShopAccess(playerId);
+        List<ShopItem> allItems = itemRepository.findAll();
+        
+        int intelValue = getIntelValue(playerId);
+        double discountPercent = Math.min(20.0, intelValue * 0.5);
+        
+        List<ShopItem> discountedItems = allItems.stream()
+                .map(item -> {
+                    long baseCost = item.getCost();
+                    long finalCost = (long) (baseCost * (1.0 - (discountPercent / 100.0)));
+                    return ShopItem.builder()
+                            .itemId(item.getItemId())
+                            .code(item.getCode())
+                            .name(item.getName())
+                            .description(item.getDescription())
+                            .cost(finalCost)
+                            .category(item.getCategory())
+                            .stockLimit(item.getStockLimit())
+                            .rankRequirement(item.getRankRequirement())
+                            .purchaseCooldownHours(item.getPurchaseCooldownHours())
+                            .effectPayload(item.getEffectPayload())
+                            .imageUrl(item.getImageUrl())
+                            .build();
+                })
+                .collect(java.util.stream.Collectors.toList());
+
+        java.util.List<String> systemMessages = new java.util.ArrayList<>();
+        if (discountPercent > 0) {
+            systemMessages.add(String.format("[SYSTEM] INT stat applied %.1f%% discount.", discountPercent));
         }
-        // TODO: Could filter by Rank here if desired, but "window shopping" is usually allowed
-        return itemRepository.findAll();
+
+        return com.lifeos.economy.dto.ShopResponse.builder()
+                .items(discountedItems)
+                .systemMessages(systemMessages)
+                .build();
     }
 
     @Transactional
     public void purchaseItem(UUID playerId, String itemCode) {
-        // 1. Penalty Zone Check
-        if (isShopLocked(playerId)) {
-            throw new IllegalStateException("Shop is locked due to Penalty Zone active.");
-        }
+        checkShopAccess(playerId);
 
         ShopItem item = itemRepository.findByCode(itemCode)
                 .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemCode));
@@ -114,7 +141,11 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
         }
 
         // 5. Deduct Gold
-        economyService.deductGold(playerId, item.getCost(), "Purchase: " + item.getName());
+        int intelValue = getIntelValue(playerId);
+        double discountPercent = Math.min(20.0, intelValue * 0.5);
+        long discountedCost = (long) (item.getCost() * (1.0 - (discountPercent / 100.0)));
+
+        economyService.deductGold(playerId, discountedCost, "Purchase: " + item.getName());
 
         // 6. Add to Inventory
         inventoryService.addItem(playerId, item.getItemId(), 1);
@@ -134,7 +165,7 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
         PurchaseTransaction xaction = PurchaseTransaction.builder()
                 .playerId(playerId)
                 .itemId(item.getItemId())
-                .cost(item.getCost())
+                .cost(discountedCost)
                 .build();
         xactionRepository.save(xaction);
 
@@ -144,9 +175,42 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
         log.info("Item {} purchased and added to inventory.", item.getName());
     }
 
+    private void checkShopAccess(UUID playerId) {
+        boolean onboardingCompleted = playerIdentityRepository.findById(playerId)
+                .map(p -> p.isOnboardingCompleted())
+                .orElse(false);
+        if (!onboardingCompleted) {
+            throw new com.lifeos.system.exception.LockedFeatureException("Complete onboarding trial quests first");
+        }
+
+        if (isShopLocked(playerId)) {
+            throw new com.lifeos.system.exception.LockedFeatureException("Shop is locked due to Penalty Zone active.");
+        }
+
+        PlayerStateResponse state = playerStateService.getPlayerState(playerId);
+        if (state.getProgression().getLevel() < 10) {
+            throw new com.lifeos.system.exception.LockedFeatureException("The System Store remains locked until Level 10.");
+        }
+    }
+
     private boolean isShopLocked(UUID playerId) {
         PlayerStateResponse state = playerStateService.getPlayerState(playerId);
         return state.getActiveFlags().stream()
                 .anyMatch(f -> f.getFlag() == StatusFlagType.PENALTY_ZONE);
+    }
+
+    private int getIntelValue(UUID playerId) {
+        try {
+            PlayerStateResponse state = playerStateService.getPlayerState(playerId);
+            if (state == null || state.getAttributes() == null) return 0;
+            return state.getAttributes().stream()
+                    .filter(a -> com.lifeos.player.domain.enums.AttributeType.INT == a.getAttributeType())
+                    .mapToInt(a -> (int) a.getCurrentValue())
+                    .findFirst()
+                    .orElse(0);
+        } catch (Exception e) {
+            log.warn("Could not fetch INT for player {}: {}", playerId, e.getMessage());
+            return 0;
+        }
     }
 }

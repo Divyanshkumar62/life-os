@@ -37,6 +37,7 @@ class StatSystemTest {
     @Mock private ProgressionService progressionService;
     @Mock private PlayerStateService playerStateService;
     @Mock private com.lifeos.event.DomainEventPublisher domainEventPublisher;
+    @Mock private com.lifeos.system.repository.SystemEventRepository systemEventRepository;
 
     @InjectMocks
     private QuestLifecycleServiceImpl questLifecycleService;

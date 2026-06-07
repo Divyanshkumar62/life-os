@@ -11,11 +11,12 @@ import { InventoryScreen } from "../screens/InventoryScreen";
 import { SystemGateView } from "../screens/SystemGate/SystemGateView";
 
 import { SystemProvider, useSystemContext } from "../context/SystemContext";
+import { PenaltyZoneScreen } from "../screens/PenaltyZone/PenaltyZoneScreen";
 import { RedGateProvider, useRedGateContext } from "../context/RedGateContext";
-import { PenaltyPopup } from "../components/features/PenaltyZone/PenaltyPopup";
 import { RedGatePopup } from "../components/features/RedGate/RedGatePopup";
 import { JobChangePopup } from "../components/features/JobChange/JobChangePopup";
 import { useSystemAudio } from "../hooks/useSystemAudio";
+import { SystemToast } from "../components/system";
 
 type Screen =
   | "dashboard"
@@ -72,7 +73,7 @@ function AppContent({
     );
   }
 
-  // Penalty Override (fallback)
+  // Penalty Override (render full confession screen)
   if (isPenaltyActive) {
     return (
       <motion.div
@@ -80,7 +81,7 @@ function AppContent({
         animate={{ x: [0, -20, 20, -10, 10, 0] }}
         transition={{ duration: 0.3 }}
       >
-        <PenaltyPopup isOpen={true} onClose={() => {}} />
+        <PenaltyZoneScreen playerId={playerId} />
       </motion.div>
     );
   }
@@ -222,6 +223,7 @@ function App() {
     <SystemProvider playerId={playerId || ""}>
       <RedGateProvider playerId={playerId || ""}>
         <AppContent playerId={playerId} setPlayerId={setPlayerId} />
+        <SystemToast />
       </RedGateProvider>
     </SystemProvider>
   );

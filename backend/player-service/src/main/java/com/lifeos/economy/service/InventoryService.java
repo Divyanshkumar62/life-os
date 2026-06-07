@@ -73,6 +73,12 @@ public class InventoryService {
      */
     @Transactional(readOnly = true)
     public List<UserInventory> getPlayerInventory(UUID playerId) {
+        boolean onboardingCompleted = playerIdentityRepository.findById(playerId)
+                .map(p -> p.isOnboardingCompleted())
+                .orElse(false);
+        if (!onboardingCompleted) {
+            throw new com.lifeos.system.exception.LockedFeatureException("Complete onboarding trial quests first");
+        }
         return inventoryRepository.findByPlayerPlayerId(playerId);
     }
 

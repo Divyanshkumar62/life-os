@@ -26,3 +26,6 @@ export type { SystemTabProps, Tab } from './SystemTab';
 
 export { SystemRadar } from './SystemRadar';
 export type { SystemRadarProps } from './SystemRadar';
+
+export { SystemToast } from './SystemToast';
+

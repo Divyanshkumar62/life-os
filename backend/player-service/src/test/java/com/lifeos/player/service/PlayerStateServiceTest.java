@@ -35,7 +35,7 @@ public class PlayerStateServiceTest {
         assertNotNull(response);
         assertEquals(username, response.getIdentity().getUsername());
         assertEquals(1, response.getProgression().getLevel());
-        assertEquals(10.0, response.getAttributes().get(0).getCurrentValue());
+        assertEquals(0.0, response.getAttributes().get(0).getCurrentValue());
 
         UUID playerId = response.getIdentity().getPlayerId();
 
@@ -58,6 +58,6 @@ public class PlayerStateServiceTest {
                 .filter(a -> a.getAttributeType() == AttributeType.FOCUS)
                 .findFirst().orElseThrow()
                 .getCurrentValue();
-        assertEquals(15.0, focusValue);
+        assertEquals(5.0, focusValue);
     }
 }

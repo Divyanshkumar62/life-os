@@ -13,6 +13,7 @@ import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.streak.service.StreakService;
 import com.lifeos.event.DomainEventPublisher;
 import com.lifeos.event.concrete.PenaltyZoneEnteredEvent;
+import com.lifeos.economy.service.EconomyService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ public class PenaltyService {
     private final PenaltyQuestRepository penaltyQuestRepository;
     private final DomainEventPublisher domainEventPublisher;
     private final SystemVoiceService systemVoiceService;
+    private final EconomyService economyService;
 
     public PenaltyService(PenaltyRecordRepository penaltyRepository, 
                          PenaltyCalculationService calculationService,
@@ -51,7 +53,8 @@ public class PenaltyService {
                          PenaltyQuestService penaltyQuestService,
                          PenaltyQuestRepository penaltyQuestRepository,
                          DomainEventPublisher domainEventPublisher,
-                         SystemVoiceService systemVoiceService) {
+                         SystemVoiceService systemVoiceService,
+                         EconomyService economyService) {
         this.penaltyRepository = penaltyRepository;
         this.calculationService = calculationService;
         this.playerStateService = playerStateService;
@@ -62,6 +65,7 @@ public class PenaltyService {
         this.penaltyQuestRepository = penaltyQuestRepository;
         this.domainEventPublisher = domainEventPublisher;
         this.systemVoiceService = systemVoiceService;
+        this.economyService = economyService;
     }
 
     @Transactional
@@ -77,7 +81,16 @@ public class PenaltyService {
                 .orElseThrow(() -> new IllegalArgumentException("Quest not found"));
 
         // 2. Calculate
-        PenaltyDefinition def = calculationService.calculatePenalty(quest, reason);
+        var playerState = playerStateService.getPlayerState(playerId);
+        long currentXp = playerState.getProgression().getCurrentXp();
+        PenaltyDefinition def = calculationService.calculatePenalty(quest, reason, currentXp, playerState);
+
+        // Emit system messages
+        if (def.getSystemMessages() != null) {
+            for (String msg : def.getSystemMessages()) {
+                systemVoiceService.emitEvent(playerId, SystemEventType.GENERAL_NOTICE, msg);
+            }
+        }
 
         // 3. Apply Effects
         if (def.getXpDeduction() > 0) {
@@ -122,6 +135,48 @@ public class PenaltyService {
 
         log.info("ENTERING PENALTY ZONE: Player {} Reason: {}", playerId, reason);
         systemVoiceService.emitEvent(playerId, SystemEventType.PENALTY_ALERT, "Warning. You have been placed in the Penalty Zone. All privileges are revoked.");
+        
+        // Gold Drain: instantly deduct 20% of player's total Gold (evaded if AGI dodge roll succeeds)
+        boolean dodgeGoldDrain = false;
+        int agiValue = 0;
+        try {
+            var attributes = state.getAttributes();
+            if (attributes != null) {
+                agiValue = attributes.stream()
+                        .filter(a -> a.getAttributeType() == com.lifeos.player.domain.enums.AttributeType.AGI)
+                        .mapToInt(a -> (int) a.getCurrentValue())
+                        .findFirst()
+                        .orElse(0);
+                
+                if (agiValue > 0) {
+                    double dodgeChance = Math.min(0.30, agiValue * 0.005);
+                    if (new java.util.Random().nextDouble() < dodgeChance) {
+                        dodgeGoldDrain = true;
+                        String dodgeMsg = String.format("[SYSTEM] High AGI (%d) successfully evaded Penalty Drain. Gold drain nullified.", agiValue);
+                        systemVoiceService.emitEvent(playerId, SystemEventType.GENERAL_NOTICE, dodgeMsg);
+                        log.info("Player {} successfully evaded Penalty Zone Gold Drain with AGI {}", playerId, agiValue);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to perform AGI gold dodge check for player {}", playerId, e);
+        }
+
+        if (!dodgeGoldDrain) {
+            try {
+                var economy = economyService.getEconomyState(playerId);
+                if (economy != null && economy.getGoldBalance() != null) {
+                    long goldBalance = economy.getGoldBalance().longValue();
+                    long goldToDeduct = (long) (goldBalance * 0.20);
+                    if (goldToDeduct > 0) {
+                        economyService.deductGold(playerId, goldToDeduct, "Penalty Zone Entrance Fee");
+                        log.info("Deducted 20% Gold ({}) from player {} upon entering Penalty Zone", goldToDeduct, playerId);
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Failed to deduct 20% Gold from player {} upon entering Penalty Zone", playerId, e);
+            }
+        }
         
         // 1. Apply Penalty Zone Flag
         playerStateService.applyStatusFlag(

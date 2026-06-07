@@ -310,19 +310,20 @@ public class ProjectService {
             throw new IllegalStateException("Project creation is LOCKED while in Penalty Zone.");
         }
 
-        PlayerProgression progression = progressionRepository.findByPlayerPlayerId(project.getPlayer().getPlayerId())
-                .orElseThrow(() -> new IllegalArgumentException("Player not found"));
-
         long activeProjects = projectRepository.countByPlayerPlayerIdAndStatus(
             project.getPlayer().getPlayerId(), 
             ProjectStatus.ACTIVE
         );
         
-        int maxSlots = progression.getRank().getProjectSlots();
+        int str = state.getAttributes().stream()
+                .filter(a -> a.getAttributeType() == com.lifeos.player.domain.enums.AttributeType.STR)
+                .mapToInt(a -> (int) a.getCurrentValue())
+                .findFirst()
+                .orElse(10);
+        
+        int maxSlots = 2 + (str / 10);
         if (activeProjects >= maxSlots) {
-            throw new IllegalStateException(
-                String.format("Maximum project slots (%d) reached for rank %s", maxSlots, progression.getRank())
-            );
+            throw new IllegalStateException("Insufficient STR to handle more Dungeons.");
         }
     }
 

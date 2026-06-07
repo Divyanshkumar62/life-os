@@ -13,15 +13,19 @@ public class PlayerTemporalStateDTO {
     private double restDebt;
     private double burnoutRiskScore;
     private int consecutiveDailyFailures;
+    private int failedConfessionAttempts;
+    private LocalDateTime penaltyLockoutUntil;
     
     public PlayerTemporalStateDTO() {}
 
-    public PlayerTemporalStateDTO(LocalDateTime lastQuestCompletedAt, int activeStreakDays, double restDebt, double burnoutRiskScore, int consecutiveDailyFailures) {
+    public PlayerTemporalStateDTO(LocalDateTime lastQuestCompletedAt, int activeStreakDays, double restDebt, double burnoutRiskScore, int consecutiveDailyFailures, int failedConfessionAttempts, LocalDateTime penaltyLockoutUntil) {
         this.lastQuestCompletedAt = lastQuestCompletedAt;
         this.activeStreakDays = activeStreakDays;
         this.restDebt = restDebt;
         this.burnoutRiskScore = burnoutRiskScore;
         this.consecutiveDailyFailures = consecutiveDailyFailures;
+        this.failedConfessionAttempts = failedConfessionAttempts;
+        this.penaltyLockoutUntil = penaltyLockoutUntil;
     }
 
     // Getters and Setters
@@ -35,6 +39,10 @@ public class PlayerTemporalStateDTO {
     public void setBurnoutRiskScore(double burnoutRiskScore) { this.burnoutRiskScore = burnoutRiskScore; }
     public int getConsecutiveDailyFailures() { return consecutiveDailyFailures; }
     public void setConsecutiveDailyFailures(int consecutiveDailyFailures) { this.consecutiveDailyFailures = consecutiveDailyFailures; }
+    public int getFailedConfessionAttempts() { return failedConfessionAttempts; }
+    public void setFailedConfessionAttempts(int failedConfessionAttempts) { this.failedConfessionAttempts = failedConfessionAttempts; }
+    public LocalDateTime getPenaltyLockoutUntil() { return penaltyLockoutUntil; }
+    public void setPenaltyLockoutUntil(LocalDateTime penaltyLockoutUntil) { this.penaltyLockoutUntil = penaltyLockoutUntil; }
 
     public static PlayerTemporalStateDTOBuilder builder() {
         return new PlayerTemporalStateDTOBuilder();
@@ -46,15 +54,19 @@ public class PlayerTemporalStateDTO {
         private double restDebt;
         private double burnoutRiskScore;
         private int consecutiveDailyFailures;
+        private int failedConfessionAttempts;
+        private LocalDateTime penaltyLockoutUntil;
 
         public PlayerTemporalStateDTOBuilder lastQuestCompletedAt(LocalDateTime lastQuestCompletedAt) { this.lastQuestCompletedAt = lastQuestCompletedAt; return this; }
         public PlayerTemporalStateDTOBuilder activeStreakDays(int activeStreakDays) { this.activeStreakDays = activeStreakDays; return this; }
         public PlayerTemporalStateDTOBuilder restDebt(double restDebt) { this.restDebt = restDebt; return this; }
         public PlayerTemporalStateDTOBuilder burnoutRiskScore(double burnoutRiskScore) { this.burnoutRiskScore = burnoutRiskScore; return this; }
         public PlayerTemporalStateDTOBuilder consecutiveDailyFailures(int consecutiveDailyFailures) { this.consecutiveDailyFailures = consecutiveDailyFailures; return this; }
+        public PlayerTemporalStateDTOBuilder failedConfessionAttempts(int failedConfessionAttempts) { this.failedConfessionAttempts = failedConfessionAttempts; return this; }
+        public PlayerTemporalStateDTOBuilder penaltyLockoutUntil(LocalDateTime penaltyLockoutUntil) { this.penaltyLockoutUntil = penaltyLockoutUntil; return this; }
 
         public PlayerTemporalStateDTO build() {
-            return new PlayerTemporalStateDTO(lastQuestCompletedAt, activeStreakDays, restDebt, burnoutRiskScore, consecutiveDailyFailures);
+            return new PlayerTemporalStateDTO(lastQuestCompletedAt, activeStreakDays, restDebt, burnoutRiskScore, consecutiveDailyFailures, failedConfessionAttempts, penaltyLockoutUntil);
         }
     }
 }

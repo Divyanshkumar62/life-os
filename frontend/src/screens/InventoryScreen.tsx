@@ -33,11 +33,11 @@ export const InventoryScreen = ({ playerId }: InventoryScreenProps) => {
     const playerName = statusWindow?.identity?.username || 'Hunter';
 
     const mapAttributesToStats = (attributes: any): Stat[] => [
-        { key: 'STRENGTH', label: 'Strength', value: attributes?.STRENGTH || 0 },
-        { key: 'AGILITY', label: 'Agility', value: attributes?.AGILITY || 0 },
-        { key: 'INTELLECT', label: 'Intelligence', value: attributes?.INTELLECT || 0 },
-        { key: 'VITALITY', label: 'Vitality', value: attributes?.VITALITY || 0 },
-        { key: 'SENSE', label: 'Perception', value: attributes?.SENSE || 0 }
+        { key: 'STR', label: 'Strength', value: attributes?.STR || 0 },
+        { key: 'AGI', label: 'Agility', value: attributes?.AGI || 0 },
+        { key: 'INT', label: 'Intelligence', value: attributes?.INT || 0 },
+        { key: 'VIT', label: 'Vitality', value: attributes?.VIT || 0 },
+        { key: 'SEN', label: 'Perception', value: attributes?.SEN || 0 }
     ];
 
     const fetchData = async () => {
@@ -77,8 +77,17 @@ export const InventoryScreen = ({ playerId }: InventoryScreenProps) => {
     const handleUseItem = async (itemCode: string) => {
         if (!playerId) return;
         try {
-            const updatedInv = await EconomyAPI.useConsumable(playerId, itemCode);
-            // Re-map and update inventory
+            let updatedInv;
+            if (itemCode.endsWith('_BOX')) {
+                // Open loot box
+                const result = await EconomyAPI.openBox(playerId, itemCode);
+                // Show reward message
+                alert(result.message);
+                // Refresh inventory after consuming the box
+                updatedInv = await EconomyAPI.fetchInventory(playerId);
+            } else {
+                updatedInv = await EconomyAPI.useConsumable(playerId, itemCode);
+            }
             const mappedInventory = updatedInv.map((item: any) => ({
                 id: item.id,
                 name: item.item.name,
@@ -87,11 +96,7 @@ export const InventoryScreen = ({ playerId }: InventoryScreenProps) => {
                 itemCode: item.item.code
             }));
             setInventory(mappedInventory);
-
-            // Hard refresh Global Context to update HUD/Status
             await refreshSystem();
-
-            alert(`Used item: ${itemCode}`);
         } catch (error) {
             console.error("Failed to use item:", error);
             alert("Cannot use item.");
