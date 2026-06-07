@@ -85,6 +85,7 @@ export default {
         'glow-cyan': '0 0 20px rgba(34, 211, 238, 0.5)',
         'glow-teal': '0 0 20px rgba(45, 212, 191, 0.5)',
         'glow-blue': '0 0 20px rgba(59, 130, 246, 0.5)',
+        'glow-red': '0 0 20px rgba(225, 29, 72, 0.5)',
         'card': '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)',
       },
       animation: {

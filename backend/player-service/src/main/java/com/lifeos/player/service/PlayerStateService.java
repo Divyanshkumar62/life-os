@@ -31,4 +31,6 @@ public interface PlayerStateService {
     void setLevel(UUID playerId, int level);
     void addFreeStatPoints(UUID playerId, int amount);
     void allocateFreeStatPoint(UUID playerId, com.lifeos.player.domain.enums.AttributeType stat, int amount);
+    void restoreFatigue(UUID playerId);
+    void accumulateDailyRestDebt(UUID playerId, double baseFatigue);
 }

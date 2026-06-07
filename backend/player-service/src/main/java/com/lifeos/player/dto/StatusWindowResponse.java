@@ -9,6 +9,7 @@ public class StatusWindowResponse {
     private Attributes attributes;
     private Economy economy;
     private SystemState systemState;
+    private List<String> systemMessages = new java.util.ArrayList<>();
 
     public Identity getIdentity() { return identity; }
     public void setIdentity(Identity identity) { this.identity = identity; }
@@ -20,6 +21,11 @@ public class StatusWindowResponse {
     public void setEconomy(Economy economy) { this.economy = economy; }
     public SystemState getSystemState() { return systemState; }
     public void setSystemState(SystemState systemState) { this.systemState = systemState; }
+    public List<String> getSystemMessages() {
+        if (systemMessages == null) systemMessages = new java.util.ArrayList<>();
+        return systemMessages;
+    }
+    public void setSystemMessages(List<String> systemMessages) { this.systemMessages = systemMessages; }
 
     public static StatusWindowBuilder builder() {
         return new StatusWindowBuilder();
@@ -31,6 +37,7 @@ public class StatusWindowResponse {
         private Attributes attributes;
         private Economy economy;
         private SystemState systemState;
+        private List<String> systemMessages;
 
         public StatusWindowBuilder identity(Identity identity) {
             this.identity = identity;
@@ -52,6 +59,10 @@ public class StatusWindowResponse {
             this.systemState = systemState;
             return this;
         }
+        public StatusWindowBuilder systemMessages(List<String> systemMessages) {
+            this.systemMessages = systemMessages;
+            return this;
+        }
         public StatusWindowResponse build() {
             StatusWindowResponse response = new StatusWindowResponse();
             response.identity = this.identity;
@@ -59,6 +70,7 @@ public class StatusWindowResponse {
             response.attributes = this.attributes;
             response.economy = this.economy;
             response.systemState = this.systemState;
+            response.systemMessages = this.systemMessages != null ? this.systemMessages : new java.util.ArrayList<>();
             return response;
         }
     }
@@ -136,6 +148,7 @@ public class StatusWindowResponse {
         private int INT;
         private int VIT;
         private int SEN;
+        private int AGI;
         private int freePoints;
 
         public int getSTR() { return STR; }
@@ -146,6 +159,8 @@ public class StatusWindowResponse {
         public void setVIT(int VIT) { this.VIT = VIT; }
         public int getSEN() { return SEN; }
         public void setSEN(int SEN) { this.SEN = SEN; }
+        public int getAGI() { return AGI; }
+        public void setAGI(int AGI) { this.AGI = AGI; }
         public int getFreePoints() { return freePoints; }
         public void setFreePoints(int freePoints) { this.freePoints = freePoints; }
 
@@ -158,12 +173,14 @@ public class StatusWindowResponse {
             private int INT;
             private int VIT;
             private int SEN;
+            private int AGI;
             private int freePoints;
 
             public AttributesBuilder STR(int STR) { this.STR = STR; return this; }
             public AttributesBuilder INT(int INT) { this.INT = INT; return this; }
             public AttributesBuilder VIT(int VIT) { this.VIT = VIT; return this; }
             public AttributesBuilder SEN(int SEN) { this.SEN = SEN; return this; }
+            public AttributesBuilder AGI(int AGI) { this.AGI = AGI; return this; }
             public AttributesBuilder freePoints(int freePoints) { this.freePoints = freePoints; return this; }
             public Attributes build() {
                 Attributes a = new Attributes();
@@ -171,6 +188,7 @@ public class StatusWindowResponse {
                 a.INT = this.INT;
                 a.VIT = this.VIT;
                 a.SEN = this.SEN;
+                a.AGI = this.AGI;
                 a.freePoints = this.freePoints;
                 return a;
             }
@@ -202,11 +220,14 @@ public class StatusWindowResponse {
     public static class SystemState {
         private boolean penaltyActive;
         private List<String> activeBuffs;
+        private String wakeUpTime;
 
         public boolean isPenaltyActive() { return penaltyActive; }
         public void setPenaltyActive(boolean penaltyActive) { this.penaltyActive = penaltyActive; }
         public List<String> getActiveBuffs() { return activeBuffs; }
         public void setActiveBuffs(List<String> activeBuffs) { this.activeBuffs = activeBuffs; }
+        public String getWakeUpTime() { return wakeUpTime; }
+        public void setWakeUpTime(String wakeUpTime) { this.wakeUpTime = wakeUpTime; }
 
         public static SystemStateBuilder builder() {
             return new SystemStateBuilder();
@@ -215,13 +236,16 @@ public class StatusWindowResponse {
         public static class SystemStateBuilder {
             private boolean penaltyActive;
             private List<String> activeBuffs;
+            private String wakeUpTime;
 
             public SystemStateBuilder penaltyActive(boolean penaltyActive) { this.penaltyActive = penaltyActive; return this; }
             public SystemStateBuilder activeBuffs(List<String> activeBuffs) { this.activeBuffs = activeBuffs; return this; }
+            public SystemStateBuilder wakeUpTime(String wakeUpTime) { this.wakeUpTime = wakeUpTime; return this; }
             public SystemState build() {
                 SystemState s = new SystemState();
                 s.penaltyActive = this.penaltyActive;
                 s.activeBuffs = this.activeBuffs;
+                s.wakeUpTime = this.wakeUpTime;
                 return s;
             }
         }

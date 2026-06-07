@@ -17,6 +17,7 @@ public class PlayerStateResponse {
     private java.util.List<PlayerStatusFlagDTO> activeFlags = new java.util.ArrayList<>();
     private PlayerTemporalStateDTO temporalState;
     private PlayerHistoryDTO history;
+    private java.util.List<String> systemMessages = new java.util.ArrayList<>();
     
     public PlayerStateResponse() {}
 
@@ -29,6 +30,18 @@ public class PlayerStateResponse {
         this.activeFlags = activeFlags != null ? activeFlags : new java.util.ArrayList<>();
         this.temporalState = temporalState;
         this.history = history;
+    }
+
+    public PlayerStateResponse(PlayerIdentityDTO identity, PlayerProgressionDTO progression, java.util.List<PlayerAttributeDTO> attributes, PlayerPsychStateDTO psychState, PlayerMetricsDTO metrics, java.util.List<PlayerStatusFlagDTO> activeFlags, PlayerTemporalStateDTO temporalState, PlayerHistoryDTO history, java.util.List<String> systemMessages) {
+        this.identity = identity;
+        this.progression = progression;
+        this.attributes = attributes != null ? attributes : new java.util.ArrayList<>();
+        this.psychState = psychState;
+        this.metrics = metrics;
+        this.activeFlags = activeFlags != null ? activeFlags : new java.util.ArrayList<>();
+        this.temporalState = temporalState;
+        this.history = history;
+        this.systemMessages = systemMessages != null ? systemMessages : new java.util.ArrayList<>();
     }
 
     // Getters
@@ -54,6 +67,11 @@ public class PlayerStateResponse {
     public void setTemporalState(PlayerTemporalStateDTO temporalState) { this.temporalState = temporalState; }
     public PlayerHistoryDTO getHistory() { return history; }
     public void setHistory(PlayerHistoryDTO history) { this.history = history; }
+    public java.util.List<String> getSystemMessages() {
+        if (systemMessages == null) systemMessages = new java.util.ArrayList<>();
+        return systemMessages;
+    }
+    public void setSystemMessages(java.util.List<String> systemMessages) { this.systemMessages = systemMessages; }
 
     public static PlayerStateResponseBuilder builder() {
         return new PlayerStateResponseBuilder();
@@ -68,6 +86,7 @@ public class PlayerStateResponse {
         private List<PlayerStatusFlagDTO> activeFlags;
         private PlayerTemporalStateDTO temporalState;
         private PlayerHistoryDTO history;
+        private List<String> systemMessages;
 
         public PlayerStateResponseBuilder identity(PlayerIdentityDTO identity) { this.identity = identity; return this; }
         public PlayerStateResponseBuilder progression(PlayerProgressionDTO progression) { this.progression = progression; return this; }
@@ -77,9 +96,10 @@ public class PlayerStateResponse {
         public PlayerStateResponseBuilder activeFlags(List<PlayerStatusFlagDTO> activeFlags) { this.activeFlags = activeFlags; return this; }
         public PlayerStateResponseBuilder temporalState(PlayerTemporalStateDTO temporalState) { this.temporalState = temporalState; return this; }
         public PlayerStateResponseBuilder history(PlayerHistoryDTO history) { this.history = history; return this; }
+        public PlayerStateResponseBuilder systemMessages(List<String> systemMessages) { this.systemMessages = systemMessages; return this; }
 
         public PlayerStateResponse build() {
-            return new PlayerStateResponse(identity, progression, attributes, psychState, metrics, activeFlags, temporalState, history);
+            return new PlayerStateResponse(identity, progression, attributes, psychState, metrics, activeFlags, temporalState, history, systemMessages);
         }
     }
 }

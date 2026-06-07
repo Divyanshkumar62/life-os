@@ -33,7 +33,7 @@ public class LevelUpRewardHandler {
     private final ApplicationEventPublisher eventPublisher;
 
     @EventListener
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRED)
     public void onLevelUp(LevelUpEvent event) {
         UUID playerId = event.getPlayerId();
         int newLevel = event.getNewLevel();

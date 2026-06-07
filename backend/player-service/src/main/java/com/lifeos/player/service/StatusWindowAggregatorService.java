@@ -33,8 +33,9 @@ public class StatusWindowAggregatorService {
     private final PlayerProgressionRepository progressionRepository;
     private final PlayerAttributeRepository attributeRepository;
     private final PlayerStatusFlagRepository statusFlagRepository;
+    private final com.lifeos.system.repository.SystemEventRepository systemEventRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public StatusWindowResponse buildStatusWindow(UUID playerId) {
         log.debug("Aggregating Status Window for player: {}", playerId);
 
@@ -70,10 +71,24 @@ public class StatusWindowAggregatorService {
         int intel = getAttributeValue(attributes, AttributeType.INT);
         int vit = getAttributeValue(attributes, AttributeType.VIT);
         int sen = getAttributeValue(attributes, AttributeType.SEN);
+        int agi = getAttributeValue(attributes, AttributeType.AGI);
         int freePoints = progression != null ? progression.getFreeStatPoints() : 0;
 
         String title = profile != null && profile.getTitle() != null ? profile.getTitle() : "None";
         String theme = profile != null && profile.getDisplayTheme() != null ? profile.getDisplayTheme() : "shadow_purple";
+
+        // Fetch and consume background system events
+        List<com.lifeos.system.domain.SystemEvent> unconsumedEvents = systemEventRepository.findByPlayerIdAndIsConsumedFalseOrderByCreatedAtAsc(playerId);
+        List<String> systemMessages = new java.util.ArrayList<>();
+        if (unconsumedEvents != null && !unconsumedEvents.isEmpty()) {
+            for (com.lifeos.system.domain.SystemEvent event : unconsumedEvents) {
+                systemMessages.add(event.getMessage());
+                event.setConsumed(true);
+            }
+            systemEventRepository.saveAll(unconsumedEvents);
+        }
+
+        String wakeUpStr = (profile != null && profile.getWakeUpTime() != null) ? profile.getWakeUpTime().toString() : "08:00";
 
         return StatusWindowResponse.builder()
                 .identity(StatusWindowResponse.Identity.builder()
@@ -91,6 +106,7 @@ public class StatusWindowAggregatorService {
                         .INT(intel)
                         .VIT(vit)
                         .SEN(sen)
+                        .AGI(agi)
                         .freePoints(freePoints)
                         .build())
                 .economy(StatusWindowResponse.Economy.builder()
@@ -99,7 +115,9 @@ public class StatusWindowAggregatorService {
                 .systemState(StatusWindowResponse.SystemState.builder()
                         .penaltyActive(penaltyActive)
                         .activeBuffs(activeBuffs)
+                        .wakeUpTime(wakeUpStr)
                         .build())
+                .systemMessages(systemMessages)
                 .build();
     }
 

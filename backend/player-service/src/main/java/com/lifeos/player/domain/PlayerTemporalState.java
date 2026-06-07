@@ -34,10 +34,16 @@ public class PlayerTemporalState {
 
     @Column(name = "consecutive_daily_failures")
     private int consecutiveDailyFailures;
+
+    @Column(name = "failed_confession_attempts")
+    private int failedConfessionAttempts;
+
+    @Column(name = "penalty_lockout_until")
+    private LocalDateTime penaltyLockoutUntil;
     
     public PlayerTemporalState() {}
 
-    public PlayerTemporalState(Long id, PlayerIdentity player, LocalDateTime lastQuestCompletedAt, int activeStreakDays, double restDebt, double burnoutRiskScore, int consecutiveDailyFailures) {
+    public PlayerTemporalState(Long id, PlayerIdentity player, LocalDateTime lastQuestCompletedAt, int activeStreakDays, double restDebt, double burnoutRiskScore, int consecutiveDailyFailures, int failedConfessionAttempts, LocalDateTime penaltyLockoutUntil) {
         this.id = id;
         this.player = player;
         this.lastQuestCompletedAt = lastQuestCompletedAt;
@@ -45,6 +51,8 @@ public class PlayerTemporalState {
         this.restDebt = restDebt;
         this.burnoutRiskScore = burnoutRiskScore;
         this.consecutiveDailyFailures = consecutiveDailyFailures;
+        this.failedConfessionAttempts = failedConfessionAttempts;
+        this.penaltyLockoutUntil = penaltyLockoutUntil;
     }
 
     // Getters and Setters
@@ -62,6 +70,10 @@ public class PlayerTemporalState {
     public void setBurnoutRiskScore(double burnoutRiskScore) { this.burnoutRiskScore = burnoutRiskScore; }
     public int getConsecutiveDailyFailures() { return consecutiveDailyFailures; }
     public void setConsecutiveDailyFailures(int consecutiveDailyFailures) { this.consecutiveDailyFailures = consecutiveDailyFailures; }
+    public int getFailedConfessionAttempts() { return failedConfessionAttempts; }
+    public void setFailedConfessionAttempts(int failedConfessionAttempts) { this.failedConfessionAttempts = failedConfessionAttempts; }
+    public LocalDateTime getPenaltyLockoutUntil() { return penaltyLockoutUntil; }
+    public void setPenaltyLockoutUntil(LocalDateTime penaltyLockoutUntil) { this.penaltyLockoutUntil = penaltyLockoutUntil; }
 
     public static PlayerTemporalStateBuilder builder() {
         return new PlayerTemporalStateBuilder();
@@ -75,6 +87,8 @@ public class PlayerTemporalState {
         private double restDebt;
         private double burnoutRiskScore;
         private int consecutiveDailyFailures;
+        private int failedConfessionAttempts;
+        private LocalDateTime penaltyLockoutUntil;
 
         public PlayerTemporalStateBuilder id(Long id) { this.id = id; return this; }
         public PlayerTemporalStateBuilder player(PlayerIdentity player) { this.player = player; return this; }
@@ -83,9 +97,11 @@ public class PlayerTemporalState {
         public PlayerTemporalStateBuilder restDebt(double restDebt) { this.restDebt = restDebt; return this; }
         public PlayerTemporalStateBuilder burnoutRiskScore(double burnoutRiskScore) { this.burnoutRiskScore = burnoutRiskScore; return this; }
         public PlayerTemporalStateBuilder consecutiveDailyFailures(int consecutiveDailyFailures) { this.consecutiveDailyFailures = consecutiveDailyFailures; return this; }
+        public PlayerTemporalStateBuilder failedConfessionAttempts(int failedConfessionAttempts) { this.failedConfessionAttempts = failedConfessionAttempts; return this; }
+        public PlayerTemporalStateBuilder penaltyLockoutUntil(LocalDateTime penaltyLockoutUntil) { this.penaltyLockoutUntil = penaltyLockoutUntil; return this; }
 
         public PlayerTemporalState build() {
-            return new PlayerTemporalState(id, player, lastQuestCompletedAt, activeStreakDays, restDebt, burnoutRiskScore, consecutiveDailyFailures);
+            return new PlayerTemporalState(id, player, lastQuestCompletedAt, activeStreakDays, restDebt, burnoutRiskScore, consecutiveDailyFailures, failedConfessionAttempts, penaltyLockoutUntil);
         }
     }
 }

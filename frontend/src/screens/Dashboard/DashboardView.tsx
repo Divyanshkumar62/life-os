@@ -15,6 +15,7 @@ import { useSystemVoice } from '../../hooks/useSystemVoice';
 import { useSystemContext } from '../../context/SystemContext';
 import { clsx } from 'clsx';
 import { AlertTriangle, Flame } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * DashboardView - Main dashboard layout composition
@@ -48,10 +49,59 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
     const { alerts, consumeAlert } = useSystemVoice(playerId);
 
     // Consume Authoritative Global State
-    const { statusWindow, loading: _loading } = useSystemContext();
+    const { statusWindow, loading: _loading, refreshSystem } = useSystemContext();
 
     // Secondary Data State (Consider abstracting these later)
     const [activeQuests, setActiveQuests] = useState<any[]>([]);
+
+    // Danger Sense UI Logic
+    const sensory = statusWindow?.attributes?.SEN || 10;
+    const [isDangerSenseActive, setIsDangerSenseActive] = useState(false);
+
+    useEffect(() => {
+        const checkDangerSense = () => {
+            if (sensory <= 15) {
+                setIsDangerSenseActive(false);
+                return;
+            }
+
+            const hasUncompletedDailies = activeQuests.some(q => 
+                (q.category === 'SYSTEM_DAILY' || q.questType === 'DISCIPLINE' || q.questType === 'REFLECTION') && 
+                q.state === 'ACTIVE'
+            );
+
+            if (!hasUncompletedDailies) {
+                setIsDangerSenseActive(false);
+                return;
+            }
+
+            const now = new Date();
+            const wakeUpStr = statusWindow?.systemState?.wakeUpTime || "08:00";
+            const [wakeHour, wakeMin] = wakeUpStr.split(':').map(Number);
+            
+            let resetHour = wakeHour - 2;
+            if (resetHour < 0) resetHour += 24;
+
+            const resetTimeToday = new Date(now);
+            resetTimeToday.setHours(resetHour, wakeMin, 0, 0);
+
+            let nextReset = new Date(resetTimeToday);
+            if (now > resetTimeToday) {
+                nextReset.setDate(nextReset.getDate() + 1);
+            }
+
+            const diffMs = nextReset.getTime() - now.getTime();
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            // Within 3 hours of their reset limit
+            setIsDangerSenseActive(diffHours > 0 && diffHours <= 3);
+        };
+
+        checkDangerSense();
+        // Check every minute
+        const interval = setInterval(checkDangerSense, 60000);
+        return () => clearInterval(interval);
+    }, [sensory, activeQuests, statusWindow?.systemState?.wakeUpTime]);
 
     // Get user name and rank from status window
     const playerName = statusWindow?.identity?.username || statusWindow?.identity?.title || 'Hunter';
@@ -137,7 +187,10 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
     }
 
     return (
-        <ScreenFrame className={clsx(isRedGateActive && "border-solo-red-900 bg-[#0f0404]")}>
+        <ScreenFrame className={clsx(
+            isRedGateActive && "border-solo-red-900 bg-[#0f0404]",
+            isDangerSenseActive && "border-red-600 shadow-[inset_0_0_20px_rgba(220,38,38,0.5)] animate-pulse"
+        )}>
             {/* Red Gate Warning Banner */}
             {isRedGateActive && (
                 <div className="bg-solo-red-950/80 border-b border-solo-red-600 p-2 text-center flex items-center justify-center gap-2 animate-pulse mb-4 rounded">
@@ -148,6 +201,24 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                     <AlertTriangle className="text-solo-red-500" size={16} />
                 </div>
             )}
+
+            {/* Danger Sense Warning Popup */}
+            <AnimatePresence>
+                {isDangerSenseActive && (
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -50, opacity: 0 }}
+                        className="bg-red-950/90 border border-red-500 p-4 rounded flex items-center gap-3 shadow-[0_0_25px_rgba(220,38,38,0.4)] mb-4 z-40 relative max-w-2xl mx-auto font-mono text-xs md:text-sm text-red-100 uppercase tracking-wider animate-pulse select-none"
+                    >
+                        <AlertTriangle className="text-red-500 animate-bounce shrink-0" size={20} />
+                        <div>
+                            <span className="font-black text-red-500 mr-2">[DANGER]</span>
+                            Senses detect approaching Penalty. Resolve active daily quests immediately.
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* Top Bar */}
             <TopBar
@@ -209,6 +280,9 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                             if (!completed) {
                                 try {
                                     await QuestAPI.completeQuest(id);
+                                    const updatedQuests = await QuestAPI.getActiveQuests(playerId || '');
+                                    setActiveQuests(updatedQuests);
+                                    await refreshSystem();
                                 } catch (error) {
                                     console.error("Failed to complete quest:", error);
                                 }

@@ -31,11 +31,13 @@ public class RewardService {
     private final EconomyService economyService;
     private final StreakService streakService;
     private final ApplicationEventPublisher eventPublisher;
+    private final com.lifeos.system.service.SystemVoiceService systemVoiceService;
 
     public RewardService(RewardRecordRepository rewardRepository, RewardCalculationService calculationService,
                        PlayerStateService playerStateService, QuestRepository questRepository,
                        EconomyService economyService, StreakService streakService,
-                       ApplicationEventPublisher eventPublisher) {
+                       ApplicationEventPublisher eventPublisher,
+                       com.lifeos.system.service.SystemVoiceService systemVoiceService) {
         this.rewardRepository = rewardRepository;
         this.calculationService = calculationService;
         this.playerStateService = playerStateService;
@@ -43,6 +45,7 @@ public class RewardService {
         this.economyService = economyService;
         this.streakService = streakService;
         this.eventPublisher = eventPublisher;
+        this.systemVoiceService = systemVoiceService;
     }
     
     @Transactional
@@ -122,6 +125,13 @@ public class RewardService {
                 .build();
         
         rewardRepository.save(record);
+
+        // Emit system messages to database SystemEvent log
+        if (reward.getSystemMessages() != null) {
+            for (String msg : reward.getSystemMessages()) {
+                systemVoiceService.emitEvent(playerId, com.lifeos.system.domain.enums.SystemEventType.GENERAL_NOTICE, msg);
+            }
+        }
         
         // VOICE: QUEST_COMPLETED
         // TODO: Distinguish between Normal and Major

@@ -48,12 +48,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
         // Submit awakening questionnaire
         if (playerId) {
             const payload = {
-                archetype: data.archetype || 'BALANCE',
-                primaryWeakness: data.struggle || '',
-                mainGoal: data.desire || '',
-                biggestChallenge: data.struggle || '',
-                availableTime: '2-4 hours',
-                focusArea: data.weapon || 'Mental'
+                biggestChallenge: data.biggestChallenge || '',
+                pastFailures: data.pastFailures || '',
+                focusArea: data.focusArea || 'Mental',
+                sixMonthGoal: data.sixMonthGoal || '',
+                availableTime: data.availableTime || '2-4 hours'
             };
             await apiCall(`/${playerId}/awakening`, 'POST', payload);
         }

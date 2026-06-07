@@ -75,7 +75,7 @@ public class OnboardingService {
 
     @Transactional
     public OnboardingResponse submitAwakening(UUID playerId, QuestionnaireRequest request) {
-        log.info("=== ONBOARDING START === Processing Awakening for player: {} with archetype: {}", playerId, request.getArchetype());
+        log.info("=== ONBOARDING START === Processing Awakening for player: {} with challenge: {}", playerId, request.getBiggestChallenge());
         
         try {
             OnboardingProgress progress = getProgress_OrThrow(playerId);
@@ -91,20 +91,35 @@ public class OnboardingService {
             log.warn("Invalid stage for Awakening: {}", progress.getCurrentStage());
         }
 
-        // 1. Save Awakening Profile with all 7 questionnaire fields
+        // Infer missing questionnaire fields using Gemini
+        log.info("Calling AI to infer missing questionnaire fields...");
+        QuestionnaireRequest inferredRequest;
+        try {
+            inferredRequest = aiQuestService.inferQuestionnaire(request);
+        } catch (Exception e) {
+            log.error("!!! ERROR: Questionnaire inference failed, using fallback: {}", e.getMessage());
+            request.setArchetype("BALANCE");
+            request.setWakeUpTime(java.time.LocalTime.of(6, 0));
+            inferredRequest = request;
+        }
+
+        // 1. Save Awakening Profile with all 5 questionnaire fields + inferred data
         log.info("Step 1: Saving player profile...");
         try {
             PlayerProfile profile = PlayerProfile.builder()
                     .playerId(playerId)
-                    .archetype(request.getArchetype())
+                    .archetype(inferredRequest.getArchetype())
                     .biggestChallenge(request.getBiggestChallenge())
-                    .sixMonthGoal(request.getMainGoal())
-                    .wakeUpTime(request.getWakeUpTime())
+                    .sixMonthGoal(request.getSixMonthGoal())
+                    .wakeUpTime(inferredRequest.getWakeUpTime())
                     .availableTime(request.getAvailableTime())
                     .focusAreas(request.getFocusArea() != null ? List.of(request.getFocusArea()) : List.of())
+                    .pastFailures(request.getPastFailures())
+                    .quitReasons(request.getPastFailures())
+                    .weaknesses(request.getBiggestChallenge() != null ? List.of(request.getBiggestChallenge()) : List.of())
                     .build();
             
-            log.debug("Profile built: archetype={}, goal={}, challenge={}", request.getArchetype(), request.getMainGoal(), request.getBiggestChallenge());
+            log.debug("Profile built: archetype={}, goal={}, challenge={}", inferredRequest.getArchetype(), request.getSixMonthGoal(), request.getBiggestChallenge());
             profileRepository.save(profile);
             log.info("Step 1: Profile saved successfully");
         } catch (Exception e) {
@@ -115,7 +130,7 @@ public class OnboardingService {
         // 2. Auto-Calibrate Stats based on Archetype
         log.info("Step 2: Calibrating stats...");
         try {
-            calibrateStats(playerId, request.getArchetype());
+            calibrateStats(playerId, inferredRequest.getArchetype());
             log.info("Step 2: Stats calibrated");
         } catch (Exception e) {
             log.error("!!! ERROR in Step 2 - Stats calibration failed: {}", e.getMessage(), e);
@@ -204,6 +219,16 @@ public class OnboardingService {
             log.info("Step 5b: Skipping Intel Quest 2 (count = {})", intelQuestCount);
         }
 
+        // 5c. Generate and assign the actual Trial Quest (Courage of the Weak)
+        log.info("Step 5c: Generating and assigning Trial Quest (Courage of the Weak)...");
+        try {
+            QuestRequest trialQuest = trialQuestGenerator.generateTrialQuest(playerId);
+            questService.assignQuest(trialQuest);
+            log.info("Assigned Trial Quest: {}", trialQuest.getTitle());
+        } catch (Exception e) {
+            log.error("!!! ERROR assigning Trial Quest: {}", e.getMessage(), e);
+        }
+
         // 6. Keep player in TRIAL_QUEST state until all quests are completed
         log.info("Step 6: Saving onboarding progress...");
         try {
@@ -252,10 +277,10 @@ public class OnboardingService {
                 break;
         }
 
-        if (intMod != 0) playerStateService.updateAttribute(playerId, AttributeType.INTELLIGENCE, intMod);
-        if (senMod != 0) playerStateService.updateAttribute(playerId, AttributeType.SENSE, senMod);
-        if (strMod != 0) playerStateService.updateAttribute(playerId, AttributeType.STRENGTH, strMod);
-        if (vitMod != 0) playerStateService.updateAttribute(playerId, AttributeType.VITALITY, vitMod);
+        if (intMod != 0) playerStateService.updateAttribute(playerId, AttributeType.INT, intMod);
+        if (senMod != 0) playerStateService.updateAttribute(playerId, AttributeType.SEN, senMod);
+        if (strMod != 0) playerStateService.updateAttribute(playerId, AttributeType.STR, strMod);
+        if (vitMod != 0) playerStateService.updateAttribute(playerId, AttributeType.VIT, vitMod);
         // AGI stays 10
     }
 
@@ -290,8 +315,8 @@ public class OnboardingService {
     
     private List<QuestRequest> createFallbackOnboardingQuests(UUID playerId, QuestionnaireRequest request) {
         String focusArea = request.getFocusArea() != null ? request.getFocusArea() : "General";
-        String weakness = request.getPrimaryWeakness() != null ? request.getPrimaryWeakness() : "Consistency";
-        String goal = request.getMainGoal() != null ? request.getMainGoal() : "Personal Growth";
+        String weakness = request.getBiggestChallenge() != null ? request.getBiggestChallenge() : "Consistency";
+        String goal = request.getSixMonthGoal() != null ? request.getSixMonthGoal() : "Personal Growth";
         
         return List.of(
             QuestRequest.builder()
@@ -331,7 +356,7 @@ public class OnboardingService {
                 .successXp(50)
                 .goldReward(50)
                 .systemMutable(false)
-                .primaryAttribute(AttributeType.VITALITY)
+                .primaryAttribute(AttributeType.VIT)
                 .build()
         );
     }
@@ -406,12 +431,6 @@ public class OnboardingService {
         }
     }
      
-    // Legacy support methods (can delete if clean break)
-    @Transactional
-    public OnboardingResponse completeTrialQuest(UUID playerId) {
-        // Bypass or map to new flow
-        return getStatus(playerId);
-    }
     
     /**
      * Unlock the JOB_CHANGE stage in onboarding for a player.
