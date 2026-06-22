@@ -6,6 +6,7 @@ import com.lifeos.player.domain.enums.AttributeType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -110,6 +111,7 @@ public class Quest {
     // Getters and Setters
     public UUID getQuestId() { return questId; }
     public void setQuestId(UUID questId) { this.questId = questId; }
+    @JsonIgnore
     public PlayerIdentity getPlayer() { return player; }
     public void setPlayer(PlayerIdentity player) { this.player = player; }
     public UUID getProjectId() { return projectId; }

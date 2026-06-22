@@ -30,10 +30,11 @@ public class QuestRequest {
     private boolean systemMutable;
     private boolean egoBreakerFlag;
     private double expectedFailureProbability;
+    private QuestState state;
     
     public QuestRequest() {}
 
-    public QuestRequest(UUID playerId, String title, String description, QuestType questType, QuestCategory category, AttributeType primaryAttribute, DifficultyTier difficultyTier, Priority priority, LocalDateTime deadlineAt, long successXp, long failureXp, long goldReward, Map<String, Double> attributeDeltas, boolean systemMutable, boolean egoBreakerFlag, double expectedFailureProbability) {
+    public QuestRequest(UUID playerId, String title, String description, QuestType questType, QuestCategory category, AttributeType primaryAttribute, DifficultyTier difficultyTier, Priority priority, LocalDateTime deadlineAt, long successXp, long failureXp, long goldReward, Map<String, Double> attributeDeltas, boolean systemMutable, boolean egoBreakerFlag, double expectedFailureProbability, QuestState state) {
         this.playerId = playerId;
         this.title = title;
         this.description = description;
@@ -50,6 +51,7 @@ public class QuestRequest {
         this.systemMutable = systemMutable;
         this.egoBreakerFlag = egoBreakerFlag;
         this.expectedFailureProbability = expectedFailureProbability;
+        this.state = state;
     }
 
     // Getters and Setters
@@ -107,7 +109,8 @@ public class QuestRequest {
         private boolean systemMutable;
         private boolean egoBreakerFlag;
         private double expectedFailureProbability;
-
+        private QuestState state;
+ 
         public QuestRequestBuilder playerId(UUID playerId) { this.playerId = playerId; return this; }
         public QuestRequestBuilder title(String title) { this.title = title; return this; }
         public QuestRequestBuilder description(String description) { this.description = description; return this; }
@@ -124,9 +127,10 @@ public class QuestRequest {
         public QuestRequestBuilder systemMutable(boolean systemMutable) { this.systemMutable = systemMutable; return this; }
         public QuestRequestBuilder egoBreakerFlag(boolean egoBreakerFlag) { this.egoBreakerFlag = egoBreakerFlag; return this; }
         public QuestRequestBuilder expectedFailureProbability(double expectedFailureProbability) { this.expectedFailureProbability = expectedFailureProbability; return this; }
-
+        public QuestRequestBuilder state(QuestState state) { this.state = state; return this; }
+ 
         public QuestRequest build() {
-            return new QuestRequest(playerId, title, description, questType, category, primaryAttribute, difficultyTier, priority, deadlineAt, successXp, failureXp, goldReward, attributeDeltas, systemMutable, egoBreakerFlag, expectedFailureProbability);
+            return new QuestRequest(playerId, title, description, questType, category, primaryAttribute, difficultyTier, priority, deadlineAt, successXp, failureXp, goldReward, attributeDeltas, systemMutable, egoBreakerFlag, expectedFailureProbability, state);
         }
     }
 }

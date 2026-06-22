@@ -13,6 +13,9 @@ import java.util.UUID;
 @Repository
 public interface QuestRepository extends JpaRepository<Quest, UUID> {
     List<Quest> findByPlayerPlayerIdAndState(UUID playerId, QuestState state);
+
+    @org.springframework.data.jpa.repository.Query("SELECT q FROM Quest q WHERE q.player.playerId = :playerId AND q.state = :state")
+    List<Quest> findActiveQuestsWithAllCategories(@org.springframework.data.repository.query.Param("playerId") UUID playerId, @org.springframework.data.repository.query.Param("state") QuestState state);
     
     long countByProjectIdAndState(UUID projectId, QuestState state);
     

@@ -114,7 +114,7 @@ class EconomySystemTest {
         );
         
         assertThrows(IllegalStateException.class, () -> 
-            shopService.purchaseItem(playerId, "POTION_1")
+            shopService.purchaseItem(playerId, "INSURANCE_SCROLL")
         );
     }
 
@@ -134,7 +134,7 @@ class EconomySystemTest {
         );
         
         assertThrows(IllegalStateException.class, () -> 
-            shopService.purchaseItem(playerId, "POTION_FOCUS")
+            shopService.purchaseItem(playerId, "INSURANCE_SCROLL")
         );
     }
 
@@ -150,12 +150,12 @@ class EconomySystemTest {
         // Mock Item
         potion = ShopItem.builder()
                 .itemId(UUID.randomUUID())
-                .code("POTION_FOCUS")
-                .name("Focus Potion")
+                .code("INSURANCE_SCROLL")
+                .name("Penalty Shield")
                 .cost(50)
                 .category(ShopCategory.CONSUMABLE)
                 .build();
-        when(shopRepository.findByCode("POTION_FOCUS")).thenReturn(Optional.of(potion));
+        when(shopRepository.findByCode("INSURANCE_SCROLL")).thenReturn(Optional.of(potion));
 
         // Mock Economy Service inside ShopService
         EconomyService mockEcon = mock(EconomyService.class);
@@ -180,7 +180,7 @@ class EconomySystemTest {
             mockIdentity
         );
 
-        shopSvc.purchaseItem(playerId, "POTION_FOCUS");
+        shopSvc.purchaseItem(playerId, "INSURANCE_SCROLL");
 
         verify(mockEcon).deductGold(eq(playerId), eq(50L), anyString());
         verify(transactionRepository).save(any());

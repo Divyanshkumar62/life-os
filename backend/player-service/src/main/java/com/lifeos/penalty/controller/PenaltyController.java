@@ -76,6 +76,7 @@ public class PenaltyController {
                 .text(request.getText())
                 .accepted(result.isAccepted())
                 .timestamp(now)
+                .feedback(result.getFeedback())
                 .build();
         journalRepository.save(journal);
 

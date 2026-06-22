@@ -222,9 +222,10 @@ public class OnboardingService {
         // 5c. Generate and assign the actual Trial Quest (Courage of the Weak)
         log.info("Step 5c: Generating and assigning Trial Quest (Courage of the Weak)...");
         try {
-            QuestRequest trialQuest = trialQuestGenerator.generateTrialQuest(playerId);
-            questService.assignQuest(trialQuest);
-            log.info("Assigned Trial Quest: {}", trialQuest.getTitle());
+            QuestRequest trialQuestReq = trialQuestGenerator.generateTrialQuest(playerId);
+            Quest trialQuest = questService.assignQuest(trialQuestReq);
+            progress.setTrialQuestId(trialQuest.getQuestId());
+            log.info("Assigned Trial Quest: {}, set trialQuestId to {}", trialQuest.getTitle(), trialQuest.getQuestId());
         } catch (Exception e) {
             log.error("!!! ERROR assigning Trial Quest: {}", e.getMessage(), e);
         }
@@ -295,6 +296,7 @@ public class OnboardingService {
 
     // Deprecated / Bridge methods for backward compatibility if needed, else removed.
     
+    @Transactional(readOnly = true)
     public OnboardingResponse getStatus(UUID playerId) {
         OnboardingProgress progress = getProgress_OrThrow(playerId);
         return buildResponse(progress, "Current Status Retrieved.");
@@ -306,9 +308,14 @@ public class OnboardingService {
     }
 
     private OnboardingResponse buildResponse(OnboardingProgress progress, String msg) {
+        Quest trialQuest = null;
+        if (progress.getTrialQuestId() != null) {
+            trialQuest = questRepository.findById(progress.getTrialQuestId()).orElse(null);
+        }
         return OnboardingResponse.builder()
                 .playerId(progress.getPlayerId())
                 .currentStage(progress.getCurrentStage())
+                .trialQuest(trialQuest)
                 .message(msg)
                 .build();
     }

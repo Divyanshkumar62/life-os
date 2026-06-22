@@ -37,6 +37,7 @@ public class ProjectServiceTest {
     @Mock private com.lifeos.project.service.DungeonArchitectService dungeonArchitectService;
     @Mock private com.lifeos.quest.service.QuestLifecycleService questLifecycleService;
     @Mock private com.lifeos.event.DomainEventPublisher domainEventPublisher;
+    @Mock private com.lifeos.economy.service.InventoryService inventoryService;
 
     private ProjectService projectService;
 
@@ -56,7 +57,8 @@ public class ProjectServiceTest {
             playerStateService,
             dungeonArchitectService,
             questLifecycleService,
-            domainEventPublisher
+            domainEventPublisher,
+            inventoryService
         );
         
         playerId = UUID.randomUUID();

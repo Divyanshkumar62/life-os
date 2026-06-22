@@ -24,14 +24,18 @@ public class PlayerJournal {
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
 
+    @Column(name = "feedback", columnDefinition = "TEXT")
+    private String feedback;
+
     public PlayerJournal() {}
 
-    public PlayerJournal(Long id, UUID playerId, String text, boolean accepted, LocalDateTime timestamp) {
+    public PlayerJournal(Long id, UUID playerId, String text, boolean accepted, LocalDateTime timestamp, String feedback) {
         this.id = id;
         this.playerId = playerId;
         this.text = text;
         this.accepted = accepted;
         this.timestamp = timestamp;
+        this.feedback = feedback;
     }
 
     // Getters and Setters
@@ -45,6 +49,8 @@ public class PlayerJournal {
     public void setAccepted(boolean accepted) { this.accepted = accepted; }
     public LocalDateTime getTimestamp() { return timestamp; }
     public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public String getFeedback() { return feedback; }
+    public void setFeedback(String feedback) { this.feedback = feedback; }
 
     public static PlayerJournalBuilder builder() {
         return new PlayerJournalBuilder();
@@ -56,15 +62,17 @@ public class PlayerJournal {
         private String text;
         private boolean accepted;
         private LocalDateTime timestamp;
+        private String feedback;
 
         public PlayerJournalBuilder id(Long id) { this.id = id; return this; }
         public PlayerJournalBuilder playerId(UUID playerId) { this.playerId = playerId; return this; }
         public PlayerJournalBuilder text(String text) { this.text = text; return this; }
         public PlayerJournalBuilder accepted(boolean accepted) { this.accepted = accepted; return this; }
         public PlayerJournalBuilder timestamp(LocalDateTime timestamp) { this.timestamp = timestamp; return this; }
+        public PlayerJournalBuilder feedback(String feedback) { this.feedback = feedback; return this; }
 
         public PlayerJournal build() {
-            return new PlayerJournal(id, playerId, text, accepted, timestamp);
+            return new PlayerJournal(id, playerId, text, accepted, timestamp, feedback);
         }
     }
 }

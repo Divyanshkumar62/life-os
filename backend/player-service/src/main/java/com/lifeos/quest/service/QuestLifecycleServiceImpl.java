@@ -99,7 +99,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
                 .primaryAttribute(request.getPrimaryAttribute())
                 .difficultyTier(request.getDifficultyTier())
                 .priority(request.getPriority())
-                .state(QuestState.ASSIGNED)
+                .state(request.getState() != null ? request.getState() : QuestState.ASSIGNED)
                 .deadlineAt(request.getDeadlineAt())
                 .systemMutable(request.isSystemMutable())
                 .egoBreakerFlag(request.isEgoBreakerFlag())
@@ -327,7 +327,7 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
     @Override
     public List<Quest> getActiveQuests(UUID playerId) {
         log.info("Fetching active quests for player: {}", playerId);
-        return questRepository.findByPlayerPlayerIdAndState(playerId, QuestState.ACTIVE);
+        return questRepository.findActiveQuestsWithAllCategories(playerId, QuestState.ACTIVE);
     }
 
     private boolean hasBlockingQuest(UUID playerId) {

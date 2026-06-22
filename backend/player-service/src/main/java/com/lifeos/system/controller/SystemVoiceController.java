@@ -23,6 +23,11 @@ public class SystemVoiceController {
         this.systemVoiceService = systemVoiceService;
     }
 
+    /**
+     * Retrieves unconsumed system alerts/events for the player.
+     * This endpoint is continuously polled by the frontend to trigger global
+     * SystemToast notifications for achievements, level ups, penalties, etc.
+     */
     @GetMapping("/alerts/{playerId}")
     public ResponseEntity<List<SystemEvent>> getUnconsumedAlerts(@PathVariable UUID playerId) {
         log.debug("Polling System Voice Alerts for player: {}", playerId);

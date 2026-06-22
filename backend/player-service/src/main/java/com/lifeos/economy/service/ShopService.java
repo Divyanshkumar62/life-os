@@ -12,13 +12,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.lifeos.economy.dto.PurchaseResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Service
 public class ShopService {
-private static final Logger log = LoggerFactory.getLogger(ShopService.class);
+    private static final Logger log = LoggerFactory.getLogger(ShopService.class);
 
     private final ShopItemRepository itemRepository;
     private final EconomyService economyService;
@@ -44,6 +45,15 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
         this.playerIdentityRepository = playerIdentityRepository;
     }
 
+    private boolean isCoreShopItem(String code) {
+        return "INSURANCE_SCROLL".equals(code)
+                || "FATIGUE_REMEDY".equals(code)
+                || "RUNE_OF_SWIFTNESS".equals(code)
+                || "RUNE_OF_BOUNTY".equals(code)
+                || "RUNE_OF_PRESENCE".equals(code)
+                || "MONARCH_EXEMPTION".equals(code);
+    }
+
     @Transactional(readOnly = true)
     public com.lifeos.economy.dto.ShopResponse listItems(UUID playerId) {
         checkShopAccess(playerId);
@@ -53,10 +63,11 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
         double discountPercent = Math.min(20.0, intelValue * 0.5);
         
         List<ShopItem> discountedItems = allItems.stream()
+                .filter(item -> isCoreShopItem(item.getCode()))
                 .map(item -> {
                     long baseCost = item.getCost();
                     long finalCost = (long) (baseCost * (1.0 - (discountPercent / 100.0)));
-                    return ShopItem.builder()
+                    ShopItem mapped = ShopItem.builder()
                             .itemId(item.getItemId())
                             .code(item.getCode())
                             .name(item.getName())
@@ -69,6 +80,8 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
                             .effectPayload(item.getEffectPayload())
                             .imageUrl(item.getImageUrl())
                             .build();
+                    mapped.setBaseCost(baseCost);
+                    return mapped;
                 })
                 .collect(java.util.stream.Collectors.toList());
 
@@ -84,8 +97,12 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
     }
 
     @Transactional
-    public void purchaseItem(UUID playerId, String itemCode) {
+    public PurchaseResponse purchaseItem(UUID playerId, String itemCode) {
         checkShopAccess(playerId);
+
+        if (!isCoreShopItem(itemCode)) {
+            throw new IllegalArgumentException("Item is not purchasable: " + itemCode);
+        }
 
         ShopItem item = itemRepository.findByCode(itemCode)
                 .orElseThrow(() -> new IllegalArgumentException("Item not found: " + itemCode));
@@ -99,37 +116,15 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
             }
         }
 
-        // 3. Stock Limit Check (Global or Per-User depending on requirement? Plan said "Per-User purchase limit" separate from Cooldown?)
-        // The plan's "User Decisions" clarified: "Per-User purchase limits with time gates".
-        // "Stock Limits" in plan referred to "Artificial Scarcity" (e.g. only 1 per month).
-        // Let's implement Stock Limit as Global limit if field exists, or use Cooldown for time-gating.
-        // Wait, plan implementation section: "Stock Limit Check ... global purchases ... countByItemId".
-        // But user decision: "Stock Limits: Per-User ... It doesn't run out because other Hunters bought it".
-        // SO STOCK LIMIT field in ShopItem should be interpreted as LIFETIME PER USER LIMIT?
-        // Or should I use `purchase_cooldown_hours` for time gating, and `stock_limit` for absolute lifetime limit?
-        // User said: "Cosmetics (Skins): Limit 1 (Once you own it, you own it)".
-        // So `stock_limit` = 1 means "Max 1 per user lifetime".
-        // Let's check user inventory for this item count? OR transaction count?
-        // Inventory quantity tells us how many they HAVE. Transaction count tells us how many they BOUGHT.
-        // If it's a consumable, they might have 0 in inventory but bought 100.
-        // If it's a Cosmetic, they have 1.
-        // Let's interpret `stockLimit` as "Max Quantity Owned + Consumed"? Or just "Max Owned"?
-        // Usually "Limit 1" for cosmetic means "You can't buy it if you already have it".
-        // Let's check Inventory for Stock Limit if it is defined.
-        
+        // 3. Stock Limit Check
         if (item.getStockLimit() != null) {
-            // Check how many user has BOUGHT total? Or has currently?
-            // "Limit 1" cosmetic -> If I have it, I can't buy it.
-            // If I bought a potion limit 1/week, that's cooldown.
-            // If I bought a "Starter Pack" limit 1 lifetime... 
-            // Let's count total transactions for this user for this item.
             long userPurchases = xactionRepository.countByPlayerIdAndItemId(playerId, item.getItemId());
             if (userPurchases >= item.getStockLimit()) {
                  throw new IllegalStateException("You have reached the purchase limit for this item.");
             }
         }
 
-        // 4. Purchase Cooldown Check (Time-Gating)
+        // 4. Purchase Cooldown Check
         if (item.getPurchaseCooldownHours() != null) {
             var cooldownOpt = cooldownRepository.findByPlayerPlayerIdAndItemItemId(playerId, item.getItemId());
             if (cooldownOpt.isPresent()) {
@@ -169,10 +164,19 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
                 .build();
         xactionRepository.save(xaction);
 
-        // 9. Apply Immediate Effects
-        // Effect handling moved strictly to ConsumableService to enable inventory staging.
-
         log.info("Item {} purchased and added to inventory.", item.getName());
+
+        java.util.List<String> systemMessages = new java.util.ArrayList<>();
+        if (discountPercent > 0) {
+            systemMessages.add(String.format("[SYSTEM] Purchased %s. INT stat applied %.1f%% discount.", item.getName(), discountPercent));
+        } else {
+            systemMessages.add(String.format("[SYSTEM] Purchased %s.", item.getName()));
+        }
+
+        return PurchaseResponse.builder()
+                .success(true)
+                .systemMessages(systemMessages)
+                .build();
     }
 
     private void checkShopAccess(UUID playerId) {
@@ -189,7 +193,7 @@ private static final Logger log = LoggerFactory.getLogger(ShopService.class);
 
         PlayerStateResponse state = playerStateService.getPlayerState(playerId);
         if (state.getProgression().getLevel() < 10) {
-            throw new com.lifeos.system.exception.LockedFeatureException("The System Store remains locked until Level 10.");
+            throw new com.lifeos.system.exception.LockedFeatureException("ACCESS DENIED: The System Store unlocks at Level 10. Current power level is insufficient.");
         }
     }
 

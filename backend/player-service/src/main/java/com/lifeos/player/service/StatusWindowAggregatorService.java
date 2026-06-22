@@ -74,7 +74,7 @@ public class StatusWindowAggregatorService {
         int agi = getAttributeValue(attributes, AttributeType.AGI);
         int freePoints = progression != null ? progression.getFreeStatPoints() : 0;
 
-        String title = profile != null && profile.getTitle() != null ? profile.getTitle() : "None";
+        String title = identity.getJobClass() != null ? identity.getJobClass() : "Novice Hunter";
         String theme = profile != null && profile.getDisplayTheme() != null ? profile.getDisplayTheme() : "shadow_purple";
 
         // Fetch and consume background system events
@@ -96,6 +96,7 @@ public class StatusWindowAggregatorService {
                         .rank(rank)
                         .title(title)
                         .equippedTheme(theme)
+                        .jobChangeStatus(identity.getJobChangeStatus())
                         .build())
                 .progression(StatusWindowResponse.Progression.builder()
                         .currentXp(currentXp)
@@ -130,6 +131,6 @@ public class StatusWindowAggregatorService {
     }
 
     private long calculateMaxXp(int level) {
-        return (long) (100 * Math.pow(1.15, level - 1));
+        return (long) (100 * Math.pow(1.1, level));
     }
 }

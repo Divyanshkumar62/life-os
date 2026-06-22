@@ -223,7 +223,8 @@ class PenaltyAdvancementTest {
             psService, // playerStateService
             null, // dungeonArchitect
             null, // questLifecycleService
-            null  // domainEventPublisher
+            null, // domainEventPublisher
+            null  // inventoryService
         );
         
         // Given Penalty Zone Active

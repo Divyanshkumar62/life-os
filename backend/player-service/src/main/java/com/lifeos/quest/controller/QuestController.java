@@ -86,55 +86,56 @@ public class QuestController {
                 .build());
     }
 
-    @PostMapping("/{questId}/complete")
-    public ResponseEntity<com.lifeos.quest.dto.QuestResponse> completeQuest(@PathVariable String questId) {
-        log.info("=== API: Completing quest: {}", questId);
-        try {
-            UUID uuid = parseUUID(questId);
-            if (uuid == null) {
-                log.error("Invalid quest ID format: {}", questId);
-                return ResponseEntity.badRequest().build();
+    @PatchMapping("/{questId}/status")
+    public ResponseEntity<?> updateQuestStatus(
+            @PathVariable String questId,
+            @RequestParam(required = false) String action,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        
+        log.info("=== API: Updating status of quest {} with action: {}, body: {}", questId, action, body);
+        
+        String targetAction = null;
+        if (action != null) {
+            targetAction = action.toUpperCase();
+        } else if (body != null) {
+            if (body.containsKey("status")) {
+                String status = body.get("status").toUpperCase();
+                if ("COMPLETED".equals(status)) targetAction = "COMPLETE";
+                else if ("FAILED".equals(status)) targetAction = "FAIL";
+                else if ("EXPIRED".equals(status)) targetAction = "EXPIRE";
+            } else if (body.containsKey("action")) {
+                targetAction = body.get("action").toUpperCase();
             }
-            com.lifeos.quest.dto.QuestResponse response = questService.completeQuest(uuid);
-            log.info("=== API: Quest completed successfully: {}", uuid);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("=== API ERROR completing quest {}: {} - {}", questId, e.getClass().getSimpleName(), e.getMessage(), e);
-            return ResponseEntity.badRequest().build();
         }
-    }
-
-    @PostMapping("/{questId}/fail")
-    public ResponseEntity<com.lifeos.quest.dto.QuestResponse> failQuest(@PathVariable String questId) {
-        log.info("=== API: Failing quest: {}", questId);
-        try {
-            UUID uuid = parseUUID(questId);
-            if (uuid == null) {
-                log.error("Invalid quest ID format: {}", questId);
-                return ResponseEntity.badRequest().build();
-            }
-            com.lifeos.quest.dto.QuestResponse response = questService.failQuest(uuid);
-            log.info("=== API: Quest failed successfully: {}", uuid);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("=== API ERROR failing quest {}: {} - {}", questId, e.getClass().getSimpleName(), e.getMessage(), e);
-            return ResponseEntity.badRequest().build();
+        
+        if (targetAction == null) {
+            log.error("=== API ERROR: No valid action or status provided for quest update");
+            return ResponseEntity.badRequest().body("Action or status is required");
         }
-    }
-
-    @PostMapping("/{questId}/expire")
-    public ResponseEntity<Void> expireQuest(@PathVariable String questId) {
-        log.warn("Expiring quest: {}", questId);
+        
+        UUID uuid = parseUUID(questId);
+        if (uuid == null) {
+            log.error("Invalid quest ID format: {}", questId);
+            return ResponseEntity.badRequest().body("Invalid quest ID format");
+        }
+        
         try {
-            UUID uuid = parseUUID(questId);
-            if (uuid == null) {
-                return ResponseEntity.badRequest().build();
+            switch (targetAction) {
+                case "COMPLETE":
+                    com.lifeos.quest.dto.QuestResponse compResponse = questService.completeQuest(uuid);
+                    return ResponseEntity.ok(compResponse);
+                case "FAIL":
+                    com.lifeos.quest.dto.QuestResponse failResponse = questService.failQuest(uuid);
+                    return ResponseEntity.ok(failResponse);
+                case "EXPIRE":
+                    questService.expireQuest(uuid);
+                    return ResponseEntity.ok().build();
+                default:
+                    return ResponseEntity.badRequest().body("Unsupported action: " + targetAction);
             }
-            questService.expireQuest(uuid);
-            return ResponseEntity.ok().build();
         } catch (Exception e) {
-            log.error("Error expiring quest: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
+            log.error("=== API ERROR updating quest status {}: {} - {}", questId, e.getClass().getSimpleName(), e.getMessage(), e);
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

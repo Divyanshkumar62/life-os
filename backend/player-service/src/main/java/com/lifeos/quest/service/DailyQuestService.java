@@ -57,7 +57,13 @@ public class DailyQuestService {
     @Transactional
     public void performDailyResetCheck(UUID playerId) {
         PlayerIdentity identity = identityRepository.findById(playerId).orElse(null);
-        if (identity == null || !identity.isOnboardingCompleted()) {
+        if (identity == null) {
+            return;
+        }
+
+        // For onboarding players, check and expire active quests whose deadlines have passed
+        if (!identity.isOnboardingCompleted()) {
+            expireActiveQuests(playerId);
             return;
         }
 
@@ -217,6 +223,17 @@ public class DailyQuestService {
 
         identity.setLastDailyReset(LocalDateTime.now());
         identityRepository.save(identity);
+    }
+
+    private void expireActiveQuests(UUID playerId) {
+        java.util.List<com.lifeos.quest.domain.Quest> activeQuests = 
+            questService.getQuestRepository().findActiveQuestsWithAllCategories(playerId, com.lifeos.quest.domain.enums.QuestState.ACTIVE);
+        for (com.lifeos.quest.domain.Quest q : activeQuests) {
+            if (q.getDeadlineAt() != null && LocalDateTime.now().isAfter(q.getDeadlineAt())) {
+                log.info("Expiring quest {} for player {}", q.getQuestId(), playerId);
+                questService.expireQuest(q.getQuestId());
+            }
+        }
     }
 }
 

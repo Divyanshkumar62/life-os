@@ -80,6 +80,7 @@ public class StatusWindowResponse {
         private String rank;
         private String title;
         private String equippedTheme;
+        private String jobChangeStatus;
 
         public int getLevel() { return level; }
         public void setLevel(int level) { this.level = level; }
@@ -89,6 +90,8 @@ public class StatusWindowResponse {
         public void setTitle(String title) { this.title = title; }
         public String getEquippedTheme() { return equippedTheme; }
         public void setEquippedTheme(String equippedTheme) { this.equippedTheme = equippedTheme; }
+        public String getJobChangeStatus() { return jobChangeStatus; }
+        public void setJobChangeStatus(String jobChangeStatus) { this.jobChangeStatus = jobChangeStatus; }
 
         public static IdentityBuilder builder() {
             return new IdentityBuilder();
@@ -99,17 +102,20 @@ public class StatusWindowResponse {
             private String rank;
             private String title;
             private String equippedTheme;
+            private String jobChangeStatus;
 
             public IdentityBuilder level(int level) { this.level = level; return this; }
             public IdentityBuilder rank(String rank) { this.rank = rank; return this; }
             public IdentityBuilder title(String title) { this.title = title; return this; }
             public IdentityBuilder equippedTheme(String equippedTheme) { this.equippedTheme = equippedTheme; return this; }
+            public IdentityBuilder jobChangeStatus(String jobChangeStatus) { this.jobChangeStatus = jobChangeStatus; return this; }
             public Identity build() {
                 Identity i = new Identity();
                 i.level = this.level;
                 i.rank = this.rank;
                 i.title = this.title;
                 i.equippedTheme = this.equippedTheme;
+                i.jobChangeStatus = this.jobChangeStatus;
                 return i;
             }
         }

@@ -4,6 +4,7 @@ import com.lifeos.quest.dto.QuestRequest;
 import com.lifeos.quest.domain.enums.QuestType;
 import com.lifeos.quest.domain.enums.DifficultyTier;
 import com.lifeos.quest.domain.enums.Priority;
+import com.lifeos.quest.domain.enums.QuestState;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ public class TrialQuestGenerator {
                 .title("System Qualification: Courage of the Weak")
                 .description("The System has detected potential in you. To awaken your true abilities, you must prove your resolve. Complete 3 focused work sessions of 30 minutes each within 24 hours.")
                 .questType(QuestType.SYSTEM_TRIAL)
+                .category(com.lifeos.quest.domain.enums.QuestCategory.TRIAL)
                 .difficultyTier(DifficultyTier.E)
                 .priority(Priority.CRITICAL)
                 .deadlineAt(LocalDateTime.now().plusHours(24))
@@ -27,6 +29,7 @@ public class TrialQuestGenerator {
                 .goldReward(0)
                 .attributeDeltas(Map.of("DISCIPLINE", 1.0))
                 .systemMutable(false) // Cannot be abandoned easily
+                .state(QuestState.ACTIVE)
                 .build();
     }
 }

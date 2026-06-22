@@ -74,7 +74,18 @@ public class ControllerIntegrationTest {
     @Test
     void testQuestCompletion() throws Exception {
         UUID questId = UUID.randomUUID();
-        mockMvc.perform(post("/api/quests/" + questId + "/complete"))
+        mockMvc.perform(patch("/api/quests/" + questId + "/status?action=COMPLETE"))
+                .andExpect(status().isOk());
+
+        verify(questService).completeQuest(questId);
+    }
+
+    @Test
+    void testQuestCompletionWithJsonBody() throws Exception {
+        UUID questId = UUID.randomUUID();
+        mockMvc.perform(patch("/api/quests/" + questId + "/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\": \"COMPLETED\"}"))
                 .andExpect(status().isOk());
 
         verify(questService).completeQuest(questId);

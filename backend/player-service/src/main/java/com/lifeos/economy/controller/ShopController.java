@@ -31,10 +31,10 @@ public class ShopController {
     }
 
     @PostMapping("/purchase/{itemCode}")
-    public ResponseEntity<Void> purchaseItem(@RequestParam UUID playerId, @PathVariable String itemCode) {
+    public ResponseEntity<com.lifeos.economy.dto.PurchaseResponse> purchaseItem(@RequestParam UUID playerId, @PathVariable String itemCode) {
         try {
-            shopService.purchaseItem(playerId, itemCode);
-            return ResponseEntity.ok().build();
+            com.lifeos.economy.dto.PurchaseResponse response = shopService.purchaseItem(playerId, itemCode);
+            return ResponseEntity.ok(response);
         } catch (com.lifeos.system.exception.LockedFeatureException e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
         }

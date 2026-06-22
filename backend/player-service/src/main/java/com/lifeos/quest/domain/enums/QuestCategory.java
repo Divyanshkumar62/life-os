@@ -4,5 +4,7 @@ public enum QuestCategory {
     NORMAL,
     SYSTEM_DAILY,
     PROJECT_SUBTASK,
-    MAIN
+    MAIN,
+    INTEL,
+    TRIAL
 }

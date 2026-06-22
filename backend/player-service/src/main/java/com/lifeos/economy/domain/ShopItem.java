@@ -48,6 +48,9 @@ public class ShopItem {
 
     @Column(name = "image_url")
     private String imageUrl;
+
+    @Transient
+    private long baseCost;
     
     public ShopItem() {}
 
@@ -85,6 +88,9 @@ public class ShopItem {
     public void setEffectPayload(Map<String, Object> effectPayload) { this.effectPayload = effectPayload; }
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    
+    public long getBaseCost() { return baseCost; }
+    public void setBaseCost(long baseCost) { this.baseCost = baseCost; }
     
     // Aliases for RedGateService compatibility
     public String getItemCode() { return code; }

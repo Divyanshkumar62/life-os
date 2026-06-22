@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface PlayerJournalRepository extends JpaRepository<PlayerJournal, Long> {
     List<PlayerJournal> findByPlayerId(UUID playerId);
+    List<PlayerJournal> findByPlayerIdOrderByTimestampAsc(UUID playerId);
 }
