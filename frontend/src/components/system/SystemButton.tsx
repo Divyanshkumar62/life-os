@@ -32,10 +32,10 @@ export function SystemButton({
     ...props
 }: SystemButtonProps) {
     const variantClasses = {
-        primary: 'bg-cyan-600 hover:bg-cyan-700 text-white border-cyan-500 shadow-glow-cyan',
-        secondary: 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600',
-        ghost: 'bg-transparent hover:bg-gray-800 text-cyan-400 border-cyan-600',
-        danger: 'bg-error/20 hover:bg-error/30 text-error border-error',
+        primary: 'bg-solo-cyan hover:bg-solo-cyan/80 text-solo-bg border-solo-cyan system-glow',
+        secondary: 'bg-gray-800 hover:bg-gray-700 text-white border-gray-600',
+        ghost: 'bg-transparent hover:bg-gray-800 text-solo-cyan border-solo-cyan',
+        danger: 'bg-solo-red/20 hover:bg-solo-red/30 text-solo-red border-solo-red',
     };
 
     const sizeClasses = {
@@ -50,9 +50,9 @@ export function SystemButton({
         <button
             className={clsx(
                 'inline-flex items-center justify-center gap-2',
-                'rounded-md border font-semibold uppercase tracking-wide',
+                'rounded-none border font-semibold uppercase tracking-widest',
                 'transition-smooth',
-                'focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-black',
+                'focus:outline-none focus:ring-2 focus:ring-solo-cyan focus:ring-offset-2 focus:ring-offset-black',
                 variantClasses[variant],
                 sizeClasses[size],
                 fullWidth && 'w-full',

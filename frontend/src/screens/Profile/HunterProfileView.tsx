@@ -6,11 +6,95 @@ interface HunterProfileViewProps {
 }
 
 export function HunterProfileView({ onBack }: HunterProfileViewProps) {
-  const { jobClass } = useSystemContext();
+  const { statusWindow, jobClass } = useSystemContext();
+  
+  const level = statusWindow?.identity?.level || 1;
+  const rank = statusWindow?.identity?.rank || "F";
+  const currentXp = statusWindow?.progression?.currentXp || 0;
+  const maxXp = statusWindow?.progression?.maxXpForLevel || 100;
+  const xpPercentage = maxXp > 0 ? (currentXp / maxXp) * 100 : 0;
+  const isXpFrozen = statusWindow?.progression?.xpFrozen || false;
+
   const displayClass = jobClass || "Novice Hunter";
   const classStatus = jobClass ? "ACTIVE" : "PENDING";
+
+  const rankCaps: Record<string, number> = {
+    F: 5,
+    E: 10,
+    D: 25,
+    C: 45,
+    B: 70,
+    A: 90,
+    S: 100,
+    SS: 999
+  };
+  const currentCap = rankCaps[rank] || 100;
+
+  const nextRankMap: Record<string, string> = {
+    F: "E",
+    E: "D",
+    D: "C",
+    C: "B",
+    B: "A",
+    A: "S",
+    S: "SS",
+    SS: "SS"
+  };
+  const nextRank = nextRankMap[rank] || "SS";
+
+  const getRequirements = () => {
+    const requirements: Array<{ label: string; met: boolean }> = [];
+    
+    requirements.push({
+      label: `Reach Level ${currentCap} (Current: ${level})`,
+      met: level >= currentCap
+    });
+    
+    const str = statusWindow?.attributes?.STR || 10;
+    const intel = statusWindow?.attributes?.INT || 10;
+    const vit = statusWindow?.attributes?.VIT || 10;
+    const sen = statusWindow?.attributes?.SEN || 10;
+    
+    if (rank === "E") {
+      requirements.push({ label: `Strength >= 5 (Current: ${str})`, met: str >= 5 });
+      requirements.push({ label: `Intellect >= 5 (Current: ${intel})`, met: intel >= 5 });
+    } else if (rank === "D") {
+      requirements.push({ label: `Strength >= 10 (Current: ${str})`, met: str >= 10 });
+      requirements.push({ label: `Intellect >= 10 (Current: ${intel})`, met: intel >= 10 });
+      requirements.push({ label: `Vitality >= 5 (Current: ${vit})`, met: vit >= 5 });
+    } else if (rank === "C") {
+      requirements.push({ label: `Strength >= 20 (Current: ${str})`, met: str >= 20 });
+      requirements.push({ label: `Intellect >= 20 (Current: ${intel})`, met: intel >= 20 });
+      requirements.push({ label: `Vitality >= 10 (Current: ${vit})`, met: vit >= 10 });
+      requirements.push({ label: `Sensibility >= 10 (Current: ${sen})`, met: sen >= 10 });
+    } else if (rank === "B") {
+      requirements.push({ label: `Strength >= 30 (Current: ${str})`, met: str >= 30 });
+      requirements.push({ label: `Intellect >= 30 (Current: ${intel})`, met: intel >= 30 });
+      requirements.push({ label: `Vitality >= 20 (Current: ${vit})`, met: vit >= 20 });
+      requirements.push({ label: `Sensibility >= 20 (Current: ${sen})`, met: sen >= 20 });
+    } else if (rank === "A") {
+      requirements.push({ label: `Strength >= 50 (Current: ${str})`, met: str >= 50 });
+      requirements.push({ label: `Intellect >= 50 (Current: ${intel})`, met: intel >= 50 });
+      requirements.push({ label: `Vitality >= 40 (Current: ${vit})`, met: vit >= 40 });
+      requirements.push({ label: `Sensibility >= 40 (Current: ${sen})`, met: sen >= 40 });
+    }
+    
+    const keyCosts: Record<string, number> = { F: 1, E: 1, D: 2, C: 3, B: 5, A: 8 };
+    const keyCost = keyCosts[rank] || 0;
+    if (keyCost > 0) {
+      requirements.push({
+        label: `Obtain ${keyCost} Rank ${rank} Boss Key(s) for Exam Entry`,
+        met: false // Goal checked dynamically on backend
+      });
+    }
+    
+    return requirements;
+  };
+
+  const reqs = getRequirements();
+  const allMet = reqs.every(r => r.met || r.label.includes("Boss Key"));
+
   return (
-    // Changed: Removed h-screen and hidden overflows, used min-h-screen for natural document flow
     <div className="min-h-screen w-full bg-[#0a0f1a] text-white flex flex-col font-mono selection:bg-cyan-500/30">
       {/* Header - Sticky */}
       <header className="flex justify-between items-center px-8 py-4 border-b border-cyan-900/40 bg-[#0a0f1a]/95 backdrop-blur-sm sticky top-0 z-50 shadow-lg shadow-black/20">
@@ -82,7 +166,6 @@ export function HunterProfileView({ onBack }: HunterProfileViewProps) {
                 HUNTER PROFILE
               </h1>
               <div className="text-[11px] tracking-[0.1em] text-gray-500 font-mono">
-                ID: 948-239-X <span className="text-gray-700 mx-2">//</span>{" "}
                 CLASS: {displayClass.toUpperCase()} ({classStatus})
               </div>
             </div>
@@ -120,13 +203,16 @@ export function HunterProfileView({ onBack }: HunterProfileViewProps) {
                     className="text-8xl font-black text-white leading-[0.8] tracking-tighter drop-shadow-[0_0_15px_rgba(34,211,238,0.5)]"
                     style={{ fontFamily: "Inter, sans-serif" }}
                   >
-                    E
+                    {rank}
                   </div>
                 </div>
 
                 <div className="absolute bottom-6 right-6 z-30">
-                  <div className="bg-red-900/30 text-red-500 border border-red-900/50 px-3 py-1 text-[10px] tracking-[0.15em] font-bold">
-                    STAGNANT
+                  <div className={clsx(
+                    "px-3 py-1 text-[10px] tracking-[0.15em] font-bold border",
+                    isXpFrozen ? "bg-red-900/30 text-red-500 border-red-900/50" : "bg-green-900/30 text-green-500 border-green-900/50"
+                  )}>
+                    {isXpFrozen ? "STAGNANT" : "ACTIVE"}
                   </div>
                 </div>
               </div>
@@ -181,46 +267,46 @@ export function HunterProfileView({ onBack }: HunterProfileViewProps) {
               <div className="h-40 bg-[#0c1220] border border-cyan-900/30 p-6 relative overflow-hidden shrink-0">
                 <div className="relative z-10 flex flex-col justify-between h-full">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <div className="text-[10px] tracking-[0.3em] text-cyan-500/80 mb-2 font-bold">
-                        PLAYER LEVEL
-                      </div>
-                      <div className="flex items-baseline gap-3">
-                        <span className="text-6xl font-black text-white leading-none tracking-tighter">
-                          24
-                        </span>
-                        <span className="text-[10px] text-gray-600 tracking-widest">
-                          / CAP 100
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[9px] text-gray-500 tracking-widest mb-1">
-                        EXP ACCUMULATION
-                      </div>
-                      <div className="font-mono text-xl text-white tracking-widest">
-                        4,500{" "}
-                        <span className="text-gray-600 text-sm">/ 5,000</span>
-                      </div>
-                    </div>
+                     <div>
+                       <div className="text-[10px] tracking-[0.3em] text-cyan-500/80 mb-2 font-bold">
+                         PLAYER LEVEL
+                       </div>
+                       <div className="flex items-baseline gap-3">
+                         <span className="text-6xl font-black text-white leading-none tracking-tighter">
+                           {level}
+                         </span>
+                         <span className="text-[10px] text-gray-600 tracking-widest">
+                           / CAP {currentCap}
+                         </span>
+                       </div>
+                     </div>
+                     <div className="text-right">
+                       <div className="text-[9px] text-gray-500 tracking-widest mb-1">
+                         EXP ACCUMULATION
+                       </div>
+                       <div className="font-mono text-xl text-white tracking-widest">
+                         {currentXp.toLocaleString()}{" "}
+                         <span className="text-gray-600 text-sm">/ {maxXp.toLocaleString()}</span>
+                       </div>
+                     </div>
                   </div>
 
                   <div>
                     <div className="h-4 bg-gray-900/50 w-full rounded-sm overflow-hidden relative mb-2">
-                      <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold z-20 text-white/90">
-                        90%
-                      </div>
-                      <div className="h-full bg-cyan-600 w-[90%] relative">
-                        <div className="absolute right-0 top-0 bottom-0 w-[1px] bg-white/50" />
-                      </div>
+                       <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold z-20 text-white/90">
+                         {xpPercentage.toFixed(0)}%
+                       </div>
+                       <div className="h-full bg-cyan-600 relative" style={{ width: `${Math.min(100, xpPercentage)}%` }}>
+                         <div className="absolute right-0 top-0 bottom-0 w-[1px] bg-white/50" />
+                       </div>
                     </div>
                     <div className="flex justify-between text-[9px]">
-                      <span className="text-green-500 tracking-wider font-mono">
-                        ⚡ BUFFER: 12% OVERFLOW (PENDING)
-                      </span>
-                      <span className="text-gray-600 tracking-widest">
-                        NEXT MILESTONE: LVL 25
-                      </span>
+                       <span className={clsx("tracking-wider font-mono", isXpFrozen ? "text-red-500" : "text-green-500")}>
+                         {isXpFrozen ? "⚠️ XP FROZEN (RANK EXAM REQUIRED)" : "⚡ SYSTEM STATUS: STABLE"}
+                       </span>
+                       <span className="text-gray-600 tracking-widest">
+                         NEXT MILESTONE: LVL {currentCap}
+                       </span>
                     </div>
                   </div>
                 </div>
@@ -245,97 +331,102 @@ export function HunterProfileView({ onBack }: HunterProfileViewProps) {
                     <h3 className="text-lg font-bold tracking-widest text-white">
                       PROMOTION STATUS
                     </h3>
-                    <button className="text-[10px] border border-cyan-500/20 px-3 py-1.5 text-gray-400 hover:text-white hover:border-cyan-500/40 transition-colors uppercase tracking-widest bg-black/50">
-                      Auto-Evaluation
-                    </button>
+                    {rank !== "SS" && (
+                      <button className={clsx(
+                        "text-[10px] border px-3 py-1.5 transition-colors uppercase tracking-widest bg-black/50 font-bold",
+                        allMet ? "border-solo-cyan text-solo-cyan hover:bg-solo-cyan/20 cursor-pointer" : "border-gray-800 text-gray-600 cursor-not-allowed"
+                      )}>
+                        Request Exam
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex flex-col xl:flex-row gap-12 flex-1">
                     <div className="flex flex-col items-center justify-center py-8">
                       <div className="w-40 h-40 rounded-full border-4 border-dashed border-gray-800 flex items-center justify-center relative">
-                        <div className="absolute inset-0 rounded-full border-t-4 border-cyan-700 transform -rotate-45" />
-                        <div className="text-5xl text-gray-700">🔒</div>
+                        <div className={clsx("absolute inset-0 rounded-full border-t-4 transform -rotate-45", allMet ? "border-solo-cyan animate-pulse" : "border-gray-700")} />
+                        <div className="text-5xl">{rank === "SS" ? "👑" : allMet ? "🔓" : "🔒"}</div>
                         <div className="absolute -bottom-3 bg-gray-800 text-[9px] px-2 py-0.5 rounded text-gray-400 tracking-wider font-bold">
-                          RANK D
+                          RANK {nextRank}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex-1 flex flex-col justify-center gap-6">
-                      <div className="text-[11px] font-bold text-red-500 flex items-center gap-2 tracking-wider bg-red-900/10 p-3 border border-red-900/20 rounded-sm">
-                        <span>⚠️</span> LOCKED: REQUIREMENTS NOT MET
-                      </div>
-
-                      <div className="space-y-4 font-mono text-[11px]">
-                        <div className="flex items-center justify-between p-4 bg-cyan-900/10 border-l-2 border-green-500">
-                          <div className="flex items-center gap-3">
-                            <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-[8px] text-black font-bold">
-                              ✓
-                            </div>
-                            <span className="text-gray-300">
-                              Minimum Level 20
-                            </span>
-                          </div>
-                          <span className="text-green-500 text-[10px] tracking-widest">
-                            COMPLETE
-                          </span>
+                      {rank === "SS" ? (
+                        <div className="text-[11px] font-bold text-solo-gold flex items-center gap-2 tracking-wider bg-solo-gold/10 p-3 border border-solo-gold/20 rounded-sm">
+                          <span>👑</span> ASCENDED: MAX RANK REACHED
                         </div>
-
-                        <div className="flex items-center justify-between p-4 bg-cyan-900/5 border-l-2 border-gray-700">
-                          <div className="flex items-center gap-3">
-                            <div className="w-4 h-4 rounded-full border border-gray-600" />
-                            <span className="text-gray-400">
-                              Daily Quests Streak (7 Days)
-                            </span>
+                      ) : (
+                        <>
+                          <div className={clsx(
+                            "text-[11px] font-bold flex items-center gap-2 tracking-wider p-3 border rounded-sm",
+                            allMet ? "text-solo-cyan bg-solo-cyan/10 border-solo-cyan/20" : "text-red-500 bg-red-900/10 border-red-900/20"
+                          )}>
+                            <span>{allMet ? "✓" : "⚠️"}</span> {allMet ? "ELIGIBLE: READY FOR RANK EXAM" : "LOCKED: REQUIREMENTS NOT MET"}
                           </div>
-                          <span className="text-gray-600">5/7</span>
-                        </div>
 
-                        <div className="flex items-center justify-between p-4 bg-cyan-900/5 border-l-2 border-gray-700">
-                          <div className="flex items-center gap-3">
-                            <div className="w-4 h-4 rounded-full border border-gray-600" />
-                            <span className="text-gray-400">
-                              Defeat Rank Boss
-                            </span>
+                          <div className="space-y-4 font-mono text-[11px]">
+                            {reqs.map((req, i) => (
+                              <div key={i} className={clsx(
+                                "flex items-center justify-between p-4 border-l-2",
+                                req.met ? "bg-cyan-900/10 border-green-500" : "bg-cyan-900/5 border-gray-700"
+                              )}>
+                                <div className="flex items-center gap-3">
+                                  <div className={clsx(
+                                    "w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold",
+                                    req.met ? "bg-green-500 text-black" : "border border-gray-600 text-gray-400"
+                                  )}>
+                                    {req.met ? "✓" : "✗"}
+                                  </div>
+                                  <span className={req.met ? "text-gray-300" : "text-gray-400"}>
+                                    {req.label}
+                                  </span>
+                                </div>
+                                <span className={clsx("text-[10px] tracking-widest", req.met ? "text-green-500" : "text-gray-600")}>
+                                  {req.met ? "COMPLETE" : "PENDING"}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                          <span className="text-gray-600">0/1</span>
-                        </div>
-                      </div>
+                        </>
+                      )}
                     </div>
                   </div>
 
                   <div className="mt-8 border-t border-cyan-900/20 pt-6 font-mono text-[10px] space-y-2">
                     <div className="text-gray-500 bg-black/40 p-2 font-bold">
                       <span className="text-cyan-500 mr-2">&gt;</span>
-                      SYSTEM_LOG: User capabilities insufficient for Rank D
-                      promotion.
+                      SYSTEM_LOG: {rank === "SS" ? "Rank Ascension complete." : allMet ? `Capabilities sufficient for Rank ${nextRank} promotion.` : `Capabilities insufficient for Rank ${nextRank} promotion.`}
                     </div>
-                    <div className="text-gray-500 bg-black/40 p-2 font-bold">
-                      <span className="text-cyan-500 mr-2">&gt;</span>
-                      SUGGESTION: Focus on Strength attribute training.
-                    </div>
+                    {rank !== "SS" && !allMet && (
+                      <div className="text-gray-500 bg-black/40 p-2 font-bold">
+                        <span className="text-cyan-500 mr-2">&gt;</span>
+                        SUGGESTION: Focus on leveling up and attribute allocation.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Footer Status - Sticky Bottom */}
-        <div className="px-6 py-2 border-t border-cyan-900/30 bg-[#05080f] flex justify-between items-center text-[9px] font-mono tracking-widest text-gray-500 uppercase fixed bottom-0 left-0 right-0 z-50">
-          <div className="flex items-center gap-4">
-            <span className="text-green-500 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-              SYSTEM STABLE
-            </span>
-            <span>|</span>
-            <span>LATENCY: 4MS</span>
-            <span>|</span>
-            <span>ENCRYPTION: AES-256</span>
-          </div>
-          <div className="animate-pulse text-cyan-600">
-            WAITING FOR INPUT...
-          </div>
+      {/* Footer Status - Sticky Bottom */}
+      <div className="px-6 py-2 border-t border-cyan-900/30 bg-[#05080f] flex justify-between items-center text-[9px] font-mono tracking-widest text-gray-500 uppercase fixed bottom-0 left-0 right-0 z-50">
+        <div className="flex items-center gap-4">
+          <span className="text-green-500 flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+            SYSTEM STABLE
+          </span>
+          <span>|</span>
+          <span>LATENCY: 4MS</span>
+          <span>|</span>
+          <span>ENCRYPTION: AES-256</span>
+        </div>
+        <div className="animate-pulse text-cyan-600">
+          WAITING FOR INPUT...
         </div>
       </div>
     </div>

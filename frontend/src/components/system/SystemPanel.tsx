@@ -29,28 +29,27 @@ export function SystemPanel({
     return (
         <div
             className={clsx(
-                'rounded-lg p-4 transition-smooth',
+                'rounded-none p-4 transition-smooth border',
                 {
                     // Variant Styles
-                    'bg-gray-800 border': variant === 'default',
-                    'glass border': variant === 'glass',
-                    'bg-gray-900 border': variant === 'solid',
+                    'bg-solo-bg': variant === 'default',
+                    'glass-panel': variant === 'glass',
+                    'bg-black': variant === 'solid',
 
                     // Glow Styles
-                    'border-glow-cyan': glowColor === 'cyan',
-                    'border-glow-teal': glowColor === 'teal',
-                    'border-gray-700': glowColor === 'none',
+                    'border-solo-cyan system-glow': glowColor === 'cyan',
+                    'border-teal-500': glowColor === 'teal',
+                    'border-gray-800': glowColor === 'none',
                 },
-                'card-shadow',
                 className
             )}
         >
             {/* Header */}
             {(title || icon) && (
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-700">
-                    {icon && <div className="text-cyan-400">{icon}</div>}
+                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-solo-cyan/30">
+                    {icon && <div className="text-solo-cyan">{icon}</div>}
                     {title && (
-                        <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">
+                        <h3 className="text-sm font-bold text-white uppercase tracking-widest">
                             {title}
                         </h3>
                     )}

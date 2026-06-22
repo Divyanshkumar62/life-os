@@ -49,6 +49,13 @@ export default {
           300: '#d1d5db',
         },
         // Solo Leveling Theme
+        'solo-bg': '#080c16',
+        'solo-cyan': {
+          DEFAULT: '#00e5ff',
+        },
+        'solo-gold': {
+          DEFAULT: '#ffd700',
+        },
         'solo-blue': {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -64,6 +71,7 @@ export default {
         },
         // Red Gate Theme
         'solo-red': {
+          DEFAULT: '#ff003c',
           50: '#fff1f2',
           100: '#ffe4e6',
           200: '#fecdd3',
@@ -78,8 +86,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Courier New', 'monospace'],
+        sans: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
+        mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
       },
       boxShadow: {
         'glow-cyan': '0 0 20px rgba(34, 211, 238, 0.5)',

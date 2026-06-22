@@ -59,13 +59,14 @@ const SystemToastItem: React.FC<SystemToastItemProps> = ({ toast, onClose }) => 
 
     return (
         <motion.div
-            initial={{ opacity: 0, x: 100, y: -20, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 100, scale: 0.9, transition: { duration: 0.2 } }}
-            className="pointer-events-auto bg-black/90 border border-cyan-500 rounded p-4 shadow-glow-cyan flex flex-col gap-1 font-mono select-none"
+            initial={{ opacity: 0, x: 50, scale: 0.95 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+            className="pointer-events-auto glass-panel border border-solo-cyan rounded-none p-4 system-glow flex flex-col gap-1 font-mono select-none"
         >
-            <div className="flex justify-between items-center border-b border-cyan-950 pb-1.5 mb-1.5">
-                <span className="text-[10px] font-bold text-cyan-400 tracking-[0.2em] uppercase">
+            <div className="flex justify-between items-center border-b border-solo-cyan/30 pb-1.5 mb-1.5">
+                <span className="text-[10px] font-bold text-solo-cyan tracking-widest uppercase">
                     [ SYSTEM ALERT ]
                 </span>
                 <button
@@ -75,7 +76,7 @@ const SystemToastItem: React.FC<SystemToastItemProps> = ({ toast, onClose }) => 
                     ✕
                 </button>
             </div>
-            <p className="text-xs text-white leading-relaxed tracking-wide whitespace-pre-wrap uppercase">
+            <p className="text-xs text-white leading-relaxed tracking-widest whitespace-pre-wrap uppercase">
                 {toast.text}
             </p>
         </motion.div>

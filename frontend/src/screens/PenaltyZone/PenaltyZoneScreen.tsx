@@ -132,17 +132,17 @@ export const PenaltyZoneScreen: React.FC<PenaltyZoneScreenProps> = ({ playerId }
             {/* oppresive scrollbar container */}
             <div className="flex-1 max-w-3xl w-full mx-auto px-6 py-12 flex flex-col justify-center relative z-10">
                 <motion.div
-                    animate={shake ? { x: [0, -15, 15, -15, 15, -10, 10, -5, 5, 0] } : {}}
-                    transition={{ duration: 0.5 }}
+                    animate={shake ? { x: [-20, 20, -10, 10, 0] } : { x: 0 }}
+                    transition={shake ? { type: 'spring', stiffness: 700, damping: 10 } : {}}
                     className="w-full flex flex-col gap-6"
                 >
                     {/* Header: oppressive Solo Leveling warning panel */}
-                    <div className="border border-red-500/30 bg-[#0f0404]/90 p-6 rounded-lg text-center shadow-[0_0_30px_rgba(239,68,68,0.15)] relative">
-                        <div className="absolute top-2 right-2 flex items-center gap-1.5 text-[10px] text-red-500/70">
+                    <div className="border border-solo-red/30 glass-panel p-6 rounded-none text-center shadow-[0_0_30px_rgba(255,0,60,0.15)] relative">
+                        <div className="absolute top-2 right-2 flex items-center gap-1.5 text-[10px] text-solo-red/70">
                             <Skull size={10} className="animate-pulse" />
                             <span>ZONE_ID: PENALTY_01</span>
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-black text-red-500 tracking-[0.25em] mb-2 uppercase drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">
+                        <h1 className="text-3xl md:text-4xl font-black text-solo-red tracking-widest mb-2 uppercase drop-shadow-[0_0_10px_rgba(255,0,60,0.5)]">
                             PENALTY ZONE
                         </h1>
                         <p className="text-[10px] md:text-xs text-gray-400 uppercase tracking-widest leading-relaxed max-w-md mx-auto mt-2">
@@ -151,9 +151,9 @@ export const PenaltyZoneScreen: React.FC<PenaltyZoneScreenProps> = ({ playerId }
                     </div>
 
                     {/* Death Toll Receipt Panel */}
-                    <div className="border border-dashed border-red-500/40 bg-red-950/10 p-4 rounded flex flex-col items-center gap-1.5 text-center">
-                        <span className="text-[10px] font-bold text-red-500/60 uppercase tracking-[0.2em]">[ DEATH TOLL ASSESSMENT ]</span>
-                        <h2 className="text-sm md:text-base font-black text-red-400 uppercase tracking-widest">
+                    <div className="border border-dashed border-solo-red/40 bg-solo-red/10 p-4 rounded-none flex flex-col items-center gap-1.5 text-center">
+                        <span className="text-[10px] font-bold text-solo-red/60 uppercase tracking-widest">[ DEATH TOLL ASSESSMENT ]</span>
+                        <h2 className="text-sm md:text-base font-black text-solo-red uppercase tracking-widest">
                             PENALTY ASSESSED: -25% EXP, -20% GOLD
                         </h2>
                     </div>
@@ -166,20 +166,20 @@ export const PenaltyZoneScreen: React.FC<PenaltyZoneScreenProps> = ({ playerId }
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="border border-red-600 bg-black/95 p-8 rounded-lg text-center flex flex-col items-center gap-6 shadow-[0_0_40px_rgba(239,68,68,0.3)] min-h-[350px] justify-center"
+                                className="border border-solo-red glass-panel p-8 rounded-none text-center flex flex-col items-center gap-6 shadow-[0_0_40px_rgba(255,0,60,0.3)] min-h-[350px] justify-center"
                             >
-                                <div className="w-16 h-16 rounded-full border border-red-500 flex items-center justify-center text-red-500 animate-pulse shadow-glow-red">
+                                <div className="w-16 h-16 rounded-full border border-solo-red flex items-center justify-center text-solo-red animate-pulse shadow-glow-red">
                                     <Clock size={32} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-black text-red-500 uppercase tracking-[0.2em] mb-2">
+                                    <h3 className="text-lg font-black text-solo-red uppercase tracking-widest mb-2">
                                         SYSTEM LOCKOUT ACTIVE
                                     </h3>
                                     <p className="text-xs text-gray-500 max-w-sm mx-auto uppercase leading-relaxed font-mono">
                                         The Architect rejects your shallow excuses. Submissions are temporarily blocked. Suffer the penalty.
                                     </p>
                                 </div>
-                                <div className="text-4xl md:text-5xl font-black text-red-500 font-mono tracking-widest select-text bg-red-950/20 px-6 py-3 border border-red-500/20 rounded">
+                                <div className="text-4xl md:text-5xl font-black text-solo-red font-mono tracking-widest select-text bg-solo-red/20 px-6 py-3 border border-solo-red/20 rounded-none">
                                     {formatTime(timeLeft)}
                                 </div>
                             </motion.div>
@@ -194,8 +194,8 @@ export const PenaltyZoneScreen: React.FC<PenaltyZoneScreenProps> = ({ playerId }
                                 className="flex flex-col gap-4"
                             >
                                 {/* Instruction note */}
-                                <div className="bg-black/40 border border-gray-800 p-4 rounded text-xs text-gray-400 leading-relaxed font-mono">
-                                    <span className="text-red-500 font-bold uppercase block mb-1">THE ARCHITECT'S DEMAND:</span>
+                                <div className="glass-panel border border-gray-800 p-4 rounded-none text-xs text-gray-400 leading-relaxed font-mono">
+                                    <span className="text-solo-red font-bold uppercase block mb-1">THE ARCHITECT'S DEMAND:</span>
                                     Submit a written reflection explaining your failure. The System will analyze your sincerity and plan to improve. Troll responses or shallow excuses will trigger a lockout.
                                 </div>
 
@@ -205,10 +205,10 @@ export const PenaltyZoneScreen: React.FC<PenaltyZoneScreenProps> = ({ playerId }
                                         value={confessionText}
                                         onChange={handleTextChange}
                                         disabled={submitting}
-                                        className="w-full h-48 bg-black/80 border border-red-500/20 focus:border-red-500 focus:shadow-[0_0_15px_rgba(239,68,68,0.2)] rounded p-4 text-xs md:text-sm text-red-100 font-mono placeholder-red-900/40 focus:outline-none resize-none transition-smooth disabled:opacity-50"
+                                        className="w-full h-48 glass-panel border border-solo-red/20 focus:border-solo-red focus:shadow-[0_0_15px_rgba(255,0,60,0.2)] rounded-none p-4 text-xs md:text-sm text-white font-mono placeholder-solo-red/40 focus:outline-none resize-none transition-smooth disabled:opacity-50"
                                         placeholder="Begin your confession... Describe the source of your failure and your plan for tomorrow..."
                                     />
-                                    <div className="absolute bottom-3 right-3 text-[10px] font-mono tracking-widest text-red-500/60 bg-black/60 px-2 py-0.5 rounded border border-red-900/10">
+                                    <div className="absolute bottom-3 right-3 text-[10px] font-mono tracking-widest text-solo-red/60 glass-panel px-2 py-0.5 rounded-none border border-solo-red/10">
                                         {getWordCount(confessionText)} / 600 WORDS
                                     </div>
                                 </div>
@@ -229,7 +229,7 @@ export const PenaltyZoneScreen: React.FC<PenaltyZoneScreenProps> = ({ playerId }
 
                                 {/* Strike alert counters (reveal after 1st rejection) */}
                                 {showWarning && strikesUsed > 0 && (
-                                    <div className="border border-red-500 bg-red-950/10 p-3 rounded flex items-center gap-3 text-red-500 font-bold text-[10px] md:text-xs tracking-widest uppercase animate-pulse">
+                                    <div className="border border-solo-red bg-solo-red/10 p-3 rounded-none flex items-center gap-3 text-solo-red font-bold text-[10px] md:text-xs tracking-widest uppercase animate-pulse">
                                         <AlertTriangle size={16} />
                                         <span>WARNING: [{strikesUsed}]/3 Attempts Used. Strike 3 triggers a 4-hour system lockout.</span>
                                     </div>
@@ -239,10 +239,10 @@ export const PenaltyZoneScreen: React.FC<PenaltyZoneScreenProps> = ({ playerId }
                                 <button
                                     type="submit"
                                     disabled={submitting || !confessionText.trim()}
-                                    className="w-full bg-red-950/30 hover:bg-red-600/30 border border-red-500 text-red-100 font-bold py-3.5 px-6 rounded transition-all tracking-[0.2em] uppercase hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs md:text-sm"
+                                    className="w-full bg-solo-red/30 hover:bg-solo-red/50 border border-solo-red text-white font-bold py-3.5 px-6 rounded-none transition-all tracking-widest uppercase hover:shadow-[0_0_15px_rgba(255,0,60,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-xs md:text-sm"
                                 >
                                     {submitting ? (
-                                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                                        <div className="w-4 h-4 border-2 border-solo-red border-t-transparent rounded-full animate-spin" />
                                     ) : (
                                         <>
                                             <Send size={14} />

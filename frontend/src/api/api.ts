@@ -162,3 +162,15 @@ export const PenaltyAPI = {
     }
 };
 
+export const AnalyticsAPI = {
+    fetchHeatmap: async (playerId: string) => {
+        return await api.get(`/analytics/heatmap?playerId=${playerId}`);
+    },
+    fetchStatGrowth: async (playerId: string) => {
+        return await api.get(`/analytics/stats?playerId=${playerId}`);
+    },
+    fetchGraveyard: async (playerId: string) => {
+        return await api.get(`/analytics/graveyard?playerId=${playerId}`);
+    }
+};
+

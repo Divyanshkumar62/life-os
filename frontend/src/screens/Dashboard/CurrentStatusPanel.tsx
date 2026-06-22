@@ -65,7 +65,7 @@ export function CurrentStatusPanel({ }: CurrentStatusPanelProps) {
                         { stat: 'STR', value: strength, max: 100 },
                         { stat: 'VIT', value: agility, max: 100 }, // Mapping UI Agility to Backend VIT
                         { stat: 'INT', value: intellect, max: 100 },
-                        { stat: 'SEN', value: 30, max: 100 } // Sensory default mapped
+                        { stat: 'SEN', value: statusWindow?.attributes?.SEN || 10, max: 100 } // Sensory mapped from backend
                     ]}
                     size={200}
                 />

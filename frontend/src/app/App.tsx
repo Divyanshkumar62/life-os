@@ -9,6 +9,7 @@ import { ActiveMissionsView } from "../screens/Missions/ActiveMissionsView";
 import { StoreScreen } from "../screens/StoreScreen";
 import { InventoryScreen } from "../screens/InventoryScreen";
 import { SystemGateView } from "../screens/SystemGate/SystemGateView";
+import { ObserverScreen } from "../screens/ObserverScreen";
 
 import { SystemProvider, useSystemContext } from "../context/SystemContext";
 import { PenaltyZoneScreen } from "../screens/PenaltyZone/PenaltyZoneScreen";
@@ -29,7 +30,8 @@ type Screen =
   | "store"
   | "inventory"
   | "system_gate"
-  | "dungeon";
+  | "dungeon"
+  | "observer";
 
 function AppContent({
   playerId,
@@ -92,7 +94,10 @@ function AppContent({
   // Job Change Popup (when awaiting acceptance or in progress)
   const showJobChangePopup = jobChange.status === 'AWAITING_ACCEPTANCE' || 
                              jobChange.status === 'IN_PROGRESS' || 
-                             jobChange.status === 'COOLDOWN';
+                             jobChange.status === 'COOLDOWN' ||
+                             statusWindow?.identity?.jobChangeStatus === 'AWAITING_ACCEPTANCE' ||
+                             statusWindow?.identity?.jobChangeStatus === 'IN_PROGRESS' ||
+                             statusWindow?.identity?.jobChangeStatus === 'COOLDOWN';
 
   if (currentScreen === "onboarding") {
     return (
@@ -203,6 +208,10 @@ function AppContent({
     );
   }
 
+  if (currentScreen === "observer") {
+    return <ObserverScreen playerId={playerId} onBack={() => setCurrentScreen("dashboard")} />;
+  }
+
   if (currentScreen === "dungeon" && activeDungeonId) {
     return (
       <DungeonView 
@@ -230,6 +239,7 @@ function AppContent({
         onViewStore={() => setCurrentScreen("store")}
         onViewInventory={() => setCurrentScreen("inventory")}
         onViewGate={() => setCurrentScreen("system_gate")}
+        onViewObserver={() => setCurrentScreen("observer")}
       />
       <JobChangePopup isOpen={showJobChangePopup && currentScreen === "dashboard"} />
     </>

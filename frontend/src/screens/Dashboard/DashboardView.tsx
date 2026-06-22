@@ -34,9 +34,10 @@ export interface DashboardViewProps {
     onViewStore?: () => void;
     onViewInventory?: () => void;
     onViewGate?: () => void;
+    onViewObserver?: () => void;
 }
 
-export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewInventory, onViewGate }: DashboardViewProps) {
+export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewInventory, onViewGate, onViewObserver }: DashboardViewProps) {
     // State
     const [isPenaltyActive, setIsPenaltyActive] = useState(false);
     const [isPromotionActive, setIsPromotionActive] = useState(false);
@@ -188,17 +189,17 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
 
     return (
         <ScreenFrame className={clsx(
-            isRedGateActive && "border-solo-red-900 bg-[#0f0404]",
-            isDangerSenseActive && "border-red-600 shadow-[inset_0_0_20px_rgba(220,38,38,0.5)] animate-pulse"
+            isRedGateActive && "border-solo-red bg-solo-bg",
+            isDangerSenseActive && "border-solo-red shadow-[inset_0_0_20px_rgba(255,0,60,0.5)] animate-pulse"
         )}>
             {/* Red Gate Warning Banner */}
             {isRedGateActive && (
-                <div className="bg-solo-red-950/80 border-b border-solo-red-600 p-2 text-center flex items-center justify-center gap-2 animate-pulse mb-4 rounded">
-                    <AlertTriangle className="text-solo-red-500" size={16} />
-                    <span className="text-solo-red-100 font-bold tracking-[0.2em] text-xs">
+                <div className="bg-solo-bg border-b border-solo-red p-2 text-center flex items-center justify-center gap-2 animate-pulse mb-4 rounded-none">
+                    <AlertTriangle className="text-solo-red" size={16} />
+                    <span className="text-white font-bold tracking-widest text-xs uppercase">
                         WARNING: DUNGEON BREAK IN PROGRESS
                     </span>
-                    <AlertTriangle className="text-solo-red-500" size={16} />
+                    <AlertTriangle className="text-solo-red" size={16} />
                 </div>
             )}
 
@@ -209,11 +210,11 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                         initial={{ y: -50, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: -50, opacity: 0 }}
-                        className="bg-red-950/90 border border-red-500 p-4 rounded flex items-center gap-3 shadow-[0_0_25px_rgba(220,38,38,0.4)] mb-4 z-40 relative max-w-2xl mx-auto font-mono text-xs md:text-sm text-red-100 uppercase tracking-wider animate-pulse select-none"
+                        className="glass-panel border border-solo-red p-4 rounded-none flex items-center gap-3 shadow-[0_0_25px_rgba(255,0,60,0.4)] mb-4 z-40 relative max-w-2xl mx-auto font-mono text-xs md:text-sm text-white uppercase tracking-widest animate-pulse select-none"
                     >
-                        <AlertTriangle className="text-red-500 animate-bounce shrink-0" size={20} />
+                        <AlertTriangle className="text-solo-red animate-bounce shrink-0" size={20} />
                         <div>
-                            <span className="font-black text-red-500 mr-2">[DANGER]</span>
+                            <span className="font-black text-solo-red mr-2">[DANGER]</span>
                             Senses detect approaching Penalty. Resolve active daily quests immediately.
                         </div>
                     </motion.div>
@@ -231,8 +232,8 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                 <button
                     onClick={onViewStore}
                     className={clsx(
-                        "flex-1 border bg-gray-900/80 py-3 rounded-lg transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg",
-                        !isRedGateActive && "border-solo-blue-900/50 hover:border-solo-blue-500 text-solo-blue-400 hover:text-white shadow-glow-cyan hover:shadow-cyan-500/20",
+                        "flex-1 border glass-panel py-3 rounded-none transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg",
+                        !isRedGateActive && "border-solo-cyan/30 hover:border-solo-cyan text-solo-cyan hover:text-white system-glow",
                         isRedGateActive && "border-gray-800 text-gray-500 opacity-50 cursor-not-allowed" // Disable during break? Or just dim
                     )}
                 >
@@ -242,9 +243,9 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                 <button
                     onClick={onViewInventory}
                     className={clsx(
-                        "flex-1 border bg-gray-900/80 py-3 rounded-lg transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg",
-                        !isRedGateActive && "border-solo-blue-900/50 hover:border-solo-blue-500 text-solo-blue-400 hover:text-white shadow-glow-cyan hover:shadow-cyan-500/20",
-                        isRedGateActive && "border-solo-red-900/50 text-solo-red-400 hover:text-white"
+                        "flex-1 border glass-panel py-3 rounded-none transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg",
+                        !isRedGateActive && "border-solo-cyan/30 hover:border-solo-cyan text-solo-cyan hover:text-white system-glow",
+                        isRedGateActive && "border-solo-red/50 text-solo-red hover:text-white"
                     )}
                 >
                     <span className="mr-2 opacity-50 group-hover:opacity-100">🎒</span>
@@ -253,13 +254,20 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                 <button
                     onClick={onViewGate}
                     className={clsx(
-                        "flex-1 border bg-gray-900/80 py-3 rounded-lg transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg animate-pulse",
-                        !isRedGateActive && "border-solo-blue-500 text-solo-blue-400 hover:bg-solo-blue-900/30",
-                        isRedGateActive && "border-solo-red-500 bg-solo-red-900/20 text-solo-red-500 hover:bg-solo-red-900/50 shadow-glow-red"
+                        "flex-1 border glass-panel py-3 rounded-none transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg animate-pulse",
+                        !isRedGateActive && "border-solo-cyan text-solo-cyan hover:bg-solo-cyan/20 system-glow",
+                        isRedGateActive && "border-solo-red bg-solo-red/20 text-solo-red hover:bg-solo-red/50 shadow-glow-red"
                     )}
                 >
                     <span className="mr-2 opacity-50 group-hover:opacity-100">{isRedGateActive ? <Flame size={14} /> : '🌀'}</span>
                     {isRedGateActive ? "ENTER RED GATE" : "SYSTEM GATES"}
+                </button>
+                <button
+                    onClick={onViewObserver}
+                    className="flex-1 border glass-panel py-3 rounded-none transition-all font-mono tracking-widest text-sm uppercase flex items-center justify-center group shadow-lg border-solo-cyan/30 hover:border-solo-cyan text-solo-cyan hover:text-white system-glow"
+                >
+                    <span className="mr-2 opacity-50 group-hover:opacity-100">👁️</span>
+                    Observer
                 </button>
             </div>
 
@@ -274,22 +282,34 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                 <div className="lg:col-span-2 space-y-4">
                     <CurrentStatusPanel />
 
-                    <DailyQuestsPanel
-                        quests={activeQuests.map(mapBackendQuest)}
-                        onQuestToggle={async (id, completed) => {
-                            if (!completed) {
-                                try {
-                                    await QuestAPI.completeQuest(id);
-                                    const updatedQuests = await QuestAPI.getActiveQuests(playerId || '');
-                                    setActiveQuests(updatedQuests);
-                                    await refreshSystem();
-                                } catch (error) {
-                                    console.error("Failed to complete quest:", error);
+                    {(statusWindow?.identity?.jobChangeStatus === 'AWAITING_ACCEPTANCE' || statusWindow?.identity?.jobChangeStatus === 'IN_PROGRESS') ? (
+                        <div className="glass-panel border border-solo-red p-6 text-center shadow-glow-red select-none">
+                            <h3 className="text-solo-red font-bold text-sm tracking-[0.25em] mb-3 uppercase flex items-center justify-center gap-2">
+                                <AlertTriangle size={16} /> GATES LOCKED: GAUNTLET ACTIVE
+                            </h3>
+                            <p className="text-[11px] text-gray-400 font-mono tracking-widest leading-relaxed uppercase">
+                                The System demands your evolution. Standard daily quests are frozen.
+                                Complete the 3-day Job Change Trial quests to restore system access.
+                            </p>
+                        </div>
+                    ) : (
+                        <DailyQuestsPanel
+                            quests={activeQuests.map(mapBackendQuest)}
+                            onQuestToggle={async (id, completed) => {
+                                if (!completed) {
+                                    try {
+                                        await QuestAPI.completeQuest(id);
+                                        const updatedQuests = await QuestAPI.getActiveQuests(playerId || '');
+                                        setActiveQuests(updatedQuests);
+                                        await refreshSystem();
+                                    } catch (error) {
+                                        console.error("Failed to complete quest:", error);
+                                    }
                                 }
-                            }
-                        }}
-                        onClaimReward={(id) => console.log('Claim reward:', id)}
-                    />
+                            }}
+                            onClaimReward={(id) => console.log('Claim reward:', id)}
+                        />
+                    )}
                 </div>
 
                 {/* Right Column */}

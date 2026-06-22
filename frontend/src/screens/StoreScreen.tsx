@@ -10,6 +10,7 @@ interface ShopItem {
     name: string;
     description: string;
     cost: number;
+    baseCost?: number;
     stockLimit?: number;
     rankRequirement?: string;
 }
@@ -55,12 +56,11 @@ export const StoreScreen = ({ playerId }: StoreScreenProps) => {
         setPurchasing(item.code);
         try {
             await EconomyAPI.purchaseItem(playerId, item.code);
-            alert(`Purchased: ${item.name}`);
             await fetchData(); // Refresh to update stock
             await refreshSystem(); // Hard refresh global state to deduct gold natively
         } catch (error) {
             console.error("Purchase failed:", error);
-            alert("Purchase failed. Check rank or stock.");
+            alert("Purchase failed. Check rank or stock limits.");
         } finally {
             setPurchasing(null);
         }
@@ -77,7 +77,7 @@ export const StoreScreen = ({ playerId }: StoreScreenProps) => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center text-solo-blue-500">
+            <div className="min-h-screen bg-black flex items-center justify-center text-solo-cyan">
                 <Loader className="animate-spin mr-2" /> Loading System Store...
             </div>
         );
@@ -87,34 +87,34 @@ export const StoreScreen = ({ playerId }: StoreScreenProps) => {
         return (
             <div className="min-h-screen bg-black text-white p-6 relative overflow-hidden flex flex-col items-center justify-center">
                 {/* Background Ambience */}
-                <div className="absolute top-0 left-0 w-full h-full bg-grid-pattern opacity-5 pointer-events-none" />
-                <div className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[600px] h-[600px] bg-solo-red-950/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute inset-0 bg-grid-pattern opacity-5 pointer-events-none" />
+                <div className="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] w-[500px] h-[500px] bg-red-950/20 rounded-full blur-[120px] pointer-events-none animate-pulse" />
 
-                {/* Restrict Sign */}
-                <div className="relative z-10 text-center max-w-lg mx-auto p-8 rounded-2xl bg-gray-900/80 border border-solo-red-900/50 shadow-glow-red flex flex-col items-center">
-                    <div className="w-20 h-20 bg-solo-red-950/40 border border-solo-red-500/30 rounded-full flex items-center justify-center mb-6 animate-pulse text-solo-red-500 shadow-glow-red">
-                        <Lock size={40} className="stroke-[1.5]" />
+                {/* Dark Glassmorphic Prison Layout */}
+                <div className="relative z-10 text-center max-w-lg mx-auto p-10 rounded-none glass-panel border border-solo-red/40 shadow-[0_0_50px_rgba(255,0,60,0.15)] flex flex-col items-center">
+                    <div className="w-24 h-24 bg-solo-red/30 border border-solo-red/40 rounded-full flex items-center justify-center mb-8 animate-pulse text-solo-red shadow-[0_0_30px_rgba(255,0,60,0.3)]">
+                        <Lock size={48} className="stroke-[1.5]" />
                     </div>
                     
-                    <h2 className="text-sm font-mono tracking-widest text-solo-red-500 font-bold uppercase mb-2">
-                        [ SYSTEM RESTRICTION ]
+                    <h2 className="text-xs font-mono tracking-widest text-solo-red font-bold uppercase mb-3 animate-pulse">
+                        [ ACCESS DENIED ]
                     </h2>
                     
-                    <h1 className="text-3xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-solo-red-400 mb-4">
-                        SYSTEM STORE LOCKED
+                    <h1 className="text-3xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-solo-red mb-6 uppercase">
+                        GATE LOCKED
                     </h1>
                     
-                    <p className="text-base text-gray-400 mb-6 leading-relaxed font-sans">
-                        The System Store remains locked until Level 10.
+                    <p className="text-sm text-solo-red/90 mb-8 leading-relaxed font-mono uppercase border border-solo-red/60 bg-solo-red/20 px-6 py-4 rounded-none shadow-inner">
+                        GATE LOCKED: Unlocks at Level 10. Increase your hunter level to access the System Merchant.
                     </p>
 
-                    <div className="flex items-center space-x-3 bg-black border border-solo-red-900/40 px-4 py-2 rounded-lg">
+                    <div className="flex items-center space-x-4 glass-panel border border-solo-red/50 px-6 py-3 rounded-none shadow-glow-red">
                         <span className="text-xs font-mono text-gray-500">CURRENT STATUS:</span>
-                        <span className="text-sm font-bold text-solo-red-400 font-mono">Lvl {playerLevel} / 10</span>
+                        <span className="text-sm font-bold text-solo-red font-mono">Lvl {playerLevel} / 10</span>
                     </div>
 
-                    <div className="mt-8 text-[11px] font-mono text-gray-600 tracking-wider">
-                        Increase your stats and clear quests to unlock the store.
+                    <div className="mt-8 text-[10px] font-mono text-gray-600 tracking-widest uppercase">
+                        The System requires higher power to establish connection.
                     </div>
                 </div>
             </div>
@@ -125,25 +125,25 @@ export const StoreScreen = ({ playerId }: StoreScreenProps) => {
         <div className="min-h-screen bg-black text-white p-6 relative overflow-hidden">
             {/* Background Ambience */}
             <div className="absolute top-0 left-0 w-full h-full bg-grid-pattern opacity-10 pointer-events-none" />
-            <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-solo-blue-900/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-solo-cyan/20 rounded-full blur-3xl pointer-events-none" />
 
             {/* Header */}
-            <header className="relative z-10 flex items-center justify-between mb-8 border-b border-solo-blue-900/50 pb-4">
+            <header className="relative z-10 flex items-center justify-between mb-8 border-b border-solo-cyan/50 pb-4">
                 <div className="flex items-center">
                     <div className="ml-12"> {/* Spacing for Back button */}
-                        <h1 className="text-3xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-solo-blue-300">
+                        <h1 className="text-3xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-solo-cyan">
                             SYSTEM STORE
                         </h1>
-                        <p className="text-sm text-solo-blue-500 font-mono tracking-widest">Buy equipment and consumables.</p>
+                        <p className="text-sm text-solo-cyan font-mono tracking-widest">Buy equipment and upgrades.</p>
                     </div>
                 </div>
 
                 {/* Currency Display */}
-                <div className="flex items-center bg-gray-900/80 border border-solo-blue-700/50 px-4 py-2 rounded-lg shadow-glow-cyan">
-                    <ShoppingBag size={20} className="text-yellow-400 mr-2" />
+                <div className="flex items-center glass-panel border border-solo-cyan/50 px-4 py-2 rounded-none system-glow">
+                    <ShoppingBag size={20} className="text-solo-gold mr-2" />
                     <div className="text-right">
-                        <p className="text-[10px] text-gray-400 uppercase">Current Funds</p>
-                        <p className="text-xl font-bold text-yellow-400 font-mono">{playerGold.toLocaleString()} G</p>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-widest">Current Funds</p>
+                        <p className="text-xl font-bold text-solo-gold font-mono">{playerGold.toLocaleString()} G</p>
                     </div>
                 </div>
             </header>
@@ -158,6 +158,7 @@ export const StoreScreen = ({ playerId }: StoreScreenProps) => {
                             name={item.name}
                             description={item.description}
                             cost={item.cost}
+                            baseCost={item.baseCost}
                             rankRequirement={item.rankRequirement}
                             stockLimit={item.stockLimit}
                             isLocked={locked}
