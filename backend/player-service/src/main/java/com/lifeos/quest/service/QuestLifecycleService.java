@@ -22,5 +22,7 @@ public interface QuestLifecycleService {
     
     List<Quest> getActiveQuests(UUID playerId);
     
+    List<Quest> getQuests(UUID playerId, com.lifeos.quest.domain.enums.QuestState state);
+    
     QuestRepository getQuestRepository();
 }

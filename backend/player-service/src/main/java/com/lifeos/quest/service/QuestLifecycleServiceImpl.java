@@ -330,6 +330,15 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         return questRepository.findActiveQuestsWithAllCategories(playerId, QuestState.ACTIVE);
     }
 
+    @Override
+    public List<Quest> getQuests(UUID playerId, QuestState state) {
+        if (state != null) {
+            return questRepository.findByPlayerPlayerIdAndState(playerId, state);
+        } else {
+            return questRepository.findByPlayerPlayerId(playerId);
+        }
+    }
+
     private boolean hasBlockingQuest(UUID playerId) {
         return questRepository.findByPlayerPlayerIdAndQuestTypeAndState(playerId, QuestType.PENALTY, QuestState.ACTIVE).isPresent() ||
                questRepository.findByPlayerPlayerIdAndQuestTypeAndState(playerId, QuestType.PENALTY, QuestState.ASSIGNED).isPresent() ||

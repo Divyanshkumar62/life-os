@@ -10,6 +10,7 @@ import com.lifeos.project.domain.enums.ProjectStatus;
 import com.lifeos.project.repository.ProjectRepository;
 import com.lifeos.quest.repository.QuestRepository;
 import com.lifeos.project.dto.ProjectCreationRequest;
+import com.lifeos.project.dto.DungeonOpenRequest;
 import com.lifeos.project.dto.DungeonResponse;
 import com.lifeos.project.domain.enums.ProjectStability;
 import com.lifeos.quest.domain.Quest;
@@ -230,6 +231,86 @@ public class ProjectService {
 
         com.lifeos.player.domain.PlayerIdentity player = new com.lifeos.player.domain.PlayerIdentity();
         player.setPlayerId(request.getPlayerId());
+
+        Project project = Project.builder()
+                .player(player)
+                .title(dungeonData.getTitle())
+                .description(dungeonData.getDescription())
+                .rankRequirement(PlayerRank.valueOf(dungeonData.getRank()))
+                .difficultyTier(determineTierFromRank(dungeonData.getRank()))
+                .status(ProjectStatus.ACTIVE)
+                .minSubtasks(dungeonData.getFloors().size())
+                .durationDays(dungeonData.getEstimatedDurationDays())
+                .startDate(LocalDateTime.now())
+                .hardDeadline(LocalDateTime.now().plusDays(dungeonData.getEstimatedDurationDays()))
+                .bossKeyReward(dungeonData.getLoot() != null ? dungeonData.getLoot().getBossKeys() : 1)
+                .baseXpReward(dungeonData.getLoot() != null ? dungeonData.getLoot().getXpTotal() : 1000)
+                .baseGoldReward(dungeonData.getLoot() != null ? dungeonData.getLoot().getGold() : 0)
+                .lastActivityAt(LocalDateTime.now())
+                .stabilityStatus(ProjectStability.STABLE)
+                .finalXpMultiplier(1.0)
+                .build();
+
+        validateProjectCreation(project);
+
+        Project savedProject = projectRepository.save(project);
+
+        for (DungeonResponse.DungeonFloor floor : dungeonData.getFloors()) {
+            Quest floorQuest = Quest.builder()
+                    .player(player)
+                    .projectId(savedProject.getProjectId())
+                    .title("Floor " + floor.getFloorNum() + ": " + floor.getTitle())
+                    .description("Sub-quest for dungeon: " + savedProject.getTitle())
+                    .questType(QuestType.DISCIPLINE)
+                    .category(QuestCategory.PROJECT_SUBTASK)
+                    .primaryAttribute(AttributeType.valueOf(floor.getStat()))
+                    .difficultyTier(project.getRankRequirement().toDifficultyTier())
+                    .priority(Priority.NORMAL)
+                    .state(QuestState.PENDING)
+                    .systemMutable(false)
+                    .build();
+            
+            questRepository.save(floorQuest);
+        }
+
+        return savedProject;
+    }
+
+    @Transactional
+    public Project openDungeon(DungeonOpenRequest request) {
+        UUID playerId = request.getPlayerId();
+        String keyItemCode = request.getKeyItemCode();
+
+        // 1. Verify the player actually owns keyItemCode in their inventory
+        if (!inventoryService.hasItem(playerId, keyItemCode)) {
+            throw new IllegalStateException("Gate access denied. Required Rank Key is missing.");
+        }
+
+        // 2. Consume (delete/decrement) the key from the inventory
+        try {
+            inventoryService.consumeItemByCode(playerId, keyItemCode, 1);
+        } catch (Exception e) {
+            throw new IllegalStateException("Gate access denied. Required Rank Key is missing.");
+        }
+
+        // Determine rank from keyItemCode (e.g. "KEY_C_RANK" -> "C")
+        String rankStr = "E";
+        if (keyItemCode != null && keyItemCode.startsWith("KEY_") && keyItemCode.endsWith("_RANK")) {
+            rankStr = keyItemCode.substring(4, keyItemCode.length() - 5);
+        }
+
+        // 3. Trigger GeminiQuestService/DungeonArchitect to generate based strictly on the rank consumed
+        String generatedGoal = "System Generated Dungeon Raid for Rank " + rankStr;
+        DungeonResponse response = dungeonArchitect.generateDungeon(playerId, generatedGoal, rankStr);
+
+        if (!response.isValid()) {
+            throw new IllegalArgumentException(response.getRejectionReason());
+        }
+
+        DungeonResponse.DungeonData dungeonData = response.getDungeon();
+
+        com.lifeos.player.domain.PlayerIdentity player = new com.lifeos.player.domain.PlayerIdentity();
+        player.setPlayerId(playerId);
 
         Project project = Project.builder()
                 .player(player)

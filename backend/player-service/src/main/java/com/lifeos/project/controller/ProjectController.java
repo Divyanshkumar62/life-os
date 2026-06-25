@@ -39,20 +39,7 @@ public class ProjectController {
         }
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<Project> createDungeon(@RequestBody ProjectCreationRequest request) {
-        // Check for active Intel Quests (PRD requirement)
-        checkNoActiveIntelQuests(request.getPlayerId());
-        
-        log.info("Received request to create dungeon for player: {}", request.getPlayerId());
-        try {
-            Project project = projectService.createDungeonProject(request);
-            return ResponseEntity.ok(project);
-        } catch (IllegalArgumentException e) {
-            log.warn("Dungeon creation validation failed: {}", e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
-    }
+
 
     @PostMapping("/{projectId}/equip/{questId}")
     public ResponseEntity<Void> equipSubQuest(@PathVariable UUID projectId, @PathVariable UUID questId) {

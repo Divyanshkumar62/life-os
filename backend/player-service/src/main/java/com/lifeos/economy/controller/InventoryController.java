@@ -16,6 +16,8 @@ import java.util.UUID;
 public class InventoryController {
 
     private final LootBoxService lootBoxService;
+    private final com.lifeos.economy.service.InventoryService inventoryService;
+    private final com.lifeos.economy.repository.ShopItemRepository shopItemRepository;
 
     /**
      * Opens a loot box for the given player.
@@ -31,5 +33,21 @@ public class InventoryController {
         } catch (LockedFeatureException e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
         }
+    }
+
+    /**
+     * Admin cheat endpoint to grant specific items to a player's inventory by item code.
+     */
+    @PostMapping("/{playerId}/grant")
+    public ResponseEntity<Void> grantItem(
+            @PathVariable UUID playerId,
+            @RequestParam String itemCode,
+            @RequestParam(defaultValue = "1") int quantity) {
+        
+        com.lifeos.economy.domain.ShopItem item = shopItemRepository.findByCode(itemCode)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Item not found with code: " + itemCode));
+        
+        inventoryService.addItem(playerId, item.getItemId(), quantity);
+        return ResponseEntity.ok().build();
     }
 }

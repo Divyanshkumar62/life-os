@@ -56,26 +56,7 @@ public class QuestController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/active")
-    public ResponseEntity<com.lifeos.quest.dto.QuestResponse> getActiveQuests(@RequestParam UUID playerId) {
-        log.info("Fetching active quests for player: {}", playerId);
-        List<Quest> activeQuests = questService.getActiveQuests(playerId);
-        
-        List<com.lifeos.system.domain.SystemEvent> unconsumedEvents = systemEventRepository.findByPlayerIdAndIsConsumedFalseOrderByCreatedAtAsc(playerId);
-        List<String> systemMessages = new java.util.ArrayList<>();
-        if (unconsumedEvents != null && !unconsumedEvents.isEmpty()) {
-            for (com.lifeos.system.domain.SystemEvent event : unconsumedEvents) {
-                systemMessages.add(event.getMessage());
-                event.setConsumed(true);
-            }
-            systemEventRepository.saveAll(unconsumedEvents);
-        }
 
-        return ResponseEntity.ok(com.lifeos.quest.dto.QuestResponse.builder()
-                .quests(activeQuests)
-                .systemMessages(systemMessages)
-                .build());
-    }
 
     @PostMapping
     public ResponseEntity<com.lifeos.quest.dto.QuestResponse> assignQuest(@RequestBody QuestRequest request) {
