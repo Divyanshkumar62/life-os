@@ -15,8 +15,115 @@ export const systemMessageEmitter = {
     }
 };
 
+import { getMockDataByView } from "../utils/mockData";
+
+export let activeSandboxView: string | null = null;
+export const setSandboxView = (view: string | null) => {
+    activeSandboxView = view;
+};
+
+function getMockResponseForGet(endpoint: string, view: string): any {
+    const mockData = getMockDataByView()[view];
+    if (!mockData) return undefined;
+
+    if (endpoint.includes("/player/status-window/")) {
+        return mockData.statusWindow || {};
+    }
+
+    if (endpoint.includes("/quests/active")) {
+        return { quests: mockData.quests || [] };
+    }
+
+    if (endpoint.includes("/quests/red-gate/")) {
+        return { active: false, quest: null };
+    }
+
+    if (endpoint.includes("/projects")) {
+        const parts = endpoint.split("/projects/");
+        if (parts.length > 1 && parts[1]) {
+            const subparts = parts[1].split("/");
+            if (subparts.length > 1 && subparts[1] === "quests") {
+                return mockData.quests || [];
+            }
+            return mockData.project || mockData.projects?.[0] || {};
+        }
+        return mockData.projects || [];
+    }
+
+    if (endpoint.includes("/shop/items")) {
+        return { items: mockData.items || [] };
+    }
+
+    if (endpoint.includes("/shop/inventory")) {
+        return { items: [] };
+    }
+
+    if (endpoint.includes("/player/job-change/") && endpoint.endsWith("/status")) {
+        return mockData.jobChange || { status: "NOT_TRIGGERED", jobClass: null, xpFrozen: false, cooldownUntil: null };
+    }
+
+    if (endpoint.includes("/player/job-change/") && endpoint.endsWith("/quests")) {
+        return mockData.quests || [];
+    }
+
+    if (endpoint.includes("/analytics/heatmap")) {
+        return mockData.heatmap || [];
+    }
+
+    if (endpoint.includes("/analytics/stats")) {
+        return mockData.stats || [];
+    }
+
+    if (endpoint.includes("/analytics/graveyard")) {
+        return mockData.graveyard || [];
+    }
+
+    return undefined;
+}
+
+function getMockResponseForPost(endpoint: string, _view: string, body?: any): any {
+    if (endpoint.includes("/penalty/confess")) {
+        const text = body?.text || "";
+        const isSincere = text.trim().split(/\s+/).length >= 10; // Simple check for visual QA
+        if (isSincere) {
+            return {
+                accepted: true,
+                feedback: "[SYSTEM] Sincerity confirmed. The Architect has lifted the lockdown."
+            };
+        } else {
+            return {
+                accepted: false,
+                feedback: "[SYSTEM] Insincere confession. Suffer the lockout extension.",
+                attemptsRemaining: 0,
+                lockoutUntil: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
+            };
+        }
+    }
+
+    if (endpoint.includes("/quests/") && endpoint.endsWith("/complete")) {
+        return { quest: { state: "COMPLETED" } };
+    }
+
+    if (endpoint.includes("/shop/purchase/")) {
+        return { success: true };
+    }
+
+    if (endpoint.includes("/player/job-change/quest/") && endpoint.endsWith("/complete")) {
+        return { success: true };
+    }
+
+    return { success: true };
+}
+
 export const api = {
     async get(endpoint: string) {
+        if (activeSandboxView) {
+            const mockResponse = getMockResponseForGet(endpoint, activeSandboxView);
+            if (mockResponse !== undefined) {
+                return mockResponse;
+            }
+        }
+
         const res = await fetch(`${API_BASE_URL}${endpoint}`);
         if (!res.ok) throw new Error(`API GET ${endpoint} Failed`);
         const json = await res.json();
@@ -27,6 +134,13 @@ export const api = {
     },
 
     async post(endpoint: string, body?: any) {
+        if (activeSandboxView) {
+            const mockResponse = getMockResponseForPost(endpoint, activeSandboxView, body);
+            if (mockResponse !== undefined) {
+                return mockResponse;
+            }
+        }
+
         const res = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

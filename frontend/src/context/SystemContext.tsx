@@ -33,7 +33,9 @@ export const useSystemContext = () => {
 export const SystemProvider: React.FC<{
   children: React.ReactNode;
   playerId: string;
-}> = ({ children, playerId }) => {
+  sandboxActive?: boolean;
+  sandboxView?: string | null;
+}> = ({ children, playerId, sandboxActive, sandboxView }) => {
   const [statusWindow, setStatusWindow] = useState<any | null>(null);
   const [jobClass, setJobClass] = useState<string | null>(null);
   const [theme, setTheme] = useState<string>("theme-default");
@@ -56,11 +58,11 @@ export const SystemProvider: React.FC<{
   }, []);
 
   const refreshSystem = useCallback(async () => {
-    if (!playerId) return;
+    if (!playerId && !sandboxActive) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await DashboardAPI.getStatusWindow(playerId);
+      const data = await DashboardAPI.getStatusWindow(playerId || "");
       setStatusWindow(data);
 
       // Update job class if present
@@ -74,12 +76,12 @@ export const SystemProvider: React.FC<{
     } finally {
       setLoading(false);
     }
-  }, [playerId, applyTheme]);
+  }, [playerId, sandboxActive, applyTheme]);
 
-  // Initial sync
+  // Sync when player ID or sandbox state changes
   useEffect(() => {
     refreshSystem();
-  }, [refreshSystem]);
+  }, [playerId, sandboxActive, sandboxView, refreshSystem]);
 
   return (
     <SystemContext.Provider

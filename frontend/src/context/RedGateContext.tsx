@@ -43,7 +43,9 @@ export const useRedGateContext = () => {
 export const RedGateProvider: React.FC<{
     children: React.ReactNode;
     playerId: string;
-}> = ({ children, playerId }) => {
+    sandboxActive?: boolean;
+    sandboxView?: string | null;
+}> = ({ children, playerId, sandboxActive, sandboxView }) => {
     const [redGate, setRedGate] = useState<RedGateState>({
         isActive: false,
         quest: null,
@@ -60,10 +62,10 @@ export const RedGateProvider: React.FC<{
     });
 
     const checkRedGateStatus = useCallback(async () => {
-        if (!playerId) return;
+        if (!playerId && !sandboxActive) return;
         try {
-            const data = await RedGateAPI.getStatus(playerId);
-            const activeQuests = await QuestAPI.getActiveQuests(playerId);
+            const data = await RedGateAPI.getStatus(playerId || "");
+            const activeQuests = await QuestAPI.getActiveQuests(playerId || "");
             const hasInvasion = activeQuests.some((q: any) => q.title?.includes('[INVASION]'));
 
             setRedGate({
@@ -77,12 +79,12 @@ export const RedGateProvider: React.FC<{
             console.error("Failed to check Red Gate status:", err);
             setRedGate(prev => ({ ...prev, loading: false }));
         }
-    }, [playerId]);
+    }, [playerId, sandboxActive]);
 
     const checkJobChangeStatus = useCallback(async () => {
-        if (!playerId) return;
+        if (!playerId && !sandboxActive) return;
         try {
-            const data = await JobChangeAPI.getStatus(playerId);
+            const data = await JobChangeAPI.getStatus(playerId || "");
             setJobChange({
                 jobClass: data.jobClass,
                 status: data.status,
@@ -94,7 +96,7 @@ export const RedGateProvider: React.FC<{
             console.error("Failed to check Job Change status:", err);
             setJobChange(prev => ({ ...prev, loading: false }));
         }
-    }, [playerId]);
+    }, [playerId, sandboxActive]);
 
     const triggerRedGateWithKey = async () => {
         try {
@@ -146,10 +148,13 @@ export const RedGateProvider: React.FC<{
         }
     };
 
+    // Re-fetch status whenever playerId or sandbox configuration changes
     useEffect(() => {
         checkRedGateStatus();
         checkJobChangeStatus();
-        
+    }, [playerId, sandboxActive, sandboxView, checkRedGateStatus, checkJobChangeStatus]);
+
+    useEffect(() => {
         const interval = setInterval(() => {
             if (redGate.isActive && redGate.remainingSeconds !== null) {
                 setRedGate(prev => ({
@@ -160,7 +165,7 @@ export const RedGateProvider: React.FC<{
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [playerId, redGate.isActive]);
+    }, [redGate.isActive]);
 
     return (
         <RedGateContext.Provider
