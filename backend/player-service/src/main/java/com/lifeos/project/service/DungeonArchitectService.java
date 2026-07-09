@@ -75,7 +75,7 @@ public class DungeonArchitectService {
             
             3. **REWARDS:**
                - **XP:** Scale XP based on Rank (E=100, D=200, etc.).
-               - **Keys:** A Dungeon ALWAYS drops exactly **1 Boss Key** upon 100% completion.
+               - **Keys:** A Dungeon ALWAYS drops exactly **1 Boss Key** upon 100%% completion.
             
             **OUTPUT FORMAT (STRICT JSON ONLY):**
             Return ONLY raw JSON. No markdown, no conversation.
@@ -106,7 +106,7 @@ public class DungeonArchitectService {
                 }
               }
             }
-            """.formatted(goal, userRank);
+            """.formatted(historyContext, goal, userRank);
     }
 
     private DungeonResponse callGemini(GeminiQuestService.GeminiRequest requestBody) {
