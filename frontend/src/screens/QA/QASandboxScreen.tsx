@@ -8,7 +8,9 @@ import {
   ChevronRight,
   Eye,
   Sliders,
-  X
+  X,
+  UserPlus,
+  UserCheck
 } from "lucide-react";
 import { ScreenFrame } from "../../components/layout";
 
@@ -30,58 +32,108 @@ interface QASandboxScreenProps {
 export const QASandboxScreen: React.FC<QASandboxScreenProps> = ({ onSelectView, onClose }) => {
   const cards: SandboxCard[] = [
     {
+      key: "onboarding",
+      title: "Awakening Questionnaire",
+      description: "Renders the Phase 1 onboarding flow, capturing physical weaknesses, focus areas, and time commitments for Grok AI calibration.",
+      icon: <UserPlus size={24} className="text-solo-cyan" />,
+      badge: "SYSTEM INITIALIZATION",
+      badgeColor: "border-solo-cyan text-solo-cyan animate-pulse shadow-[0_0_8px_rgba(0,229,255,0.4)]",
+      details: [
+        "Phase 1 initialization checklist",
+        "Focus areas: Strength & Sensibility attributes",
+        "Grok AI calibration: Daily quest difficulty weights"
+      ]
+    },
+    {
+      key: "profile",
+      title: "Status Window",
+      description: "Displays core player identity, class progression, and real-time attribute distribution (STR, AGI, VIT, INT, PER).",
+      icon: <UserCheck size={24} className="text-solo-cyan" />,
+      badge: "RANK E",
+      badgeColor: "border-solo-cyan text-solo-cyan shadow-[0_0_8px_rgba(0,229,255,0.4)]",
+      details: [
+        "Displays Level, Rank, and Class progress",
+        "Distribute free attribute points (STR/AGI/VIT/INT/PER)",
+        "Tracks rank upgrade criteria & boss keys requirements"
+      ]
+    },
+    {
       key: "dashboard",
-      title: "Main Dashboard",
-      description: "Visualizes player progression, daily active quest progress, and equipped theme state.",
+      title: "System Dashboard",
+      description: "Access the absolute interface of the System. Tracks Jin-Woo's level progression, active daily quests (Push-Ups, Sit-Ups, Running), and active Vanguard/Shadow job themes.",
       icon: <LayoutDashboard size={24} className="text-solo-cyan" />,
-      badge: "Level 24",
-      badgeColor: "border-solo-cyan text-solo-cyan",
-      details: ["C-Rank authoritative state", "3 active daily quests", "Vanguard display theme"]
+      badge: "Sung Jin-Woo",
+      badgeColor: "border-solo-cyan text-solo-cyan shadow-[0_0_8px_rgba(0,229,255,0.4)]",
+      details: [
+        "Level 24 E-Rank Re-Awakened Hunter",
+        "Daily Quest: Prep for the Great Evolution (Active)",
+        "Equipped Title: Wolf Slayer (+4 Strength)"
+      ]
     },
     {
       key: "dungeon",
-      title: "Dungeon View",
-      description: "Renders the multi-floor quest gate, showcasing cleared, active, and locked floor progression.",
+      title: "Dungeon Gate Raid",
+      description: "Simulates the instant dungeon environments. Renders floor progression (Floors 1-3), keys validation, and active boss room instances.",
       icon: <Skull size={24} className="text-solo-cyan" />,
-      badge: "Goblin Lair",
-      badgeColor: "border-solo-gold text-solo-gold",
-      details: ["C-Rank difficulty", "3 floors structured quests", "Floor 1 complete, Floor 2 active"]
+      badge: "Instance Gate",
+      badgeColor: "border-solo-gold text-solo-gold shadow-[0_0_8px_rgba(255,215,0,0.4)]",
+      details: [
+        "C-Rank Dungeon: Goblin Lair Key Consumed",
+        "Floor 1 Cleared: Goblin Shaman vanquished",
+        "Floor 2 Active: Underboss Room gate unlocked"
+      ]
     },
     {
       key: "penalty",
-      title: "Penalty Zone",
-      description: "Simulates the lockout eviction phase. User must submit a sincere reflection or suffer lockout countdown.",
+      title: "Penalty Zone Eviction",
+      description: "Forces immediate redirection to the Penalty Zone (Desert Oasis) upon quest failure. Jin-Woo must survive centipedes or write a sincere confession.",
       icon: <AlertTriangle size={24} className="text-solo-red" />,
-      badge: "Eviction Lockout",
-      badgeColor: "border-solo-red text-solo-red animate-pulse",
-      details: ["4-Hour remaining lockout timer", "3 failed confession attempts", "Oppressive Crimson UI override"]
+      badge: "Penalty Protocol",
+      badgeColor: "border-solo-red text-solo-red animate-pulse shadow-[0_0_8px_rgba(255,0,0,0.5)]",
+      details: [
+        "System state status: PENALTY_ZONE_LOCKOUT",
+        "Timer active: 4 Hours Centipede survival countdown",
+        "3 failed attempts: Lockout extension flag active"
+      ]
     },
     {
       key: "store",
-      title: "System Store",
-      description: "Displays available shop consumables and equipment items, checking level threshold requirements.",
+      title: "Purchasing & Inventory",
+      description: "Simulates buying scrolls, elixirs of life, and keys using earned Gold. Checks level limits and player status flags before granting items.",
       icon: <ShoppingBag size={24} className="text-solo-cyan" />,
-      badge: "5,000 Gold",
-      badgeColor: "border-green-500 text-green-400",
-      details: ["Level 10 shop unlocked", "Displays Monarch's Exemption", "Stock limits verification"]
+      badge: "System Shop",
+      badgeColor: "border-green-500 text-green-400 shadow-[0_0_8px_rgba(34,197,94,0.4)]",
+      details: [
+        "Player Gold: 50,000G (Authorized balance)",
+        "Available item: Elixir of Life (Requires Level 10)",
+        "Purchased inventory item: Monarch's Exemption scroll"
+      ]
     },
     {
       key: "job_change",
       title: "Job Change Gauntlet",
-      description: "Renders the legendary popup overlay forcing hunter class evolution and Day 3 Boss Room trials.",
+      description: "Isolates the class promotion trials. Forces Sung Jin-Woo to survive waves of knights and accept the Shadow Necromancer evolution.",
       icon: <Sliders size={24} className="text-purple-400" />,
-      badge: "Level 40",
-      badgeColor: "border-purple-500 text-purple-400",
-      details: ["Day 1 & Day 2 completed", "Day 3 Boss Trial active", "Shadow Necromancer evolution path"]
+      badge: "Evolution Gate",
+      badgeColor: "border-purple-500 text-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.4)]",
+      details: [
+        "Status: Class promotion exam in progress",
+        "Boss Room: Igris the Blood-Red Commander active",
+        "Job evolution option: Shadow Monarch path"
+      ]
     },
     {
       key: "observer",
-      title: "Observer Screen",
-      description: "Aggregates visual heatmap logs, stat growth trajectories, and graveyard records of past lockouts.",
+      title: "The System Observer",
+      description: "Aggregates visual telemetry heatmaps, 30-day attribute progression charts, and the Confession Graveyard containing the COMMAND: ARISE shadow extraction.",
       icon: <Eye size={24} className="text-solo-cyan" />,
-      badge: "365-Day Metrics",
-      badgeColor: "border-solo-cyan text-solo-cyan",
-      details: ["Populated daily heatmap grid", "STR/INT/VIT/AGI/SEN progression chart", "Lockout failure records list"]
+      badge: "System Monarch",
+      badgeColor: "border-solo-cyan text-solo-cyan shadow-[0_0_8px_rgba(0,229,255,0.4)]",
+      details: [
+        "Telemetry: 365-day grid tracking cleared days",
+        "Stat trajectory: STR, AGI, VIT, INT, SEN growths",
+        "Graveyard shadow extraction: COMMAND: ARISE active"
+      ]
     }
   ];
 
@@ -167,3 +219,4 @@ export const QASandboxScreen: React.FC<QASandboxScreenProps> = ({ onSelectView, 
     </ScreenFrame>
   );
 };
+export default QASandboxScreen;

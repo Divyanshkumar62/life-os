@@ -545,6 +545,14 @@ export const mockObserverState = {
 
 // Main mapped configuration helper
 export const getMockDataByView = (): Record<string, any> => ({
+  onboarding: {
+    statusWindow: mockDashboardState,
+    jobChange: mockJobChangeStatus
+  },
+  profile: {
+    statusWindow: mockDashboardState,
+    jobChange: mockJobChangeStatus
+  },
   dashboard: {
     statusWindow: mockDashboardState,
     quests: mockDashboardQuests,

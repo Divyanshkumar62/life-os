@@ -1,15 +1,9 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-} from "react";
-import { DashboardAPI } from "../api/api";
+import React, { useEffect, useState, createContext, useContext, useCallback, useMemo } from "react";
+import { usePlayerStore } from "../stores/usePlayerStore";
 
 interface SystemStateContextType {
   playerId: string | null;
-  statusWindow: any | null; // Will type properly based on backend schema
+  statusWindow: any | null;
   jobClass: string | null;
   theme: string;
   loading: boolean;
@@ -18,9 +12,7 @@ interface SystemStateContextType {
   applyTheme: (jobClass: string) => void;
 }
 
-const SystemContext = createContext<SystemStateContextType | undefined>(
-  undefined,
-);
+const SystemContext = createContext<SystemStateContextType | undefined>(undefined);
 
 export const useSystemContext = () => {
   const context = useContext(SystemContext);
@@ -35,63 +27,102 @@ export const SystemProvider: React.FC<{
   playerId: string;
   sandboxActive?: boolean;
   sandboxView?: string | null;
-}> = ({ children, playerId, sandboxActive, sandboxView }) => {
-  const [statusWindow, setStatusWindow] = useState<any | null>(null);
-  const [jobClass, setJobClass] = useState<string | null>(null);
+}> = ({ children, playerId }) => {
+  const player = usePlayerStore();
+  const fetchPlayerState = usePlayerStore((state) => state.fetchPlayerState);
   const [theme, setTheme] = useState<string>("theme-default");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const applyTheme = useCallback((jobClass: string) => {
     let themeClass = "theme-default";
 
-    if (jobClass === "Silver Knight" || jobClass === "Berserker") {
+    if (
+      jobClass === "VANGUARD" ||
+      jobClass === "Silver Knight" ||
+      jobClass === "Berserker"
+    ) {
       themeClass = "theme-vanguard";
-    } else if (jobClass === "Arcane Mage" || jobClass === "Grand Architect") {
+    } else if (
+      jobClass === "SCHOLAR" ||
+      jobClass === "Arcane Mage" ||
+      jobClass === "Grand Architect"
+    ) {
       themeClass = "theme-scholar";
-    } else if (jobClass === "Shadow Necromancer" || jobClass === "Monarch") {
+    } else if (
+      jobClass === "SHADOW" ||
+      jobClass === "Shadow Necromancer" ||
+      jobClass === "Monarch"
+    ) {
       themeClass = "theme-shadow";
     }
 
     setTheme(themeClass);
     document.documentElement.setAttribute("data-theme", themeClass);
+    document.body.className = themeClass;
   }, []);
 
   const refreshSystem = useCallback(async () => {
-    if (!playerId && !sandboxActive) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await DashboardAPI.getStatusWindow(playerId || "");
-      setStatusWindow(data);
+    if (!playerId) return;
+    await fetchPlayerState(playerId);
+  }, [playerId, fetchPlayerState]);
 
-      // Update job class if present
-      if (data?.jobClass) {
-        setJobClass(data.jobClass);
-        applyTheme(data.jobClass);
-      }
-    } catch (err: any) {
-      console.error("Failed to sync with System authoritative state:", err);
-      setError(err.message || "System Sync Failure");
-    } finally {
-      setLoading(false);
-    }
-  }, [playerId, sandboxActive, applyTheme]);
-
-  // Sync when player ID or sandbox state changes
   useEffect(() => {
-    refreshSystem();
-  }, [playerId, sandboxActive, sandboxView, refreshSystem]);
+    if (player.jobClass) {
+      applyTheme(player.jobClass);
+    }
+  }, [player.jobClass, applyTheme]);
+
+  useEffect(() => {
+    if (playerId) {
+      refreshSystem();
+    }
+  }, [playerId, refreshSystem]);
+
+  // Construct backward-compatible statusWindow object mapping to the Zustand store state (wrapped in useMemo to prevent cascading re-renders)
+  const statusWindow = useMemo(() => ({
+    jobClass: player.jobClass,
+    identity: {
+      level: player.level,
+      rank: player.rank,
+      equippedTheme: theme,
+      jobChangeStatus: player.jobChangeStatus,
+    },
+    progression: {
+      currentXp: player.xp,
+      maxXpForLevel: player.maxXp,
+    },
+    attributes: player.attributes,
+    economy: {
+      gold: player.gold,
+      debt: player.debt,
+    },
+    systemState: {
+      penaltyActive: player.penaltyActive,
+      activeBuffs: player.activeModifiers,
+    },
+  }), [
+    player.jobClass,
+    player.level,
+    player.rank,
+    theme,
+    player.jobChangeStatus,
+    player.xp,
+    player.maxXp,
+    player.attributes,
+    player.gold,
+    player.debt,
+    player.penaltyActive,
+    player.activeModifiers,
+  ]);
 
   return (
     <SystemContext.Provider
       value={{
-        playerId,
+        playerId: player.playerId || playerId,
         statusWindow,
-        jobClass,
+        jobClass: player.jobClass,
         theme,
-        loading,
-        error,
+        loading: player.loading,
+        error: player.error,
         refreshSystem,
         applyTheme,
       }}

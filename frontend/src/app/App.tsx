@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { BrowserRouter, Routes, Route, useNavigate, useParams, Navigate } from "react-router-dom";
 import { OnboardingFlow } from "../screens/Onboarding/OnboardingFlow";
 import { DashboardView } from "../screens/Dashboard/DashboardView";
 import { SystemLogView } from "../screens/SystemLog/SystemLogView";
@@ -11,10 +12,9 @@ import { InventoryScreen } from "../screens/InventoryScreen";
 import { SystemGateView } from "../screens/SystemGate/SystemGateView";
 import { ObserverScreen } from "../screens/ObserverScreen";
 
-import { SystemProvider, useSystemContext } from "../context/SystemContext";
+import { SystemProvider, useSystemContext } from "../providers/SystemProvider";
 import { PenaltyZoneScreen } from "../screens/PenaltyZone/PenaltyZoneScreen";
 import { RedGateProvider, useRedGateContext } from "../context/RedGateContext";
-import { RedGatePopup } from "../components/features/RedGate/RedGatePopup";
 import { JobChangePopup } from "../components/features/JobChange/JobChangePopup";
 import { useSystemAudio } from "../hooks/useSystemAudio";
 import { SystemToast } from "../components/system";
@@ -23,18 +23,23 @@ import { QASandboxScreen } from "../screens/QA/QASandboxScreen";
 import { setSandboxView as setApiSandboxView } from "../api/api";
 import { X, Sliders } from "lucide-react";
 
-type Screen =
-  | "dashboard"
-  | "system_log"
-  | "diagnostic"
-  | "profile"
-  | "missions"
-  | "onboarding"
-  | "store"
-  | "inventory"
-  | "system_gate"
-  | "dungeon"
-  | "observer";
+// Route Guards & Screen Overrides
+import { RedGateGuard } from "../routes/guards/RedGateGuard";
+import { PenaltyGuard } from "../routes/guards/PenaltyGuard";
+import { OnboardingGuard } from "../routes/guards/OnboardingGuard";
+import { RedGateOverrideScreen } from "../features/events/components/RedGateOverrideScreen";
+import { usePlayerStore } from "../stores/usePlayerStore";
+
+function DungeonRouteWrapper({ playerId, navigate }: { playerId: string | null; navigate: any }) {
+  const { activeDungeonId } = useParams();
+  return (
+    <DungeonView 
+      playerId={playerId} 
+      projectId={activeDungeonId || ""} 
+      onBack={() => navigate("/gate")} 
+    />
+  );
+}
 
 function AppContent({
   playerId,
@@ -51,20 +56,25 @@ function AppContent({
   sandboxView: string | null;
   setSandboxView: (view: string | null) => void;
 }) {
-  const [currentScreen, setCurrentScreen] = useState<Screen>("onboarding");
-  const [activeDungeonId, setActiveDungeonId] = useState<string | null>(null);
-  const { statusWindow, jobClass, theme } = useSystemContext();
+  const navigate = useNavigate();
+  const { statusWindow, theme } = useSystemContext();
   const { redGate, jobChange, isShopLocked, isInventoryLocked } = useRedGateContext();
   const { playRedGateAlarm } = useSystemAudio();
 
+  const fetchPlayerState = usePlayerStore((state) => state.fetchPlayerState);
+  const setOnboardingCompleted = usePlayerStore((state) => state.setOnboardingCompleted);
+
   const isPenaltyActive = !!statusWindow?.systemState?.penaltyActive;
 
+  // Sync route and Zustand player state
   useEffect(() => {
-    if (jobClass) {
-      document.body.className = theme;
+    if (playerId) {
+      fetchPlayerState(playerId);
+      setOnboardingCompleted(true);
     }
+  }, [playerId, fetchPlayerState, setOnboardingCompleted]);
 
-    // Red Gate takes priority over everything
+  useEffect(() => {
     if (redGate.isActive && !sandboxActive) {
       document.body.classList.add("theme-red");
       playRedGateAlarm();
@@ -74,7 +84,7 @@ function AppContent({
     } else {
       document.body.classList.remove("theme-red");
     }
-  }, [isPenaltyActive, jobClass, theme, redGate.isActive, playRedGateAlarm, sandboxActive]);
+  }, [isPenaltyActive, theme, redGate.isActive, playRedGateAlarm, sandboxActive]);
 
   // Render floating back to sandbox button
   const renderBackToSandboxBtn = () => (
@@ -189,35 +199,37 @@ function AppContent({
         </>
       );
     }
+
+    if (sandboxView === "onboarding") {
+      return (
+        <>
+          <OnboardingFlow
+            onComplete={() => {
+              setSandboxView(null);
+              setApiSandboxView(null);
+            }}
+          />
+          {renderBackToSandboxBtn()}
+        </>
+      );
+    }
+
+    if (sandboxView === "profile") {
+      return (
+        <>
+          <HunterProfileView
+            onBack={() => {
+              setSandboxView(null);
+              setApiSandboxView(null);
+            }}
+          />
+          {renderBackToSandboxBtn()}
+        </>
+      );
+    }
   }
 
-  // Red Gate Override - Lock out entire Dashboard with Glitch Physics
-  if (redGate.isActive) {
-    return (
-      <motion.div
-        className="min-h-screen bg-[#0f0404]"
-        animate={{ x: [0, -20, 20, -10, 10, 0] }}
-        transition={{ duration: 0.3, repeat: Infinity, repeatDelay: 3 }}
-      >
-        <RedGatePopup isOpen={true} />
-      </motion.div>
-    );
-  }
-
-  // Penalty Override (render full confession screen)
-  if (isPenaltyActive) {
-    return (
-      <motion.div
-        className="min-h-screen bg-[#0f0404]"
-        animate={{ x: [0, -20, 20, -10, 10, 0] }}
-        transition={{ duration: 0.3 }}
-      >
-        <PenaltyZoneScreen playerId={playerId} />
-      </motion.div>
-    );
-  }
-
-  // Job Change Popup (when awaiting acceptance or in progress)
+  // Job Change Popup condition
   const showJobChangePopup = jobChange.status === 'AWAITING_ACCEPTANCE' || 
                              jobChange.status === 'IN_PROGRESS' || 
                              jobChange.status === 'COOLDOWN' ||
@@ -225,141 +237,153 @@ function AppContent({
                              statusWindow?.identity?.jobChangeStatus === 'IN_PROGRESS' ||
                              statusWindow?.identity?.jobChangeStatus === 'COOLDOWN';
 
-  let viewToRender;
-
-  if (currentScreen === "onboarding") {
-    viewToRender = (
-      <OnboardingFlow
-        onComplete={(id) => {
-          setPlayerId(id);
-          setCurrentScreen("dashboard");
-        }}
-      />
-    );
-  } else if (currentScreen === "system_log") {
-    viewToRender = <SystemLogView onBack={() => setCurrentScreen("dashboard")} />;
-  } else if (currentScreen === "diagnostic") {
-    viewToRender = <DiagnosticView onBack={() => setCurrentScreen("dashboard")} />;
-  } else if (currentScreen === "profile") {
-    viewToRender = <HunterProfileView onBack={() => setCurrentScreen("dashboard")} />;
-  } else if (currentScreen === "missions") {
-    console.log("Rendering ActiveMissionsView");
-    viewToRender = <ActiveMissionsView playerId={playerId} onBack={() => setCurrentScreen("dashboard")} />;
-  } else if (currentScreen === "store") {
-    if (isShopLocked) {
-      viewToRender = (
-        <motion.div
-          className="min-h-screen bg-black flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <div className="text-center">
-            <h2 className="text-2xl text-red-500 font-bold mb-4">SYSTEM INTERFERENCE</h2>
-            <p className="text-gray-400">Store is locked during Red Gate survival.</p>
-            <button
-              onClick={() => setCurrentScreen("dashboard")}
-              className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
-            >
-              Return to Dashboard
-            </button>
-          </div>
-        </motion.div>
-      );
-    } else {
-      viewToRender = (
-        <div className="relative">
-          <button
-            onClick={() => setCurrentScreen("dashboard")}
-            className="absolute top-4 left-4 z-50 bg-black/50 text-white p-2 rounded-full hover:bg-solo-blue-900/50"
-          >
-            Back
-          </button>
-          <StoreScreen playerId={playerId} />
-        </div>
-      );
-    }
-  } else if (currentScreen === "inventory") {
-    if (isInventoryLocked) {
-      viewToRender = (
-        <motion.div
-          className="min-h-screen bg-black flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <div className="text-center">
-            <h2 className="text-2xl text-red-500 font-bold mb-4">SYSTEM INTERFERENCE</h2>
-            <p className="text-gray-400">Inventory is locked during Red Gate survival.</p>
-            <button
-              onClick={() => setCurrentScreen("dashboard")}
-              className="mt-4 px-4 py-2 bg-gray-800 text-white rounded"
-            >
-              Return to Dashboard
-            </button>
-          </div>
-        </motion.div>
-      );
-    } else {
-      viewToRender = (
-        <div className="relative">
-          <button
-            onClick={() => setCurrentScreen("dashboard")}
-            className="absolute top-4 left-4 z-50 bg-black/50 text-white p-2 rounded-full hover:bg-solo-blue-900/50"
-          >
-            Back
-          </button>
-          <InventoryScreen playerId={playerId} />
-        </div>
-      );
-    }
-  } else if (currentScreen === "system_gate") {
-    viewToRender = (
-      <SystemGateView
-        playerId={playerId}
-        onBack={() => setCurrentScreen("dashboard")}
-        onEnterDungeon={(id) => {
-          setActiveDungeonId(id);
-          setCurrentScreen("dungeon");
-        }}
-      />
-    );
-  } else if (currentScreen === "observer") {
-    viewToRender = <ObserverScreen playerId={playerId} onBack={() => setCurrentScreen("dashboard")} />;
-  } else if (currentScreen === "dungeon" && activeDungeonId) {
-    viewToRender = (
-      <DungeonView 
-        playerId={playerId} 
-        projectId={activeDungeonId} 
-        onBack={() => {
-          setActiveDungeonId(null);
-          setCurrentScreen("system_gate");
-        }} 
-      />
-    );
-  } else {
-    viewToRender = (
-      <>
-        <DashboardView
-          playerId={playerId}
-          onViewSystemLog={() => setCurrentScreen("system_log")}
-          onViewDiagnostic={() => setCurrentScreen("diagnostic")}
-          onViewProfile={() => setCurrentScreen("profile")}
-          onViewMissions={() => {
-            console.log("App: Setting screen to missions");
-            setCurrentScreen("missions");
-          }}
-          onViewStore={() => setCurrentScreen("store")}
-          onViewInventory={() => setCurrentScreen("inventory")}
-          onViewGate={() => setCurrentScreen("system_gate")}
-          onViewObserver={() => setCurrentScreen("observer")}
-        />
-        <JobChangePopup isOpen={showJobChangePopup && currentScreen === "dashboard"} />
-      </>
-    );
-  }
-
   return (
     <>
-      {viewToRender}
+      <Routes>
+        {/* Onboarding registration flow is outside OnboardingGuard */}
+        <Route 
+          path="/onboarding" 
+          element={
+            <OnboardingFlow
+              onComplete={(id) => {
+                setPlayerId(id);
+                setOnboardingCompleted(true);
+                navigate("/dashboard");
+              }}
+            />
+          } 
+        />
+
+        {/* OnboardingGuard blocks all gameplay routes if onboarding is not completed */}
+        <Route element={<OnboardingGuard />}>
+          {/* Red Gate Overrides everything else */}
+          <Route path="/red-gate" element={<RedGateOverrideScreen />} />
+
+          {/* Hierarchical Priority: RedGateGuard -> PenaltyGuard */}
+          <Route element={<RedGateGuard />}>
+            <Route path="/penalty" element={<PenaltyZoneScreen playerId={playerId} />} />
+            
+            <Route element={<PenaltyGuard />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route 
+                path="/dashboard" 
+                element={
+                  <>
+                    <DashboardView
+                      playerId={playerId}
+                      onViewSystemLog={() => navigate("/system_log")}
+                      onViewDiagnostic={() => navigate("/diagnostic")}
+                      onViewProfile={() => navigate("/profile")}
+                      onViewMissions={() => navigate("/missions")}
+                      onViewStore={() => navigate("/store")}
+                      onViewInventory={() => navigate("/inventory")}
+                      onViewGate={() => navigate("/gate")}
+                      onViewObserver={() => navigate("/observer")}
+                    />
+                    <JobChangePopup isOpen={showJobChangePopup} />
+                  </>
+                } 
+              />
+              <Route path="/system_log" element={<SystemLogView onBack={() => navigate("/dashboard")} />} />
+              <Route path="/diagnostic" element={<DiagnosticView onBack={() => navigate("/dashboard")} />} />
+              <Route path="/profile" element={<HunterProfileView onBack={() => navigate("/dashboard")} />} />
+              <Route path="/missions" element={<ActiveMissionsView playerId={playerId} onBack={() => navigate("/dashboard")} />} />
+              
+              <Route 
+                path="/store" 
+                element={
+                  isShopLocked ? (
+                    <motion.div
+                      className="min-h-screen bg-black flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <div className="text-center">
+                        <h2 className="text-2xl text-red-500 font-bold mb-4">SYSTEM INTERFERENCE</h2>
+                        <p className="text-gray-400">Store is locked during Red Gate survival.</p>
+                        <button
+                          onClick={() => navigate("/dashboard")}
+                          className="mt-4 px-4 py-2 bg-gray-800 text-white rounded shadow-glow-red hover:bg-gray-700 transition"
+                        >
+                          Return to Dashboard
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <div className="relative">
+                      <button
+                        onClick={() => navigate("/dashboard")}
+                        className="absolute top-4 left-4 z-50 bg-black/50 text-white p-2 rounded-full hover:bg-solo-blue-900/50"
+                      >
+                        Back
+                      </button>
+                      <StoreScreen playerId={playerId} />
+                    </div>
+                  )
+                } 
+              />
+
+              <Route 
+                path="/inventory" 
+                element={
+                  isInventoryLocked ? (
+                    <motion.div
+                      className="min-h-screen bg-black flex items-center justify-center"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      <div className="text-center">
+                        <h2 className="text-2xl text-red-500 font-bold mb-4">SYSTEM INTERFERENCE</h2>
+                        <p className="text-gray-400">Inventory is locked during Red Gate survival.</p>
+                        <button
+                          onClick={() => navigate("/dashboard")}
+                          className="mt-4 px-4 py-2 bg-gray-800 text-white rounded shadow-glow-red hover:bg-gray-700 transition"
+                        >
+                          Return to Dashboard
+                        </button>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <div className="relative">
+                      <button
+                        onClick={() => navigate("/dashboard")}
+                        className="absolute top-4 left-4 z-50 bg-black/50 text-white p-2 rounded-full hover:bg-solo-blue-900/50"
+                      >
+                        Back
+                      </button>
+                      <InventoryScreen playerId={playerId} />
+                    </div>
+                  )
+                } 
+              />
+
+              <Route 
+                path="/gate" 
+                element={
+                  <SystemGateView
+                    playerId={playerId}
+                    onBack={() => navigate("/dashboard")}
+                    onEnterDungeon={(id) => navigate(`/dungeon/${id}`)}
+                  />
+                } 
+              />
+
+              <Route 
+                path="/observer" 
+                element={
+                  <ObserverScreen playerId={playerId} onBack={() => navigate("/dashboard")} />
+                } 
+              />
+
+              <Route 
+                path="/dungeon/:activeDungeonId" 
+                element={<DungeonRouteWrapper playerId={playerId} navigate={navigate} />} 
+              />
+            </Route>
+          </Route>
+        </Route>
+      </Routes>
+
       {!sandboxActive && (
         <button
           onClick={() => {
@@ -382,7 +406,6 @@ function App() {
   const [sandboxActive, setSandboxActive] = useState(false);
   const [sandboxView, setSandboxView] = useState<string | null>(null);
 
-  // Bind keydown event to backtick ` key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "`") {
@@ -401,27 +424,29 @@ function App() {
   }, []);
 
   return (
-    <SystemProvider 
-      playerId={playerId || ""}
-      sandboxActive={sandboxActive}
-      sandboxView={sandboxView}
-    >
-      <RedGateProvider 
+    <BrowserRouter>
+      <SystemProvider 
         playerId={playerId || ""}
         sandboxActive={sandboxActive}
         sandboxView={sandboxView}
       >
-        <AppContent 
-          playerId={playerId} 
-          setPlayerId={setPlayerId}
+        <RedGateProvider 
+          playerId={playerId || ""}
           sandboxActive={sandboxActive}
-          setSandboxActive={setSandboxActive}
           sandboxView={sandboxView}
-          setSandboxView={setSandboxView}
-        />
-        <SystemToast />
-      </RedGateProvider>
-    </SystemProvider>
+        >
+          <AppContent 
+            playerId={playerId} 
+            setPlayerId={setPlayerId}
+            sandboxActive={sandboxActive}
+            setSandboxActive={setSandboxActive}
+            sandboxView={sandboxView}
+            setSandboxView={setSandboxView}
+          />
+          <SystemToast />
+        </RedGateProvider>
+      </SystemProvider>
+    </BrowserRouter>
   );
 }
 
