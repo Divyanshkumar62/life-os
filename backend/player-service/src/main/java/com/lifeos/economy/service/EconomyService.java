@@ -2,6 +2,7 @@ package com.lifeos.economy.service;
 
 import com.lifeos.economy.domain.PlayerEconomy;
 import com.lifeos.economy.repository.PlayerEconomyRepository;
+import com.lifeos.player.repository.PlayerProgressionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +16,14 @@ public class EconomyService {
 
     private final PlayerEconomyRepository economyRepository;
     private final com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository;
+    private final PlayerProgressionRepository progressionRepository;
 
     public EconomyService(PlayerEconomyRepository economyRepository, 
-                        com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository) {
+                        com.lifeos.player.repository.PlayerIdentityRepository playerIdentityRepository,
+                        PlayerProgressionRepository progressionRepository) {
         this.economyRepository = economyRepository;
         this.playerIdentityRepository = playerIdentityRepository;
+        this.progressionRepository = progressionRepository;
     }
 
     @Transactional
@@ -43,7 +47,7 @@ public class EconomyService {
         BigDecimal amountBd = BigDecimal.valueOf(amount);
 
         PlayerEconomy economy = economyRepository.findByPlayerPlayerId(playerId)
-                .orElseThrow(() -> new IllegalArgumentException("Player economy data not found"));
+                .orElseGet(() -> createInitialEconomy(playerId));
 
         if (economy.getGoldBalance().compareTo(amountBd) < 0) {
             throw new IllegalStateException("Insufficient funds");
@@ -66,10 +70,15 @@ public class EconomyService {
         // We need player identity ref. Assuming it exists if we are here.
         var player = playerIdentityRepository.findById(playerId).orElseThrow();
         
+        long initialGold = progressionRepository.findByPlayerPlayerId(playerId)
+                .map(prog -> prog.getGold())
+                .orElse(0L);
+        BigDecimal initialGoldBd = BigDecimal.valueOf(initialGold);
+        
         return PlayerEconomy.builder()
                 .player(player)
-                .goldBalance(BigDecimal.ZERO)
-                .totalGoldEarned(BigDecimal.ZERO)
+                .goldBalance(initialGoldBd)
+                .totalGoldEarned(initialGoldBd)
                 .totalGoldSpent(BigDecimal.ZERO)
                 .lastTransactionAt(LocalDateTime.now())
                 .build();

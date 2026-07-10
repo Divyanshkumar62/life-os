@@ -56,4 +56,21 @@ public class DungeonController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
+
+    @PostMapping("/{id}/arise")
+    public ResponseEntity<Project> ariseDungeon(
+            @PathVariable("id") UUID dungeonId,
+            @RequestParam UUID playerId) {
+        log.info("Request to Arise failed dungeon {} for player {}", dungeonId, playerId);
+        try {
+            Project project = projectService.ariseDungeon(dungeonId, playerId);
+            return ResponseEntity.ok(project);
+        } catch (IllegalStateException e) {
+            log.warn("Dungeon Arise failed: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.warn("Dungeon Arise validation failed: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
 }

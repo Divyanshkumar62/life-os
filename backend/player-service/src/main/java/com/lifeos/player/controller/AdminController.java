@@ -8,6 +8,11 @@ import com.lifeos.progression.domain.UserBossKey;
 import com.lifeos.progression.repository.UserBossKeyRepository;
 import com.lifeos.player.domain.PlayerIdentity;
 import com.lifeos.player.repository.PlayerIdentityRepository;
+import com.lifeos.core.entity.PlayerState;
+import com.lifeos.core.entity.TemporalModifier;
+import com.lifeos.core.repository.PlayerStateRepository;
+import com.lifeos.core.repository.TemporalModifierRepository;
+import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -25,13 +30,18 @@ public class AdminController {
     private final PenaltyService penaltyService;
     private final UserBossKeyRepository bossKeyRepository;
     private final PlayerIdentityRepository playerIdentityRepository;
+    private final PlayerStateRepository corePlayerStateRepository;
+    private final TemporalModifierRepository temporalModifierRepository;
 
     public AdminController(PlayerStateService playerStateService, PenaltyService penaltyService, 
-                          UserBossKeyRepository bossKeyRepository, PlayerIdentityRepository playerIdentityRepository) {
+                          UserBossKeyRepository bossKeyRepository, PlayerIdentityRepository playerIdentityRepository,
+                          PlayerStateRepository corePlayerStateRepository, TemporalModifierRepository temporalModifierRepository) {
         this.playerStateService = playerStateService;
         this.penaltyService = penaltyService;
         this.bossKeyRepository = bossKeyRepository;
         this.playerIdentityRepository = playerIdentityRepository;
+        this.corePlayerStateRepository = corePlayerStateRepository;
+        this.temporalModifierRepository = temporalModifierRepository;
     }
 
     @PostMapping("/players/{playerId}/level")
@@ -84,6 +94,27 @@ public class AdminController {
     public ResponseEntity<Void> enterPenaltyZone(@PathVariable UUID playerId, @RequestParam String reason) {
         log.warn("Admin: Forcing player {} into penalty zone. Reason: {}", playerId, reason);
         penaltyService.enterPenaltyZone(playerId, reason);
+        
+        // Also create core TemporalModifier
+        PlayerState corePlayer = corePlayerStateRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Core PlayerState not found"));
+                
+        // Ensure no active PENALTY_ZONE modifier exists to prevent duplicates
+        boolean hasActivePenalty = temporalModifierRepository.findByPlayerPlayerIdAndIsActive(playerId, true)
+                .stream()
+                .anyMatch(m -> "PENALTY_ZONE".equals(m.getModifierType()));
+                
+        if (!hasActivePenalty) {
+            TemporalModifier modifier = TemporalModifier.builder()
+                    .player(corePlayer)
+                    .modifierType("PENALTY_ZONE")
+                    .startsAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusYears(100))
+                    .isActive(true)
+                    .build();
+            temporalModifierRepository.save(modifier);
+        }
+        
         return ResponseEntity.ok().build();
     }
 
@@ -91,6 +122,16 @@ public class AdminController {
     public ResponseEntity<Void> exitPenaltyZone(@PathVariable UUID playerId) {
         log.info("Admin: Forcing player {} to exit penalty zone", playerId);
         penaltyService.exitPenaltyZone(playerId);
+        
+        // Also deactivate core TemporalModifier
+        temporalModifierRepository.findByPlayerPlayerIdAndIsActive(playerId, true)
+                .stream()
+                .filter(m -> "PENALTY_ZONE".equals(m.getModifierType()))
+                .forEach(m -> {
+                    m.setActive(false);
+                    temporalModifierRepository.save(m);
+                });
+                
         return ResponseEntity.ok().build();
     }
 }

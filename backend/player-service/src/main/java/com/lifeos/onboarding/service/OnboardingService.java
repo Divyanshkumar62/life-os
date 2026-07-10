@@ -46,6 +46,7 @@ public class OnboardingService {
     private final QuestFallbackService questFallbackService;
     private final com.lifeos.ai.service.AIQuestService aiQuestService;
     private final IntelQuestGenerator intelQuestGenerator;
+    private final com.lifeos.core.repository.PlayerStateRepository playerStateRepository;
 
     @Transactional
     public OnboardingResponse startOnboarding(String username) {
@@ -463,5 +464,37 @@ public class OnboardingService {
         onboardingRepository.save(progress);
         
         log.info("JOB_CHANGE stage unlocked for player {}", playerId);
+    }
+    
+    @Transactional
+    public OnboardingResponse completeTrial(UUID playerId) {
+        log.info("Completing onboarding trial for player: {}", playerId);
+        
+        OnboardingProgress progress = getProgress_OrThrow(playerId);
+        progress.setCurrentStage(OnboardingStage.COMPLETED);
+        progress.setTrialCompleted(true);
+        progress.setCompletedAt(LocalDateTime.now());
+        onboardingRepository.save(progress);
+        
+        PlayerIdentity identity = progress.getPlayer();
+        identity.setOnboardingCompleted(true);
+        identityRepository.save(identity);
+        
+        playerStateRepository.findById(playerId).ifPresent(coreState -> {
+            coreState.setOnboardingCompleted(true);
+            coreState.setLevel(10);
+            coreState.setGoldBalance(10000);
+            playerStateRepository.save(coreState);
+            log.info("Updated core PlayerState for player: {} to onboardingCompleted = true, level = 10, gold = 10000", playerId);
+        });
+
+        var progression = progressionRepository.findByPlayerPlayerId(playerId).orElse(null);
+        if (progression != null) {
+            progression.setLevel(10);
+            progression.setGold(10000L);
+            progressionRepository.save(progression);
+        }
+        
+        return buildResponse(progress, "Onboarding trial completed successfully. System unlocked.");
     }
 }

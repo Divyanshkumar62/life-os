@@ -30,6 +30,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
     private final com.lifeos.penalty.repository.PenaltyRecordRepository penaltyRepository;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
     private final com.lifeos.system.repository.SystemEventRepository systemEventRepository;
+    private final com.lifeos.core.repository.PlayerStateRepository playerStateRepository;
 
     public PlayerStateServiceImpl(
             PlayerIdentityRepository identityRepository,
@@ -42,7 +43,8 @@ public class PlayerStateServiceImpl implements PlayerStateService {
             PlayerHistoryRepository historyRepository,
             com.lifeos.penalty.repository.PenaltyRecordRepository penaltyRepository,
             org.springframework.context.ApplicationEventPublisher eventPublisher,
-            com.lifeos.system.repository.SystemEventRepository systemEventRepository) {
+            com.lifeos.system.repository.SystemEventRepository systemEventRepository,
+            com.lifeos.core.repository.PlayerStateRepository playerStateRepository) {
         this.identityRepository = identityRepository;
         this.progressionRepository = progressionRepository;
         this.attributeRepository = attributeRepository;
@@ -54,6 +56,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         this.penaltyRepository = penaltyRepository;
         this.eventPublisher = eventPublisher;
         this.systemEventRepository = systemEventRepository;
+        this.playerStateRepository = playerStateRepository;
     }
 
     @Override
@@ -70,6 +73,13 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 .systemVersion("v1")
                 .build();
         identity = identityRepository.save(identity);
+
+        // Create core PlayerState record
+        com.lifeos.core.entity.PlayerState corePlayerState = com.lifeos.core.entity.PlayerState.builder()
+                .playerId(identity.getPlayerId())
+                .username(identity.getUsername())
+                .build();
+        playerStateRepository.save(corePlayerState);
 
         // Create Progression
         PlayerProgression progression = PlayerProgression.builder()

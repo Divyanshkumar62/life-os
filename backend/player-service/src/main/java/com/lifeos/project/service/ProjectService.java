@@ -481,4 +481,46 @@ public class ProjectService {
             projectRepository.save(project);
         }
     }
+
+    @Transactional
+    public Project ariseDungeon(UUID dungeonId, UUID playerId) {
+        Project project = projectRepository.findById(dungeonId)
+                .orElseThrow(() -> new IllegalArgumentException("Dungeon not found: " + dungeonId));
+
+        if (!project.getPlayer().getPlayerId().equals(playerId)) {
+            throw new IllegalArgumentException("Dungeon does not belong to this player");
+        }
+
+        if (project.getStatus() != ProjectStatus.FAILED) {
+            throw new IllegalStateException("Only failed dungeons can be resurrected");
+        }
+
+        // Consume the COMMAND_ARISE item from inventory
+        try {
+            inventoryService.consumeItemByCode(playerId, "COMMAND_ARISE", 1);
+        } catch (Exception e) {
+            throw new IllegalStateException("Requires active COMMAND_ARISE consumable in inventory.");
+        }
+
+        // Resurrect into SHADOW state
+        project.setStatus(ProjectStatus.SHADOW);
+        
+        // Cut the original duration in half for the new deadline
+        int halfDuration = Math.max(1, project.getDurationDays() / 2);
+        project.setHardDeadline(LocalDateTime.now().plusDays(halfDuration));
+        project.setLastActivityAt(LocalDateTime.now());
+        
+        // Reactivate pending subtask quests associated with the dungeon
+        var dungeonQuests = questRepository.findByProjectId(dungeonId);
+        for (var quest : dungeonQuests) {
+            if (quest.getState() == com.lifeos.quest.domain.enums.QuestState.FAILED ||
+                quest.getState() == com.lifeos.quest.domain.enums.QuestState.ACTIVE ||
+                quest.getState() == com.lifeos.quest.domain.enums.QuestState.ASSIGNED) {
+                quest.setState(com.lifeos.quest.domain.enums.QuestState.PENDING);
+                questRepository.save(quest);
+            }
+        }
+
+        return projectRepository.save(project);
+    }
 }

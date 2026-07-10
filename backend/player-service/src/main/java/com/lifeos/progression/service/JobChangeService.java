@@ -22,7 +22,9 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import com.lifeos.core.repository.PlayerStateRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -53,6 +55,7 @@ public class JobChangeService {
     private final InventoryService inventoryService;
     private final PenaltyService penaltyService;
     private final ShopItemRepository shopItemRepository;
+    private final PlayerStateRepository playerStateRepository;
 
     /**
      * Check if player has reached level 40 and trigger job change if needed.
@@ -426,5 +429,45 @@ public class JobChangeService {
                     return (double) physicalCount / completed.size();
                 })
                 .orElse(0.5);
+    }
+
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public com.lifeos.core.dto.JobChangeResponse selectJobClass(UUID playerId, String selectedClass) {
+        // Pessimistic Write Lock player state
+        playerStateRepository.findAndLockById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player state not found: " + playerId));
+
+        PlayerIdentity identity = identityRepository.findById(playerId)
+                .orElseThrow(() -> new IllegalArgumentException("Player identity not found: " + playerId));
+
+        if (identity.getJobClass() != null) {
+            throw new IllegalStateException("Player already has a job class: " + identity.getJobClass());
+        }
+
+        identity.setJobClass(selectedClass);
+        identity.setJobChangeStatus("COMPLETED");
+        identity.setXpFrozen(false);
+        identityRepository.save(identity);
+
+        projectService.resumePlayerProjects(playerId, 3);
+
+        // Fetch A-rank items to return in response
+        List<ShopItem> aRankItems = shopItemRepository.findAll().stream()
+                .filter(item -> item.getRankRequirement() == com.lifeos.player.domain.enums.PlayerRank.A)
+                .limit(JOB_CHANGE_REWARD_A_ITEMS)
+                .toList();
+
+        // Award rewards
+        awardRewards(playerId, selectedClass);
+
+        return com.lifeos.core.dto.JobChangeResponse.builder()
+                .playerId(playerId)
+                .jobClass(selectedClass)
+                .evolutionRewards(com.lifeos.core.dto.JobChangeResponse.EvolutionRewards.builder()
+                        .goldAwarded(JOB_CHANGE_REWARD_GOLD)
+                        .statPointsAwarded(JOB_CHANGE_REWARD_STAT_POINTS)
+                        .itemsAwarded(aRankItems.stream().map(ShopItem::getName).toList())
+                        .build())
+                .build();
     }
 }

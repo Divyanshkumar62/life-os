@@ -37,6 +37,12 @@ public class OnboardingController {
         return ResponseEntity.ok(onboardingService.submitAwakening(playerId, request));
     }
 
+    @PostMapping("/{playerId}/trial/complete")
+    public ResponseEntity<OnboardingResponse> completeTrial(@PathVariable UUID playerId) {
+        log.info("Completing onboarding trial for player: {}", playerId);
+        return ResponseEntity.ok(onboardingService.completeTrial(playerId));
+    }
+
     // Calibrate endpoint removed (merged into Awakening)
 
     @GetMapping("/{playerId}/status")

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-@Service
+@Service("systemVoiceService")
 public class SystemVoiceService {
 
     private static final Logger log = LoggerFactory.getLogger(SystemVoiceService.class);
