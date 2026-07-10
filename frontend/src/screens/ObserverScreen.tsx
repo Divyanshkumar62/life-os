@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, Skull, TrendingUp, Calendar, RefreshCw } from 'lucide-react';
+import { Eye, Skull, TrendingUp, RefreshCw } from 'lucide-react';
 import { ScreenFrame } from '../components/layout/ScreenFrame';
 import { AnalyticsAPI } from '../api/api';
+import { TelemetryHeatmap } from '../features/analytics/components/TelemetryHeatmap';
+import { DungeonGraveyard } from '../features/analytics/components/DungeonGraveyard';
 import {
   ResponsiveContainer,
   LineChart,
@@ -16,11 +18,6 @@ import {
 interface ObserverScreenProps {
   playerId: string | null;
   onBack: () => void;
-}
-
-interface HeatmapEntry {
-  date: string;
-  status: 'ALL_CLEARED' | 'PARTIAL' | 'FAILED' | 'NO_QUESTS';
 }
 
 interface StatDataPoint {
@@ -41,7 +38,6 @@ interface GraveyardEntry {
 }
 
 export function ObserverScreen({ playerId, onBack }: ObserverScreenProps) {
-  const [heatmap, setHeatmap] = useState<HeatmapEntry[]>([]);
   const [stats, setStats] = useState<StatDataPoint[]>([]);
   const [graveyard, setGraveyard] = useState<GraveyardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -50,12 +46,10 @@ export function ObserverScreen({ playerId, onBack }: ObserverScreenProps) {
   const loadData = async () => {
     if (!playerId) return;
     try {
-      const [heatmapData, statsData, graveyardData] = await Promise.all([
-        AnalyticsAPI.fetchHeatmap(playerId),
+      const [statsData, graveyardData] = await Promise.all([
         AnalyticsAPI.fetchStatGrowth(playerId),
         AnalyticsAPI.fetchGraveyard(playerId)
       ]);
-      setHeatmap(heatmapData || []);
       setStats(statsData || []);
       setGraveyard(graveyardData || []);
     } catch (error) {
@@ -74,14 +68,6 @@ export function ObserverScreen({ playerId, onBack }: ObserverScreenProps) {
     setRefreshing(true);
     loadData();
   };
-
-  // Chunk 365 days into 53 weeks (7 days each)
-  const weeks: HeatmapEntry[][] = [];
-  if (heatmap.length > 0) {
-    for (let i = 0; i < heatmap.length; i += 7) {
-      weeks.push(heatmap.slice(i, i + 7));
-    }
-  }
 
   // Format dates for chart labels
   const formattedStats = stats.map(d => ({
@@ -157,73 +143,8 @@ export function ObserverScreen({ playerId, onBack }: ObserverScreenProps) {
           {/* Main Visualizations (Left and Middle columns) */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Daily Heatmap Grid */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="glass-panel border border-slate-800 bg-[#060c18]/80 p-5 shadow-lg relative"
-            >
-              <div className="absolute top-0 left-0 w-24 h-[1px] bg-solo-cyan" />
-              <div className="absolute top-0 left-0 w-[1px] h-24 bg-solo-cyan" />
-              
-              <h3 className="text-xs text-solo-cyan font-bold tracking-[0.25em] mb-4 uppercase flex items-center gap-2">
-                <Calendar size={14} /> Daily quest completion calendar (365 Days)
-              </h3>
-
-              <div className="flex gap-2 p-2 bg-[#030712]/50 border border-slate-900 overflow-x-auto scrollbar-thin">
-                {/* Y-Axis Labels */}
-                <div className="flex flex-col justify-between py-1 text-[8px] font-bold text-gray-600 select-none h-[98px] shrink-0 font-mono">
-                  <span>Mon</span>
-                  <span>Wed</span>
-                  <span>Fri</span>
-                </div>
-
-                {/* Heatmap Grid columns */}
-                <div className="flex gap-1">
-                  {weeks.map((week, wIdx) => (
-                    <div key={wIdx} className="flex flex-col gap-1 shrink-0">
-                      {week.map((day, dIdx) => {
-                        let colorClass = 'bg-slate-950/80 border border-slate-900/60';
-                        let glowClass = '';
-                        if (day.status === 'ALL_CLEARED') {
-                          colorClass = 'bg-solo-cyan border border-solo-cyan';
-                          glowClass = 'shadow-[0_0_5px_rgba(0,229,255,0.7)]';
-                        } else if (day.status === 'PARTIAL') {
-                          colorClass = 'bg-[#007f99] border border-[#009fb3]';
-                        } else if (day.status === 'FAILED') {
-                          colorClass = 'bg-solo-red border border-solo-red';
-                          glowClass = 'shadow-[0_0_5px_rgba(255,0,60,0.7)]';
-                        }
-                        return (
-                          <div
-                            key={dIdx}
-                            className={`w-2.5 h-2.5 transition-all duration-300 hover:scale-125 ${colorClass} ${glowClass}`}
-                            title={`${day.date}: ${day.status.replace('_', ' ')}`}
-                          />
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Legend */}
-              <div className="flex justify-end gap-4 mt-3 text-[9px] text-gray-500 uppercase tracking-wider font-bold">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-slate-950/80 border border-slate-900" /> Empty
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-[#007f99] border border-[#009fb3]" /> Partial
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-solo-cyan shadow-[0_0_5px_rgba(0,229,255,0.7)]" /> Clear
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-solo-red shadow-[0_0_5px_rgba(255,0,60,0.7)]" /> Penalty
-                </span>
-              </div>
-            </motion.div>
+            {/* Daily Heatmap Grid (Modularized) */}
+            <TelemetryHeatmap playerId={playerId || ""} />
 
             {/* Stat Growth Trajectory */}
             <motion.div
@@ -315,6 +236,9 @@ export function ObserverScreen({ playerId, onBack }: ObserverScreenProps) {
                 </div>
               )}
             </motion.div>
+
+            {/* Dungeon Graveyard Section (Modularized) */}
+            <DungeonGraveyard playerId={playerId || ""} />
           </div>
 
           {/* Confession Graveyard (Right column) */}
@@ -387,3 +311,4 @@ export function ObserverScreen({ playerId, onBack }: ObserverScreenProps) {
     </ScreenFrame>
   );
 }
+export default ObserverScreen;
