@@ -3,6 +3,8 @@ package com.lifeos.system.domain;
 import com.lifeos.system.domain.enums.SystemEventType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,9 +16,11 @@ public class SystemEvent {
     @Id
     @GeneratedValue
     @UuidGenerator
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(columnDefinition = "VARCHAR(36)", updatable = false)
     private UUID eventId;
 
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, columnDefinition = "VARCHAR(36)")
     private UUID playerId;
 

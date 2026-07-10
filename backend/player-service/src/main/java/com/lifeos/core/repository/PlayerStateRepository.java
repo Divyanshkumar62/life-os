@@ -11,10 +11,13 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.UUID;
 
-@Repository
+@Repository("corePlayerStateRepository")
 public interface PlayerStateRepository extends JpaRepository<PlayerState, UUID> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM PlayerState p WHERE p.playerId = :id")
     Optional<PlayerState> findAndLockById(@Param("id") UUID id);
+
+    @Query("SELECT COUNT(q) > 0 FROM Quest q WHERE q.player.playerId = :playerId AND q.category = com.lifeos.quest.domain.enums.QuestCategory.SYSTEM_DAILY AND q.state IN (com.lifeos.quest.domain.enums.QuestState.ACTIVE, com.lifeos.quest.domain.enums.QuestState.ASSIGNED)")
+    boolean hasFailedActiveDailies(@Param("playerId") UUID playerId);
 }

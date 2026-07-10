@@ -5,5 +5,7 @@ public enum ProjectStatus {
     COMPLETED,
     FAILED,
     ABANDONED,
-    SUSPENDED
+    SUSPENDED,
+    SHADOW,
+    PERMADEATH
 }
