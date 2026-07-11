@@ -62,7 +62,7 @@ export const RedGateProvider: React.FC<{
     });
 
     const checkRedGateStatus = useCallback(async () => {
-        if (!playerId && !sandboxActive) return;
+        if (!playerId) return;
         try {
             const data = await RedGateAPI.getStatus(playerId || "");
             const activeQuests = await QuestAPI.getActiveQuests(playerId || "");
@@ -79,10 +79,10 @@ export const RedGateProvider: React.FC<{
             console.error("Failed to check Red Gate status:", err);
             setRedGate(prev => ({ ...prev, loading: false }));
         }
-    }, [playerId, sandboxActive]);
+    }, [playerId]);
 
     const checkJobChangeStatus = useCallback(async () => {
-        if (!playerId && !sandboxActive) return;
+        if (!playerId) return;
         try {
             const data = await JobChangeAPI.getStatus(playerId || "");
             setJobChange({
@@ -96,7 +96,7 @@ export const RedGateProvider: React.FC<{
             console.error("Failed to check Job Change status:", err);
             setJobChange(prev => ({ ...prev, loading: false }));
         }
-    }, [playerId, sandboxActive]);
+    }, [playerId]);
 
     const triggerRedGateWithKey = async () => {
         try {
@@ -150,6 +150,11 @@ export const RedGateProvider: React.FC<{
 
     // Re-fetch status whenever playerId or sandbox configuration changes
     useEffect(() => {
+        if (sandboxActive && !playerId) {
+            setRedGate({ isActive: false, quest: null, remainingSeconds: null, loading: false });
+            setJobChange({ jobClass: null, status: 'AWAITING_ACCEPTANCE', xpFrozen: false, cooldownUntil: null, loading: false });
+            return;
+        }
         checkRedGateStatus();
         checkJobChangeStatus();
     }, [playerId, sandboxActive, sandboxView, checkRedGateStatus, checkJobChangeStatus]);
