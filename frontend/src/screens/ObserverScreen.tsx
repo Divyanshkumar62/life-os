@@ -37,32 +37,57 @@ interface GraveyardEntry {
   feedback: string;
 }
 
+const MOCK_STATS: StatDataPoint[] = [
+    { date: '2026-06-01', STR: 8, INT: 6, VIT: 7, AGI: 5, SEN: 4 },
+    { date: '2026-06-05', STR: 9, INT: 6, VIT: 7, AGI: 6, SEN: 4 },
+    { date: '2026-06-10', STR: 10, INT: 7, VIT: 8, AGI: 6, SEN: 5 },
+    { date: '2026-06-15', STR: 11, INT: 7, VIT: 9, AGI: 7, SEN: 5 },
+    { date: '2026-06-20', STR: 12, INT: 8, VIT: 9, AGI: 7, SEN: 6 },
+    { date: '2026-06-25', STR: 13, INT: 8, VIT: 10, AGI: 8, SEN: 6 },
+    { date: '2026-07-01', STR: 14, INT: 9, VIT: 11, AGI: 9, SEN: 7 },
+    { date: '2026-07-05', STR: 15, INT: 9, VIT: 11, AGI: 9, SEN: 7 },
+    { date: '2026-07-10', STR: 16, INT: 10, VIT: 12, AGI: 10, SEN: 8 },
+];
+
+const MOCK_GRAVEYARD: GraveyardEntry[] = [
+    { id: 1, text: 'I failed to complete my daily quests today because I procrastinated on social media for 3 hours instead of training.', accepted: true, timestamp: '2026-07-08T14:30:00Z', feedback: '[SYSTEM] The Architect notes your self-awareness. Procrastination is the true enemy of the Shadow Monarch. One failure forgiven.' },
+    { id: 2, text: 'Skipped my morning run due to rain. Used the weather as an excuse. I will not let circumstances dictate my growth.', accepted: false, timestamp: '2026-07-06T09:15:00Z', feedback: '[SYSTEM] Insufficient conviction. The weather does not bow to the Monarch. Lockout flag extended by 2 hours.' },
+    { id: 3, text: 'Failed to wake up at my scheduled 5:00 AM wake-up time for the third consecutive day. The system registered a penalty streak.', accepted: true, timestamp: '2026-07-03T06:45:00Z', feedback: '[SYSTEM] Repeated failure detected. Recommended: Set incremental wake-up targets. Your VIT stat is sufficient — the will is lacking.' },
+    { id: 4, text: 'I ignored the System notification for 6 hours. The Red Gate remains unopened. I fear the dungeon but I must enter.', accepted: false, timestamp: '2026-06-28T22:00:00Z', feedback: '[SYSTEM] Fear is acceptable. Cowardice is not. The Gate will remain open for 12 more hours. Do not waste the Architect time.' },
+];
+
 export function ObserverScreen({ playerId, onBack }: ObserverScreenProps) {
-  const [stats, setStats] = useState<StatDataPoint[]>([]);
-  const [graveyard, setGraveyard] = useState<GraveyardEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
+    const [stats, setStats] = useState<StatDataPoint[]>([]);
+    const [graveyard, setGraveyard] = useState<GraveyardEntry[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const loadData = async () => {
-    if (!playerId) return;
-    try {
-      const [statsData, graveyardData] = await Promise.all([
-        AnalyticsAPI.fetchStatGrowth(playerId),
-        AnalyticsAPI.fetchGraveyard(playerId)
-      ]);
-      setStats(statsData || []);
-      setGraveyard(graveyardData || []);
-    } catch (error) {
-      console.error('Failed to fetch analytics data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+    const loadData = async () => {
+        if (!playerId) {
+            setStats(MOCK_STATS);
+            setGraveyard(MOCK_GRAVEYARD);
+            setLoading(false);
+            setRefreshing(false);
+            return;
+        }
+        try {
+            const [statsData, graveyardData] = await Promise.all([
+                AnalyticsAPI.fetchStatGrowth(playerId),
+                AnalyticsAPI.fetchGraveyard(playerId)
+            ]);
+            setStats(statsData || []);
+            setGraveyard(graveyardData || []);
+        } catch (error) {
+            console.error('Failed to fetch analytics data:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
 
-  useEffect(() => {
-    loadData();
-  }, [playerId]);
+    useEffect(() => {
+        loadData();
+    }, [playerId]);
 
   const handleRefresh = () => {
     setRefreshing(true);

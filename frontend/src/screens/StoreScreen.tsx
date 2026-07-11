@@ -19,6 +19,17 @@ interface StoreScreenProps {
     playerId: string | null;
 }
 
+const MOCK_SHOP_ITEMS: ShopItem[] = [
+    { itemId: 'mock-001', code: 'INSURANCE_SCROLL', name: 'Penalty Shield', description: 'One-time protection against Penalty Zone entry. Consumed on use.', cost: 2500, baseCost: 2500, stockLimit: 3, rankRequirement: 'E-RANK' },
+    { itemId: 'mock-002', code: 'FATIGUE_REMEDY', name: 'Fatigue Remedy', description: 'Instantly restores 30% of your daily energy pool. One use per day.', cost: 500, baseCost: 500, stockLimit: 5, rankRequirement: 'E-RANK' },
+    { itemId: 'mock-003', code: 'RUNE_OF_SWIFTNESS', name: 'Rune of Swiftness', description: 'Temporary AGI boost of +5 for the next 4 hours. Stacks with equipment.', cost: 10000, baseCost: 10000, stockLimit: 2, rankRequirement: 'E-RANK' },
+    { itemId: 'mock-004', code: 'RUNE_OF_BOUNTY', name: 'Rune of Bounty', description: 'Double gold earnings from all quests for 24 hours.', cost: 5000, baseCost: 5000, stockLimit: 2, rankRequirement: 'E-RANK' },
+    { itemId: 'mock-005', code: 'RUNE_OF_PRESENCE', name: 'Rune of Presence', description: 'Temporary SEN boost of +5 for the next 4 hours. Reveals hidden gate paths.', cost: 3000, baseCost: 3000, stockLimit: 2, rankRequirement: 'E-RANK' },
+    { itemId: 'mock-006', code: 'MONARCH_EXEMPTION', name: "Monarch's Exemption", description: 'One free skip of any active penalty lockout. Extremely rare.', cost: 20000, baseCost: 20000, stockLimit: 1, rankRequirement: 'E-RANK' },
+    { itemId: 'mock-007', code: 'KEY_A_RANK', name: 'A-Rank Key', description: 'Unlocks an A-Rank dungeon gate. Requires C-Rank or higher.', cost: 5000, baseCost: 5000, stockLimit: 1, rankRequirement: 'C-RANK' },
+    { itemId: 'mock-008', code: 'COMMAND_ARISE', name: 'Command: Arise', description: 'Ancient artifact. Extract a shadow from a fallen enemy. One-time use.', cost: 100000, baseCost: 100000, stockLimit: 1, rankRequirement: 'S-RANK' },
+];
+
 export const StoreScreen = ({ playerId }: StoreScreenProps) => {
     const [items, setItems] = useState<ShopItem[]>([]);
     const [loading, setLoading] = useState(true);
@@ -31,7 +42,11 @@ export const StoreScreen = ({ playerId }: StoreScreenProps) => {
     const playerLevel = statusWindow?.identity?.level || 1;
 
     const fetchData = async () => {
-        if (!playerId) return;
+        if (!playerId) {
+            setItems(MOCK_SHOP_ITEMS);
+            setLoading(false);
+            return;
+        }
         try {
             const shopItems = await EconomyAPI.fetchShopItems(playerId);
             setItems(shopItems);
