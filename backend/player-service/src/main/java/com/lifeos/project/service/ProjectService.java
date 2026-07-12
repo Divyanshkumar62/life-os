@@ -110,12 +110,16 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
                 
-        if (project.getStatus() != ProjectStatus.ACTIVE) {
-            throw new IllegalStateException("Project is not active");
+        if (project.getStatus() != ProjectStatus.ACTIVE && project.getStatus() != ProjectStatus.SHADOW) {
+            throw new IllegalStateException("Project is not active or shadow");
         }
         
         if (LocalDateTime.now().isAfter(project.getHardDeadline())) {
-            project.setStatus(ProjectStatus.FAILED);
+            if (project.getStatus() == ProjectStatus.SHADOW) {
+                project.setStatus(ProjectStatus.PERMADEATH);
+            } else {
+                project.setStatus(ProjectStatus.FAILED);
+            }
             projectRepository.save(project);
             log.info("Project failed: Deadline passed");
             return;
@@ -502,25 +506,62 @@ public class ProjectService {
             throw new IllegalStateException("Requires active COMMAND_ARISE consumable in inventory.");
         }
 
-        // Resurrect into SHADOW state
-        project.setStatus(ProjectStatus.SHADOW);
-        
-        // Cut the original duration in half for the new deadline
+        // Clone the target FAILED dungeon parameters into a fresh instance
         int halfDuration = Math.max(1, project.getDurationDays() / 2);
-        project.setHardDeadline(LocalDateTime.now().plusDays(halfDuration));
-        project.setLastActivityAt(LocalDateTime.now());
-        
+        LocalDateTime newDeadline = LocalDateTime.now().plusDays(halfDuration);
+
+        Project shadowDungeon = Project.builder()
+                .player(project.getPlayer())
+                .title(project.getTitle())
+                .description(project.getDescription())
+                .rankRequirement(project.getRankRequirement())
+                .difficultyTier(project.getDifficultyTier())
+                .status(ProjectStatus.SHADOW)
+                .minSubtasks(project.getMinSubtasks())
+                .durationDays(halfDuration)
+                .startDate(LocalDateTime.now())
+                .hardDeadline(newDeadline)
+                .bossKeyReward(project.getBossKeyReward())
+                .baseXpReward(project.getBaseXpReward())
+                .baseGoldReward(project.getBaseGoldReward())
+                .createdAt(LocalDateTime.now())
+                .completedAt(null)
+                .lastActivityAt(LocalDateTime.now())
+                .stabilityStatus(project.getStabilityStatus())
+                .finalXpMultiplier(project.getFinalXpMultiplier())
+                .build();
+
+        shadowDungeon = projectRepository.save(shadowDungeon);
+
         // Reactivate pending subtask quests associated with the dungeon
         var dungeonQuests = questRepository.findByProjectId(dungeonId);
         for (var quest : dungeonQuests) {
             if (quest.getState() == com.lifeos.quest.domain.enums.QuestState.FAILED ||
                 quest.getState() == com.lifeos.quest.domain.enums.QuestState.ACTIVE ||
                 quest.getState() == com.lifeos.quest.domain.enums.QuestState.ASSIGNED) {
-                quest.setState(com.lifeos.quest.domain.enums.QuestState.PENDING);
-                questRepository.save(quest);
+                
+                Quest clonedQuest = Quest.builder()
+                        .player(quest.getPlayer())
+                        .projectId(shadowDungeon.getProjectId())
+                        .title(quest.getTitle())
+                        .description(quest.getDescription())
+                        .questType(quest.getQuestType())
+                        .category(quest.getCategory())
+                        .primaryAttribute(quest.getPrimaryAttribute())
+                        .difficultyTier(quest.getDifficultyTier())
+                        .priority(quest.getPriority())
+                        .state(com.lifeos.quest.domain.enums.QuestState.PENDING)
+                        .assignedAt(LocalDateTime.now())
+                        .startsAt(LocalDateTime.now())
+                        .deadlineAt(newDeadline)
+                        .systemMutable(quest.isSystemMutable())
+                        .egoBreakerFlag(quest.isEgoBreakerFlag())
+                        .expectedFailureProbability(quest.getExpectedFailureProbability())
+                        .build();
+                questRepository.save(clonedQuest);
             }
         }
 
-        return projectRepository.save(project);
+        return shadowDungeon;
     }
 }

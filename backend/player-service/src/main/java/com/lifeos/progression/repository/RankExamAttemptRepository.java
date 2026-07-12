@@ -15,4 +15,6 @@ public interface RankExamAttemptRepository extends JpaRepository<RankExamAttempt
     
     @Query("SELECT r FROM RankExamAttempt r WHERE r.player.playerId = :playerId ORDER BY r.unlockedAt DESC LIMIT 1")
     Optional<RankExamAttempt> findLatestByPlayerId(@Param("playerId") UUID playerId);
+
+    java.util.List<RankExamAttempt> findByPlayerPlayerId(UUID playerId);
 }

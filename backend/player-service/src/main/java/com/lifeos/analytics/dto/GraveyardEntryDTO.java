@@ -8,6 +8,9 @@ public class GraveyardEntryDTO {
     private boolean accepted;
     private LocalDateTime timestamp;
     private String feedback;
+    private int strikeCount;
+    private Integer lockoutDurationHours;
+    private String entryType;
 
     public GraveyardEntryDTO() {}
 
@@ -17,6 +20,21 @@ public class GraveyardEntryDTO {
         this.accepted = accepted;
         this.timestamp = timestamp;
         this.feedback = feedback;
+        this.strikeCount = 0;
+        this.lockoutDurationHours = null;
+        this.entryType = "CONFESSION";
+    }
+
+    public GraveyardEntryDTO(Long id, String text, boolean accepted, LocalDateTime timestamp, String feedback,
+                             int strikeCount, Integer lockoutDurationHours, String entryType) {
+        this.id = id;
+        this.text = text;
+        this.accepted = accepted;
+        this.timestamp = timestamp;
+        this.feedback = feedback;
+        this.strikeCount = strikeCount;
+        this.lockoutDurationHours = lockoutDurationHours;
+        this.entryType = entryType;
     }
 
     public Long getId() { return id; }
@@ -33,4 +51,13 @@ public class GraveyardEntryDTO {
 
     public String getFeedback() { return feedback; }
     public void setFeedback(String feedback) { this.feedback = feedback; }
+
+    public int getStrikeCount() { return strikeCount; }
+    public void setStrikeCount(int strikeCount) { this.strikeCount = strikeCount; }
+
+    public Integer getLockoutDurationHours() { return lockoutDurationHours; }
+    public void setLockoutDurationHours(Integer lockoutDurationHours) { this.lockoutDurationHours = lockoutDurationHours; }
+
+    public String getEntryType() { return entryType; }
+    public void setEntryType(String entryType) { this.entryType = entryType; }
 }

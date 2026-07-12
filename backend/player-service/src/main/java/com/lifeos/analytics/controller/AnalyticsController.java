@@ -39,10 +39,17 @@ public class AnalyticsController {
         return ResponseEntity.ok(stats);
     }
 
-    @GetMapping("/graveyard")
+    @GetMapping("/confessions")
     public ResponseEntity<List<GraveyardEntryDTO>> getJournalGraveyard(@RequestParam UUID playerId) {
         log.info("Fetching confession graveyard for player: {}", playerId);
         List<GraveyardEntryDTO> graveyard = analyticsService.getJournalGraveyard(playerId);
+        return ResponseEntity.ok(graveyard);
+    }
+
+    @GetMapping("/dungeon-graveyard")
+    public ResponseEntity<List<com.lifeos.analytics.dto.DungeonGraveyardEntryDTO>> getDungeonGraveyard(@RequestParam UUID playerId) {
+        log.info("Fetching dungeon graveyard for player: {}", playerId);
+        List<com.lifeos.analytics.dto.DungeonGraveyardEntryDTO> graveyard = analyticsService.getDungeonGraveyard(playerId);
         return ResponseEntity.ok(graveyard);
     }
 }

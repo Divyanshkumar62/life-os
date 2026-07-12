@@ -36,7 +36,7 @@ public class DungeonStabilityService {
     public void performDailyStabilityChecks() {
         log.info("Starting Daily Dungeon Stability Check...");
         List<Project> activeProjects = projectRepository.findAll().stream()
-                .filter(p -> p.getStatus() == ProjectStatus.ACTIVE)
+                .filter(p -> p.getStatus() == ProjectStatus.ACTIVE || p.getStatus() == ProjectStatus.SHADOW)
                 .collect(Collectors.toList());
 
         for (Project project : activeProjects) {
@@ -48,7 +48,7 @@ public class DungeonStabilityService {
     @Transactional
     public void checkAllProjectsStability(UUID playerId) {
         List<Project> activeProjects = projectRepository.findAll().stream() // Ideally findByPlayerAndStatus
-                .filter(p -> p.getPlayer().getPlayerId().equals(playerId) && p.getStatus() == ProjectStatus.ACTIVE)
+                .filter(p -> p.getPlayer().getPlayerId().equals(playerId) && (p.getStatus() == ProjectStatus.ACTIVE || p.getStatus() == ProjectStatus.SHADOW))
                 .collect(Collectors.toList());
         
         for (Project project : activeProjects) {
