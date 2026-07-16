@@ -5,6 +5,8 @@ import com.lifeos.economy.service.EconomyService;
 import com.lifeos.onboarding.service.OnboardingService;
 import com.lifeos.penalty.service.PenaltyService;
 import com.lifeos.player.service.PlayerStateService;
+import com.lifeos.player.dto.LevelUpResultDTO;
+import com.lifeos.player.repository.PlayerProgressionRepository;
 import com.lifeos.progression.service.JobChangeService;
 import com.lifeos.voice.domain.enums.SystemMessageType;
 import com.lifeos.voice.event.VoiceSystemEvent;
@@ -31,6 +33,9 @@ public class LevelUpRewardHandler {
     private final OnboardingService onboardingService;
     private final EconomyService economyService;
     private final ApplicationEventPublisher eventPublisher;
+    private final PlayerProgressionRepository progressionRepository;
+    private final com.lifeos.system.service.SystemVoiceService systemVoiceService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @EventListener
     @Transactional(propagation = Propagation.REQUIRED)
@@ -45,8 +50,12 @@ public class LevelUpRewardHandler {
             clearTemporaryDebuffs(playerId);
             
             // Step 2: Grant free stat points
-            playerStateService.addFreeStatPoints(playerId, 3);
-            log.debug("Granted 3 free stat points to player {}", playerId);
+            int statPointsAwarded = 5;
+            if (newLevel == 40) {
+                statPointsAwarded += 20;
+            }
+            playerStateService.addFreeStatPoints(playerId, statPointsAwarded);
+            log.debug("Granted {} free stat points to player {}", statPointsAwarded, playerId);
             
             // Step 3: Grant gold reward based on level
             long goldReward = newLevel * GOLD_PER_LEVEL;
@@ -62,8 +71,29 @@ public class LevelUpRewardHandler {
                 log.info("Unlocked JOB_CHANGE stage in onboarding for player {}", playerId);
             }
             
+            // Fetch current progression info for DTO
+            boolean xpFrozen = false;
+            int rankCapLevel = 100;
+            var progression = progressionRepository.findByPlayerPlayerId(playerId).orElse(null);
+            if (progression != null) {
+                xpFrozen = progression.isXpFrozen();
+                rankCapLevel = progression.getRank().getLevelCap();
+            }
+
+            LevelUpResultDTO rewardDto = LevelUpResultDTO.builder()
+                    .playerId(playerId)
+                    .newLevel(newLevel)
+                    .previousLevel(event.getPreviousLevel())
+                    .statPointsAwarded(statPointsAwarded)
+                    .goldAwarded(goldReward)
+                    .debuffsCleansed(true)
+                    .xpFrozen(xpFrozen)
+                    .xpBurned(0L)
+                    .rankCapLevel(rankCapLevel)
+                    .build();
+
             // Step 5: Send notifications (fire-and-forget)
-            sendLevelUpNotifications(playerId);
+            sendLevelUpNotifications(playerId, rewardDto);
             
             log.info("Level-up processing complete for player {} at level {} ({} gold awarded)", 
                     playerId, newLevel, goldReward);
@@ -79,11 +109,36 @@ public class LevelUpRewardHandler {
         log.debug("Cleared temporary debuffs for player {}", playerId);
     }
 
-    private void sendLevelUpNotifications(UUID playerId) {
+    private void sendLevelUpNotifications(UUID playerId, LevelUpResultDTO rewardDto) {
+        String payloadJson = null;
         try {
+            payloadJson = objectMapper.writeValueAsString(rewardDto);
+        } catch (Exception e) {
+            log.warn("Failed to serialize LevelUpResultDTO: {}", e.getMessage());
+        }
+
+        try {
+            systemVoiceService.emitEvent(playerId, com.lifeos.system.domain.enums.SystemEventType.LEVEL_UP, 
+                    "Congratulations! You have leveled up to Level " + rewardDto.getNewLevel(), payloadJson);
+        } catch (Exception e) {
+            log.warn("Failed to emit LEVEL_UP system voice event: {}", e.getMessage());
+        }
+
+        try {
+            java.util.Map<String, Object> payload = new java.util.HashMap<>();
+            payload.put("newLevel", rewardDto.getNewLevel());
+            payload.put("previousLevel", rewardDto.getPreviousLevel());
+            payload.put("statPointsAwarded", rewardDto.getStatPointsAwarded());
+            payload.put("goldAwarded", rewardDto.getGoldAwarded());
+            payload.put("debuffsCleansed", rewardDto.isDebuffsCleansed());
+            payload.put("xpFrozen", rewardDto.isXpFrozen());
+            payload.put("xpBurned", rewardDto.getXpBurned());
+            payload.put("rankCapLevel", rewardDto.getRankCapLevel());
+
             eventPublisher.publishEvent(VoiceSystemEvent.builder()
                     .playerId(playerId)
                     .type(SystemMessageType.LEVEL_UP)
+                    .payload(payload)
                     .build());
         } catch (Exception e) {
             log.warn("Failed to send LEVEL_UP notification: {}", e.getMessage());
