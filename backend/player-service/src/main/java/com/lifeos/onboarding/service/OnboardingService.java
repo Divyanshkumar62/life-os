@@ -5,6 +5,8 @@ import com.lifeos.onboarding.domain.OnboardingStage;
 import com.lifeos.onboarding.domain.PlayerProfile;
 import com.lifeos.onboarding.dto.OnboardingResponse;
 import com.lifeos.onboarding.dto.QuestionnaireRequest;
+import com.lifeos.onboarding.dto.AwakeningPenaltyDTO;
+import com.lifeos.onboarding.dto.AwakeningPenaltyResultDTO;
 import com.lifeos.onboarding.repository.OnboardingProgressRepository;
 import com.lifeos.onboarding.repository.PlayerProfileRepository;
 import com.lifeos.player.domain.PlayerIdentity;
@@ -34,6 +36,9 @@ import java.util.UUID;
 public class OnboardingService {
 
     private static final Logger log = LoggerFactory.getLogger(OnboardingService.class);
+
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
 
     private final PlayerStateService playerStateService;
     private final OnboardingProgressRepository onboardingRepository;
@@ -496,5 +501,204 @@ public class OnboardingService {
         }
         
         return buildResponse(progress, "Onboarding trial completed successfully. System unlocked.");
+    }
+
+    @Transactional
+    public AwakeningPenaltyDTO failTrial(UUID playerId) {
+        log.info("Trial failed for player {}, generating 1-hour physical task...", playerId);
+        OnboardingProgress progress = getProgress_OrThrow(playerId);
+
+        // Stage guard: a trial can only be failed from the TRIAL_QUEST stage.
+        if (progress.getCurrentStage() != OnboardingStage.TRIAL_QUEST) {
+            throw new IllegalStateException(
+                    "Player must be in TRIAL_QUEST stage to fail a trial. Current stage: " + progress.getCurrentStage());
+        }
+
+        // Generate the 1-hour awakening penalty task
+        QuestRequest penaltyQuest = aiQuestService.generateAwakeningPenalty(playerId);
+        
+        UUID penaltyId = UUID.randomUUID();
+        progress.setCurrentStage(OnboardingStage.AWAKENING_PENALTY);
+        progress.setPenaltyQuestId(penaltyId);
+        progress.setPenaltyTitle(penaltyQuest.getTitle());
+        progress.setPenaltyDescription(penaltyQuest.getDescription());
+        // Set deadline exactly 1 hour from now
+        progress.setPenaltyDeadlineAt(LocalDateTime.now().plusHours(1));
+        onboardingRepository.save(progress);
+
+        return AwakeningPenaltyDTO.builder()
+                .playerId(playerId)
+                .penaltyQuestId(penaltyId)
+                .taskTitle(penaltyQuest.getTitle())
+                .taskDescription(penaltyQuest.getDescription())
+                .deadlineAt(progress.getPenaltyDeadlineAt())
+                .stage(OnboardingStage.AWAKENING_PENALTY)
+                .build();
+    }
+
+    @Transactional
+    public AwakeningPenaltyResultDTO completePenalty(UUID playerId) {
+        log.info("AWAKENING PENALTY CLEARED: Resetting trial for tomorrow for player {}", playerId);
+        OnboardingProgress progress = getProgress_OrThrow(playerId);
+
+        // Stage guard: the penalty can only be completed while serving it.
+        if (progress.getCurrentStage() != OnboardingStage.AWAKENING_PENALTY) {
+            throw new IllegalStateException("Player is not in AWAKENING_PENALTY stage");
+        }
+
+        // Timer enforcement: the 1-hour physical penalty must be fully endured before it can be cleared.
+        if (progress.getPenaltyDeadlineAt() != null
+                && LocalDateTime.now().isBefore(progress.getPenaltyDeadlineAt())) {
+            throw new IllegalStateException("Penalty endurance time has not elapsed.");
+        }
+
+        // Change stage back to TRIAL_QUEST
+        progress.setCurrentStage(OnboardingStage.TRIAL_QUEST);
+        progress.setTrialCompleted(false);
+        
+        // Clear old penalty details
+        progress.setPenaltyQuestId(null);
+        progress.setPenaltyTitle(null);
+        progress.setPenaltyDescription(null);
+        progress.setPenaltyDeadlineAt(null);
+        
+        // Delete all old quests for this player so they get a fresh start tomorrow
+        List<Quest> oldQuests = questRepository.findByPlayerPlayerId(playerId);
+        questRepository.deleteAll(oldQuests);
+        
+        // Recreate the onboarding quests (Core AI quests, Intel quests, and Trial quest)
+        // 1. Core AI Quests
+        List<QuestRequest> coreQuests;
+        try {
+            coreQuests = aiQuestService.generateQuests(playerId, 3);
+            for (QuestRequest q : coreQuests) {
+                // Set deadline to tomorrow
+                q.setDeadlineAt(LocalDateTime.now().plusDays(1).withHour(23).withMinute(59));
+                questService.assignQuest(q);
+            }
+        } catch (Exception e) {
+            log.error("Failed to generate AI quests during penalty reset", e);
+        }
+        
+        // 2. Intel Quests
+        try {
+            QuestRequest intelQuest1 = intelQuestGenerator.generateFirstIntelQuest(playerId);
+            if (intelQuest1 != null) {
+                intelQuest1.setDeadlineAt(LocalDateTime.now().plusDays(1).withHour(23).withMinute(59));
+                questService.assignQuest(intelQuest1);
+            }
+        } catch (Exception e) {
+            log.error("Failed to generate Intel Quest during penalty reset", e);
+        }
+        
+        // 3. Trial Quest
+        try {
+            QuestRequest trialQuestReq = trialQuestGenerator.generateTrialQuest(playerId);
+            if (trialQuestReq != null) {
+                // Trial quest gets 24h starting tomorrow
+                trialQuestReq.setDeadlineAt(LocalDateTime.now().plusDays(1).withHour(23).withMinute(59));
+                Quest trialQuest = questService.assignQuest(trialQuestReq);
+                progress.setTrialQuestId(trialQuest.getQuestId());
+            }
+        } catch (Exception e) {
+            log.error("Failed to generate Trial Quest during penalty reset", e);
+        }
+        
+        onboardingRepository.save(progress);
+        
+        return AwakeningPenaltyResultDTO.builder()
+                .playerId(playerId)
+                .cleared(true)
+                .trialResetDate(java.time.LocalDate.now().plusDays(1))
+                .accountDeleted(false)
+                .build();
+    }
+
+    @Transactional
+    public AwakeningPenaltyResultDTO failPenalty(UUID playerId) {
+        log.info("AWAKENING PENALTY FAILED: Wiping account for player {}", playerId);
+
+        // Fetch-first: closes the silent-success loophole (unknown player -> 404, not a no-op 200).
+        OnboardingProgress progress = getProgress_OrThrow(playerId);
+
+        // Stage guard: an irreversible account wipe must never be reachable outside the penalty flow.
+        if (progress.getCurrentStage() != OnboardingStage.AWAKENING_PENALTY) {
+            throw new IllegalStateException("Player is not in AWAKENING_PENALTY stage");
+        }
+
+        String[] queries = {
+            "DELETE FROM onboarding_progress WHERE player_id = :playerId",
+            "DELETE FROM player_profiles WHERE player_id = :playerId",
+            "DELETE FROM player_progression WHERE player_id = :playerId",
+            "DELETE FROM player_state WHERE player_id = :playerId",
+            "DELETE FROM quest_mutation_log WHERE quest_id IN (SELECT quest_id FROM quest WHERE player_id = :playerId)",
+            "DELETE FROM quest_outcome_profile WHERE quest_id IN (SELECT quest_id FROM quest WHERE player_id = :playerId)",
+            "DELETE FROM player_quest_link WHERE player_id = :playerId",
+            "DELETE FROM quest WHERE player_id = :playerId",
+            "DELETE FROM penalty_quests WHERE player_id = :playerId",
+            "DELETE FROM penalty_record WHERE player_id = :playerId",
+            "DELETE FROM player_journal WHERE player_id = :playerId",
+            "DELETE FROM player_attribute WHERE player_id = :playerId",
+            "DELETE FROM player_history WHERE player_id = :playerId",
+            "DELETE FROM player_metadata WHERE player_id = :playerId",
+            "DELETE FROM player_metrics WHERE player_id = :playerId",
+            "DELETE FROM player_psych_state WHERE player_id = :playerId",
+            "DELETE FROM player_status_flag WHERE player_id = :playerId",
+            "DELETE FROM player_temporal_state WHERE player_id = :playerId",
+            "DELETE FROM player_state_snapshot WHERE player_id = :playerId",
+            "DELETE FROM job_change_quest WHERE player_id = :playerId",
+            "DELETE FROM rank_exam_attempts WHERE player_id = :playerId",
+            "DELETE FROM user_boss_keys WHERE player_id = :playerId",
+            "DELETE FROM dungeon_break_events WHERE player_id = :playerId",
+            "DELETE FROM project WHERE player_id = :playerId",
+            "DELETE FROM reward_record WHERE player_id = :playerId",
+            "DELETE FROM player_streak WHERE player_id = :playerId",
+            "DELETE FROM system_event WHERE player_id = :playerId",
+            "DELETE FROM system_messages WHERE player_id = :playerId",
+            "DELETE FROM purchase_cooldown WHERE player_id = :playerId",
+            "DELETE FROM purchase_transaction WHERE player_id = :playerId",
+            "DELETE FROM user_inventory WHERE player_id = :playerId",
+            "DELETE FROM player_economy WHERE player_id = :playerId",
+            "DELETE FROM player_identity WHERE player_id = :playerId"
+        };
+
+        for (String q : queries) {
+            try {
+                entityManager.createNativeQuery(q)
+                        .setParameter("playerId", playerId.toString())
+                        .executeUpdate();
+            } catch (Exception e) {
+                try {
+                    entityManager.createNativeQuery(q)
+                            .setParameter("playerId", playerId)
+                            .executeUpdate();
+                } catch (Exception ex) {
+                    log.warn("Could not execute deletion query '{}': {}", q, ex.getMessage());
+                }
+            }
+        }
+
+        return AwakeningPenaltyResultDTO.builder()
+                .playerId(playerId)
+                .cleared(false)
+                .trialResetDate(null)
+                .accountDeleted(true)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public AwakeningPenaltyDTO getPenaltyStatus(UUID playerId) {
+        OnboardingProgress progress = getProgress_OrThrow(playerId);
+        if (progress.getCurrentStage() != OnboardingStage.AWAKENING_PENALTY) {
+            throw new IllegalStateException("Player is not in AWAKENING_PENALTY stage");
+        }
+        return AwakeningPenaltyDTO.builder()
+                .playerId(playerId)
+                .penaltyQuestId(progress.getPenaltyQuestId())
+                .taskTitle(progress.getPenaltyTitle())
+                .taskDescription(progress.getPenaltyDescription())
+                .deadlineAt(progress.getPenaltyDeadlineAt())
+                .stage(progress.getCurrentStage())
+                .build();
     }
 }

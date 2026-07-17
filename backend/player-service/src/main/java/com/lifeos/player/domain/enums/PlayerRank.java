@@ -1,10 +1,11 @@
 package com.lifeos.player.domain.enums;
 
 public enum PlayerRank {
+    @Deprecated
     F(5, 1, 1),
-    E(10, 1, 2),
-    D(25, 1, 3),
-    C(45, 2, 4),
+    E(15, 1, 2),
+    D(30, 1, 3),
+    C(50, 2, 4),
     B(70, 3, 4),
     A(90, 3, 5),
     S(100, 5, 5),

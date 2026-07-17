@@ -31,6 +31,10 @@ public class OnboardingProgress {
     public Map<String, Object> getQuestionnaireData() { return questionnaireData; }
     public LocalDateTime getStartedAt() { return startedAt; }
     public LocalDateTime getCompletedAt() { return completedAt; }
+    public UUID getPenaltyQuestId() { return penaltyQuestId; }
+    public String getPenaltyTitle() { return penaltyTitle; }
+    public String getPenaltyDescription() { return penaltyDescription; }
+    public LocalDateTime getPenaltyDeadlineAt() { return penaltyDeadlineAt; }
 
     // Setters
     public void setPlayerId(UUID playerId) { this.playerId = playerId; }
@@ -41,6 +45,10 @@ public class OnboardingProgress {
     public void setQuestionnaireData(Map<String, Object> questionnaireData) { this.questionnaireData = questionnaireData; }
     public void setStartedAt(LocalDateTime startedAt) { this.startedAt = startedAt; }
     public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+    public void setPenaltyQuestId(UUID penaltyQuestId) { this.penaltyQuestId = penaltyQuestId; }
+    public void setPenaltyTitle(String penaltyTitle) { this.penaltyTitle = penaltyTitle; }
+    public void setPenaltyDescription(String penaltyDescription) { this.penaltyDescription = penaltyDescription; }
+    public void setPenaltyDeadlineAt(LocalDateTime penaltyDeadlineAt) { this.penaltyDeadlineAt = penaltyDeadlineAt; }
 
     // Simple Builder
     public static class OnboardingProgressBuilder {
@@ -82,6 +90,11 @@ public class OnboardingProgress {
     
     private LocalDateTime startedAt;
     private LocalDateTime completedAt;
+
+    private UUID penaltyQuestId;
+    private String penaltyTitle;
+    private String penaltyDescription;
+    private LocalDateTime penaltyDeadlineAt;
     
     @PrePersist
     protected void onCreate() {

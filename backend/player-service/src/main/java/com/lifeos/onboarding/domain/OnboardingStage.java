@@ -5,5 +5,6 @@ public enum OnboardingStage {
     QUESTIONNAIRE,
     CALIBRATION,
     JOB_CHANGE,  // Unlocked at Level 40
+    AWAKENING_PENALTY,
     COMPLETED
 }

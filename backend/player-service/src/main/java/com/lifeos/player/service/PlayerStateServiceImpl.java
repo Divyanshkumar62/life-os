@@ -173,23 +173,31 @@ public class PlayerStateServiceImpl implements PlayerStateService {
 
         var progression = progressionRepository.findByPlayerPlayerId(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
-        
-        // Track Total XP Accumulated (New Field)
-        progression.setTotalXpAccumulated(progression.getTotalXpAccumulated() + xpAmount);
 
+        int previousLevel = progression.getLevel();
+        
         // Rank-Gate Logic: Check XP Freeze
         if (progression.isXpFrozen()) {
-             System.out.println("XP is Frozen for player " + playerId);
-             progressionRepository.save(progression); // Save total XP update even if frozen? Yes.
+             log.info("XP is Frozen for player {}. Discarding incoming XP.", playerId);
              return;
         }
 
         // Legacy check for safety (or implicit/fallback)
         if (progression.getLevel() >= progression.getRank().getLevelCap()) {
              progression.setXpFrozen(true);
+             progression.setCurrentXp(0);
              progressionRepository.save(progression);
+             
+             PlayerIdentity identity = identityRepository.findById(playerId).orElse(null);
+             if (identity != null) {
+                 identity.setXpFrozen(true);
+                 identityRepository.save(identity);
+             }
              return;
         }
+
+        // Track Total XP Accumulated (New Field)
+        progression.setTotalXpAccumulated(progression.getTotalXpAccumulated() + xpAmount);
 
         long tempXp = progression.getCurrentXp() + xpAmount;
         boolean leveledUp = false;
@@ -201,8 +209,13 @@ public class PlayerStateServiceImpl implements PlayerStateService {
                 // Check if next level exceeds cap
                 if (progression.getLevel() + 1 > progression.getRank().getLevelCap()) {
                     progression.setXpFrozen(true);
-                    // Keep explicit XP or cap it? 
-                    // Usually we keep the overflow in currentXp until promotion.
+                    tempXp = 0; // Burn overflow
+                    
+                    PlayerIdentity identity = identityRepository.findById(playerId).orElse(null);
+                    if (identity != null) {
+                        identity.setXpFrozen(true);
+                        identityRepository.save(identity);
+                    }
                     break; 
                 } else {
                     tempXp -= xpRequired;
@@ -219,7 +232,7 @@ public class PlayerStateServiceImpl implements PlayerStateService {
         
         // Emit Level-Up Event
         if (leveledUp) {
-            eventPublisher.publishEvent(new com.lifeos.event.concrete.LevelUpEvent(playerId, progression.getLevel()));
+            eventPublisher.publishEvent(new com.lifeos.event.concrete.LevelUpEvent(playerId, progression.getLevel(), previousLevel));
         }
     }
 

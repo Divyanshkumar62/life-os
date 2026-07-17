@@ -34,6 +34,7 @@ public class StatusWindowAggregatorService {
     private final PlayerAttributeRepository attributeRepository;
     private final PlayerStatusFlagRepository statusFlagRepository;
     private final com.lifeos.system.repository.SystemEventRepository systemEventRepository;
+    private final com.lifeos.project.repository.DungeonBreakEventRepository dungeonBreakEventRepository;
 
     @Transactional
     public StatusWindowResponse buildStatusWindow(UUID playerId) {
@@ -60,7 +61,11 @@ public class StatusWindowAggregatorService {
         List<String> activeBuffs = activeFlags.stream()
                 .filter(flag -> flag.getFlag() != StatusFlagType.PENALTY_ZONE && flag.getFlag() != StatusFlagType.WARNING)
                 .map(flag -> flag.getFlag().name())
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(java.util.ArrayList::new));
+
+        if (identity.isRedGateActive()) {
+            activeBuffs.add("RED_GATE_ACTIVE");
+        }
 
         int level = progression != null ? progression.getLevel() : 1;
         String rank = progression != null && progression.getRank() != null ? progression.getRank().name() : "F";
@@ -87,6 +92,13 @@ public class StatusWindowAggregatorService {
             }
             systemEventRepository.saveAll(unconsumedEvents);
         }
+
+        // Fetch unacknowledged dungeon break events
+        com.lifeos.project.domain.DungeonBreakEvent breakEvent = dungeonBreakEventRepository
+                .findFirstByPlayerIdAndAcknowledgedFalseOrderByTriggeredAtDesc(playerId)
+                .orElse(null);
+        boolean dungeonBreakActive = breakEvent != null;
+        com.lifeos.project.dto.DungeonBreakEventDTO breakEventDTO = dungeonBreakActive ? com.lifeos.project.dto.DungeonBreakEventDTO.fromEntity(breakEvent) : null;
 
         String wakeUpStr = (profile != null && profile.getWakeUpTime() != null) ? profile.getWakeUpTime().toString() : "08:00";
 
@@ -117,6 +129,8 @@ public class StatusWindowAggregatorService {
                         .penaltyActive(penaltyActive)
                         .activeBuffs(activeBuffs)
                         .wakeUpTime(wakeUpStr)
+                        .dungeonBreakActive(dungeonBreakActive)
+                        .activeDungeonBreakEvent(breakEventDTO)
                         .build())
                 .systemMessages(systemMessages)
                 .build();

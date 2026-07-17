@@ -162,7 +162,8 @@ public class PenaltyService {
             log.error("Failed to perform AGI gold dodge check for player {}", playerId, e);
         }
 
-        if (!dodgeGoldDrain) {
+        boolean skipGoldDrain = "Red Gate Override Failed".equals(reason);
+        if (!dodgeGoldDrain && !skipGoldDrain) {
             try {
                 var economy = economyService.getEconomyState(playerId);
                 if (economy != null && economy.getGoldBalance() != null) {

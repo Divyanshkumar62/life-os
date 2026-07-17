@@ -227,6 +227,8 @@ public class StatusWindowResponse {
         private boolean penaltyActive;
         private List<String> activeBuffs;
         private String wakeUpTime;
+        private boolean dungeonBreakActive;
+        private com.lifeos.project.dto.DungeonBreakEventDTO activeDungeonBreakEvent;
 
         public boolean isPenaltyActive() { return penaltyActive; }
         public void setPenaltyActive(boolean penaltyActive) { this.penaltyActive = penaltyActive; }
@@ -234,6 +236,10 @@ public class StatusWindowResponse {
         public void setActiveBuffs(List<String> activeBuffs) { this.activeBuffs = activeBuffs; }
         public String getWakeUpTime() { return wakeUpTime; }
         public void setWakeUpTime(String wakeUpTime) { this.wakeUpTime = wakeUpTime; }
+        public boolean isDungeonBreakActive() { return dungeonBreakActive; }
+        public void setDungeonBreakActive(boolean dungeonBreakActive) { this.dungeonBreakActive = dungeonBreakActive; }
+        public com.lifeos.project.dto.DungeonBreakEventDTO getActiveDungeonBreakEvent() { return activeDungeonBreakEvent; }
+        public void setActiveDungeonBreakEvent(com.lifeos.project.dto.DungeonBreakEventDTO activeDungeonBreakEvent) { this.activeDungeonBreakEvent = activeDungeonBreakEvent; }
 
         public static SystemStateBuilder builder() {
             return new SystemStateBuilder();
@@ -243,15 +249,21 @@ public class StatusWindowResponse {
             private boolean penaltyActive;
             private List<String> activeBuffs;
             private String wakeUpTime;
+            private boolean dungeonBreakActive;
+            private com.lifeos.project.dto.DungeonBreakEventDTO activeDungeonBreakEvent;
 
             public SystemStateBuilder penaltyActive(boolean penaltyActive) { this.penaltyActive = penaltyActive; return this; }
             public SystemStateBuilder activeBuffs(List<String> activeBuffs) { this.activeBuffs = activeBuffs; return this; }
             public SystemStateBuilder wakeUpTime(String wakeUpTime) { this.wakeUpTime = wakeUpTime; return this; }
+            public SystemStateBuilder dungeonBreakActive(boolean dungeonBreakActive) { this.dungeonBreakActive = dungeonBreakActive; return this; }
+            public SystemStateBuilder activeDungeonBreakEvent(com.lifeos.project.dto.DungeonBreakEventDTO activeDungeonBreakEvent) { this.activeDungeonBreakEvent = activeDungeonBreakEvent; return this; }
             public SystemState build() {
                 SystemState s = new SystemState();
                 s.penaltyActive = this.penaltyActive;
                 s.activeBuffs = this.activeBuffs;
                 s.wakeUpTime = this.wakeUpTime;
+                s.dungeonBreakActive = this.dungeonBreakActive;
+                s.activeDungeonBreakEvent = this.activeDungeonBreakEvent;
                 return s;
             }
         }
