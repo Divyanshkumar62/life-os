@@ -106,10 +106,38 @@ public class ProjectService {
     }
     
     @Transactional
-    public void completeProject(UUID projectId) {
+    public com.lifeos.project.dto.SpeedrunResultDTO completeProject(UUID projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("Project not found: " + projectId));
-                
+                 
+        if (project.getStatus() == ProjectStatus.COMPLETED) {
+            long actualDuration = java.time.temporal.ChronoUnit.DAYS.between(project.getStartDate(), project.getCompletedAt() != null ? project.getCompletedAt() : LocalDateTime.now());
+            actualDuration = Math.max(0, actualDuration);
+            double speedrunMultiplier = 1.0;
+            if (actualDuration < project.getDurationDays() && project.getDurationDays() > 0) {
+                speedrunMultiplier = 1.0 + (1.0 - (double) actualDuration / project.getDurationDays());
+            }
+            int baseXp = project.getBaseXpReward();
+            int baseGold = project.getBaseGoldReward();
+            int totalXp = (int) Math.round(baseXp * speedrunMultiplier);
+            int totalGold = (int) Math.round(baseGold * speedrunMultiplier);
+            
+            com.lifeos.project.dto.SpeedrunResultDTO dto = new com.lifeos.project.dto.SpeedrunResultDTO();
+            dto.setProjectId(project.getProjectId());
+            dto.setProjectTitle(project.getTitle());
+            dto.setActualDurationDays((int) actualDuration);
+            dto.setEstimatedDurationDays(project.getDurationDays());
+            dto.setSpeedrunMultiplier(speedrunMultiplier);
+            dto.setBaseXp(baseXp);
+            dto.setBonusXp(totalXp - baseXp);
+            dto.setTotalXp(totalXp);
+            dto.setBaseGold(baseGold);
+            dto.setBonusGold(totalGold - baseGold);
+            dto.setTotalGold(totalGold);
+            dto.setLootDrops(java.util.Collections.emptyList());
+            return dto;
+        }
+
         if (project.getStatus() != ProjectStatus.ACTIVE && project.getStatus() != ProjectStatus.SHADOW) {
             throw new IllegalStateException("Project is not active or shadow");
         }
@@ -122,7 +150,7 @@ public class ProjectService {
             }
             projectRepository.save(project);
             log.info("Project failed: Deadline passed");
-            return;
+            return null;
         }
         
         long completedSubtasks = questRepository.countByProjectIdAndState(
@@ -137,12 +165,12 @@ public class ProjectService {
             );
         }
         
-        long actualDuration = ChronoUnit.DAYS.between(project.getStartDate(), LocalDateTime.now());
-        if (actualDuration < project.getDurationDays()) {
-            throw new IllegalStateException(
-                String.format("Cannot complete project: Only %d/%d days elapsed", 
-                    actualDuration, project.getDurationDays())
-            );
+        long actualDuration = java.time.temporal.ChronoUnit.DAYS.between(project.getStartDate(), LocalDateTime.now());
+        actualDuration = Math.max(0, actualDuration);
+        
+        double speedrunMultiplier = 1.0;
+        if (actualDuration < project.getDurationDays() && project.getDurationDays() > 0) {
+            speedrunMultiplier = 1.0 + (1.0 - (double) actualDuration / project.getDurationDays());
         }
         
         project.setStatus(ProjectStatus.COMPLETED);
@@ -151,13 +179,36 @@ public class ProjectService {
         
         awardRankSpecificBossKey(project);
         
+        int baseXp = project.getBaseXpReward();
+        int baseGold = project.getBaseGoldReward();
+        int totalXp = (int) Math.round(baseXp * speedrunMultiplier);
+        int totalGold = (int) Math.round(baseGold * speedrunMultiplier);
+        int bonusXp = totalXp - baseXp;
+        int bonusGold = totalGold - baseGold;
+        
         domainEventPublisher.publish(new com.lifeos.event.concrete.ProjectCompletedEvent(
             project.getPlayer().getPlayerId(),
             project.getProjectId(),
             project.getBossKeyReward(),
-            project.getBaseXpReward(),
-            project.getBaseGoldReward()
+            totalXp,
+            totalGold
         ));
+
+        com.lifeos.project.dto.SpeedrunResultDTO dto = new com.lifeos.project.dto.SpeedrunResultDTO();
+        dto.setProjectId(project.getProjectId());
+        dto.setProjectTitle(project.getTitle());
+        dto.setActualDurationDays((int) actualDuration);
+        dto.setEstimatedDurationDays(project.getDurationDays());
+        dto.setSpeedrunMultiplier(speedrunMultiplier);
+        dto.setBaseXp(baseXp);
+        dto.setBonusXp(bonusXp);
+        dto.setTotalXp(totalXp);
+        dto.setBaseGold(baseGold);
+        dto.setBonusGold(bonusGold);
+        dto.setTotalGold(totalGold);
+        dto.setLootDrops(java.util.Collections.emptyList());
+        
+        return dto;
     }
     
     @Transactional

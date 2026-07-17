@@ -26,6 +26,7 @@ public class DungeonController {
 
     private final ProjectService projectService;
     private final QuestRepository questRepository;
+    private final com.lifeos.project.repository.DungeonBreakEventRepository dungeonBreakEventRepository;
 
     private void checkNoActiveIntelQuests(UUID playerId) {
         boolean hasActiveIntelQuest = questRepository.findByPlayerPlayerIdAndState(playerId, QuestState.ACTIVE)
@@ -72,5 +73,24 @@ public class DungeonController {
             log.warn("Dungeon Arise validation failed: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
+    }
+
+    @PostMapping("/break/{projectId}/acknowledge")
+    public ResponseEntity<Void> acknowledgeDungeonBreak(
+            @PathVariable("projectId") UUID projectId,
+            @RequestParam UUID playerId) {
+        log.info("Request to acknowledge dungeon break for project {} and player {}", projectId, playerId);
+        
+        com.lifeos.project.domain.DungeonBreakEvent event = dungeonBreakEventRepository
+                .findByProjectIdAndAcknowledgedFalse(projectId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unacknowledged Dungeon Break event not found for this project"));
+
+        if (!event.getPlayerId().equals(playerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied");
+        }
+
+        event.setAcknowledged(true);
+        dungeonBreakEventRepository.save(event);
+        return ResponseEntity.noContent().build();
     }
 }

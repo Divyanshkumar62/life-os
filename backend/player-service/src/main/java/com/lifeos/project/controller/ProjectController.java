@@ -54,11 +54,11 @@ public class ProjectController {
     }
 
     @PostMapping("/{projectId}/complete")
-    public ResponseEntity<Void> completeProject(@PathVariable UUID projectId) {
+    public ResponseEntity<com.lifeos.project.dto.SpeedrunResultDTO> completeProject(@PathVariable UUID projectId) {
         log.info("Attempting manual completion of project {}", projectId);
         try {
-            projectService.completeProject(projectId);
-            return ResponseEntity.ok().build();
+            com.lifeos.project.dto.SpeedrunResultDTO result = projectService.completeProject(projectId);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             log.warn("Project completion failed: {}", e.getMessage());
             return ResponseEntity.badRequest().build();

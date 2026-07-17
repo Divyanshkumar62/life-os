@@ -83,7 +83,8 @@ public class DungeonStabilityService {
         }
     }
 
-    private void triggerDungeonBreak(Project project) {
+    @Transactional
+    public void triggerDungeonBreak(Project project) {
         log.warn("DUNGEON BREAK! Monsters invading from: {}", project.getTitle());
         
         project.setStabilityStatus(ProjectStability.BROKEN);
