@@ -26,11 +26,14 @@ public class JobChangeController {
         PlayerIdentity identity = identityRepository.findById(playerId)
                 .orElseThrow(() -> new IllegalArgumentException("Player not found"));
 
+        String recommended = jobChangeService.getRecommendedClass(playerId);
+
         return ResponseEntity.ok(new JobChangeStatusResponse(
                 identity.getJobClass(),
                 identity.getJobChangeStatus(),
                 identity.isXpFrozen(),
-                identity.getJobChangeCooldownUntil()
+                identity.getJobChangeCooldownUntil(),
+                recommended
         ));
     }
 
@@ -75,12 +78,14 @@ public class JobChangeController {
         public String status;
         public boolean xpFrozen;
         public Object cooldownUntil;
+        public String recommendedClass;
 
-        public JobChangeStatusResponse(String jobClass, String status, boolean xpFrozen, Object cooldownUntil) {
+        public JobChangeStatusResponse(String jobClass, String status, boolean xpFrozen, Object cooldownUntil, String recommendedClass) {
             this.jobClass = jobClass;
             this.status = status;
             this.xpFrozen = xpFrozen;
             this.cooldownUntil = cooldownUntil;
+            this.recommendedClass = recommendedClass;
         }
     }
 }

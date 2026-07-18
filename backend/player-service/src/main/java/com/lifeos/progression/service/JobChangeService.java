@@ -233,9 +233,6 @@ public class JobChangeService {
         }
     }
 
-    /**
-     * Complete the job change quest on Day 3 completion.
-     */
     @Transactional
     public void completeJobChange(UUID playerId, boolean perfectClearance) {
         PlayerIdentity identity = identityRepository.findById(playerId).orElse(null);
@@ -243,31 +240,11 @@ public class JobChangeService {
             throw new IllegalArgumentException("Player not found");
         }
 
-        int str = getAttributeValue(playerId, AttributeType.STR);
-        int intel = getAttributeValue(playerId, AttributeType.INT);
-        int vit = getAttributeValue(playerId, AttributeType.VIT);
-        int sen = getAttributeValue(playerId, AttributeType.SEN);
-
-        double physicalRatio = calculatePhysicalQuestRatio(playerId);
-
-        JobClassCalculator.JobClassResult result = jobClassCalculator.calculateJobClass(
-                str, intel, vit, sen,
-                physicalRatio,
-                perfectClearance
-        );
-
-        identity.setJobClass(result.jobTitle);
-        identity.setClassMultiplier(result.classMultiplierJson);
-        identity.setClassUnlockedAt(LocalDateTime.now());
-        identity.setJobChangeStatus("COMPLETED");
-        identity.setXpFrozen(false);
+        identity.setJobChangeStatus("AWAITING_CLASS_SELECTION");
+        identity.setXpFrozen(true);
         identityRepository.save(identity);
 
-        projectService.resumePlayerProjects(playerId, 3);
-
-        awardRewards(playerId, result.jobTitle);
-
-        log.info("Player {} completed Job Change Quest with class: {}", playerId, result.jobTitle);
+        log.info("Player {} completed Day 3 quests. Job change status updated to AWAITING_CLASS_SELECTION. XP remains frozen.", playerId);
     }
 
     /**
@@ -431,6 +408,19 @@ public class JobChangeService {
                 .orElse(0.5);
     }
 
+    public String getRecommendedClass(UUID playerId) {
+        int str = getAttributeValue(playerId, AttributeType.STR);
+        int intel = getAttributeValue(playerId, AttributeType.INT);
+        int vit = getAttributeValue(playerId, AttributeType.VIT);
+        int sen = getAttributeValue(playerId, AttributeType.SEN);
+        double physicalRatio = calculatePhysicalQuestRatio(playerId);
+        
+        JobClassCalculator.JobClassResult result = jobClassCalculator.calculateJobClass(
+                str, intel, vit, sen, physicalRatio, true
+        );
+        return result.jobTitle;
+    }
+
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public com.lifeos.core.dto.JobChangeResponse selectJobClass(UUID playerId, String selectedClass) {
         // Pessimistic Write Lock player state
@@ -444,7 +434,26 @@ public class JobChangeService {
             throw new IllegalStateException("Player already has a job class: " + identity.getJobClass());
         }
 
+        // Calculate and set class multiplier json
+        String classMultiplierJson;
+        switch (selectedClass) {
+            case "Silver Knight":
+            case "Berserker":
+                classMultiplierJson = "{\"PHYSICAL_XP\":1.15,\"COGNITIVE_XP\":1.00,\"GOLD_YIELD\":1.00}";
+                break;
+            case "Grand Architect":
+            case "Arcane Mage":
+                classMultiplierJson = "{\"PHYSICAL_XP\":1.00,\"COGNITIVE_XP\":1.15,\"GOLD_YIELD\":1.00}";
+                break;
+            case "Shadow Necromancer":
+            default:
+                classMultiplierJson = "{\"PHYSICAL_XP\":1.05,\"COGNITIVE_XP\":1.05,\"GOLD_YIELD\":1.00}";
+                break;
+        }
+
         identity.setJobClass(selectedClass);
+        identity.setClassMultiplier(classMultiplierJson);
+        identity.setClassUnlockedAt(LocalDateTime.now());
         identity.setJobChangeStatus("COMPLETED");
         identity.setXpFrozen(false);
         identityRepository.save(identity);
@@ -460,12 +469,24 @@ public class JobChangeService {
         // Award rewards
         awardRewards(playerId, selectedClass);
 
+        // Check for recommended class choice bonus (+5 stat points)
+        String recommended = getRecommendedClass(playerId);
+        int finalStatReward = JOB_CHANGE_REWARD_STAT_POINTS;
+        if (selectedClass.equals(recommended)) {
+            log.info("Player selected recommended class: {}. Awarding system selection bonus (+5 stat points).", recommended);
+            PlayerProgression progression = progressionRepository.findByPlayerPlayerId(playerId)
+                    .orElseThrow(() -> new IllegalArgumentException("Progression not found"));
+            progression.setFreeStatPoints(progression.getFreeStatPoints() + 5);
+            progressionRepository.save(progression);
+            finalStatReward += 5;
+        }
+
         return com.lifeos.core.dto.JobChangeResponse.builder()
                 .playerId(playerId)
                 .jobClass(selectedClass)
                 .evolutionRewards(com.lifeos.core.dto.JobChangeResponse.EvolutionRewards.builder()
                         .goldAwarded(JOB_CHANGE_REWARD_GOLD)
-                        .statPointsAwarded(JOB_CHANGE_REWARD_STAT_POINTS)
+                        .statPointsAwarded(finalStatReward)
                         .itemsAwarded(aRankItems.stream().map(ShopItem::getName).toList())
                         .build())
                 .build();
