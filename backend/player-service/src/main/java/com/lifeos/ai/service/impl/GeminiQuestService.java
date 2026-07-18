@@ -182,6 +182,72 @@ public class GeminiQuestService implements AIQuestService {
         return null;
     }
 
+    @Override
+    public QuestRequest generateAwakeningPenalty(UUID playerId) {
+        String playerContext = contextService.buildContextPrompt(playerId);
+
+        String systemPrompt = """
+            You are the SYSTEM from Solo Leveling. A player has FAILED their onboarding trial quest.
+            You must generate a BRUTAL 1-hour physical penalty task for the Awakening Penalty.
+            
+            CRITICAL REQUIREMENTS:
+            1. TASK TYPE: High-intensity physical exercise (e.g., push-ups, squats, running, planks) scaled for 1 hour duration.
+            2. DEADLINE: The player must complete it within exactly 1 hour.
+            3. TONE: Cold, mechanical, ominous. "The System has detected your failure to awaken. Compliance is mandatory. Survive the penalty or face termination."
+            
+            OUTPUT FORMAT:
+            Return ONLY valid JSON.
+            Schema:
+            {
+              "title": "AWAKENING PENALTY: [Brutal Exercise Name]",
+              "description": "String (Narrative warning + specific counts/durations: 'You have failed the trial. Perform 100 push-ups, 100 squats, and 50 burpees. Do not stop. Do not rest.')"
+            }
+            """;
+
+        try {
+            GeminiRequest requestBody = new GeminiRequest(systemPrompt + "\n\nPlayer Profile:\n" + playerContext);
+            String contentResult = callGemini(requestBody);
+            
+            if (contentResult != null) {
+                String cleanJson = cleanJsonResponse(contentResult);
+                AIQuestSchema schema = objectMapper.readValue(cleanJson, AIQuestSchema.class);
+                
+                return QuestRequest.builder()
+                        .playerId(playerId)
+                        .title(schema.getTitle())
+                        .description(schema.getDescription())
+                        .questType(QuestType.PENALTY)
+                        .difficultyTier(DifficultyTier.E)
+                        .priority(Priority.CRITICAL)
+                        .deadlineAt(LocalDateTime.now().plusHours(1))
+                        .successXp(0)
+                        .failureXp(0)
+                        .goldReward(0)
+                        .systemMutable(false)
+                        .primaryAttribute(com.lifeos.player.domain.enums.AttributeType.VIT)
+                        .build();
+            }
+        } catch (Exception e) {
+            log.error("Failed to generate AI awakening penalty quest", e);
+        }
+
+        // Fallback if Gemini fails
+        return QuestRequest.builder()
+                .playerId(playerId)
+                .title("AWAKENING PENALTY: Daily Trial Survival")
+                .description("You have failed the awakening trial. The System has initiated a purge sequence. Complete 100 Push-ups, 100 Squats, and a 5km run in 1 hour to abort sequence.")
+                .questType(QuestType.PENALTY)
+                .difficultyTier(DifficultyTier.E)
+                .priority(Priority.CRITICAL)
+                .deadlineAt(LocalDateTime.now().plusHours(1))
+                .successXp(0)
+                .failureXp(0)
+                .goldReward(0)
+                .systemMutable(false)
+                .primaryAttribute(com.lifeos.player.domain.enums.AttributeType.VIT)
+                .build();
+    }
+
     private String callGemini(GeminiRequest requestBody) {
         java.util.Set<String> probeUrls = new java.util.LinkedHashSet<>();
         probeUrls.add(apiUrl);

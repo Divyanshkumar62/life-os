@@ -10,6 +10,7 @@ public interface AIQuestService {
     QuestRequest generatePenaltyQuest(UUID playerId, UUID failedQuestId);
     QuestRequest generatePromotionExam(UUID playerId, com.lifeos.player.domain.enums.PlayerRank fromRank, com.lifeos.player.domain.enums.PlayerRank toRank);
     QuestionnaireRequest inferQuestionnaire(QuestionnaireRequest request);
+    QuestRequest generateAwakeningPenalty(UUID playerId);
     
     // Future expansion:
     // String analyzePerformance(UUID playerId);
