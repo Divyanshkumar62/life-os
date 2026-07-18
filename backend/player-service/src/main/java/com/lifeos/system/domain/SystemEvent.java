@@ -34,6 +34,9 @@ public class SystemEvent {
     @Column(nullable = false)
     private boolean isConsumed = false;
 
+    @Column(name = "payload_json", length = 2000)
+    private String payloadJson;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
     
@@ -42,6 +45,8 @@ public class SystemEvent {
     }
     
     // Getters and Setters
+    public String getPayloadJson() { return payloadJson; }
+    public void setPayloadJson(String payloadJson) { this.payloadJson = payloadJson; }
     public UUID getEventId() { return eventId; }
     public void setEventId(UUID eventId) { this.eventId = eventId; }
     

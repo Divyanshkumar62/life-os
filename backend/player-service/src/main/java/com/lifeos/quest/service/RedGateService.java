@@ -54,6 +54,8 @@ public class RedGateService {
     private final StreakService streakService;
     private final PushNotificationService pushNotificationService;
     private final ShopItemRepository shopItemRepository;
+    private final com.lifeos.penalty.repository.PenaltyRecordRepository penaltyRepository;
+    private final com.lifeos.penalty.service.PenaltyService penaltyService;
 
     private final Random random = new Random();
 
@@ -250,18 +252,54 @@ public class RedGateService {
             questRepository.save(quest);
         }
 
+        int vitVal = attributeRepository.findByPlayerPlayerIdAndAttributeType(playerId, AttributeType.VIT)
+                .map(attr -> (int) attr.getCurrentValue())
+                .orElse(10);
+
+        var economy = economyRepository.findById(playerId).orElse(null);
+        long currentGold = economy != null ? economy.getGoldBalance().longValue() : 0;
+        double vitMitigation = Math.min((double) vitVal / 100.0, 0.50);
+        double drainPercentage = 0.40 * (1.0 - vitMitigation);
+        long goldDrain = (long) (currentGold * drainPercentage);
+
+        if (goldDrain > 0) {
+            try {
+                economyService.deductGold(playerId, goldDrain, "Red Gate Failure Penalty");
+                log.info("Drained 40% Gold (mitigated: {}) from player {} due to Red Gate failure", goldDrain, playerId);
+            } catch (Exception e) {
+                log.error("Failed to deduct 40% Gold from player {}", playerId, e);
+            }
+        }
+
+        // Apply Architect's Scorn debuff (-10% stats for 24h)
+        for (AttributeType attrType : AttributeType.values()) {
+            UUID randomQuestId = UUID.randomUUID();
+            java.util.Map<String, Object> payload = new java.util.HashMap<>();
+            payload.put("debuffAttr", attrType.name());
+            payload.put("debuffAmount", 10.0);
+            
+            com.lifeos.penalty.domain.PenaltyRecord debuffRecord = com.lifeos.penalty.domain.PenaltyRecord.builder()
+                    .playerId(playerId)
+                    .questId(randomQuestId)
+                    .type(com.lifeos.penalty.domain.enums.PenaltyType.STAT_DEBUFF)
+                    .severity(com.lifeos.penalty.domain.enums.PenaltySeverity.HIGH)
+                    .valuePayload(payload)
+                    .appliedAt(LocalDateTime.now())
+                    .expiresAt(LocalDateTime.now().plusHours(24))
+                    .build();
+            
+            penaltyRepository.save(debuffRecord);
+        }
+        log.info("Applied Architect's Scorn debuff (-10% stats for 24h) to all stats for player {}", playerId);
+
+        // Reset streak
         streakService.resetStreak(playerId);
         log.info("Streak reset for player {} due to Red Gate failure", playerId);
 
-        PlayerProgression progression = progressionRepository.findByPlayerPlayerId(playerId).orElse(null);
-        if (progression != null) {
-            var economy = economyRepository.findById(playerId).orElse(null);
-            long currentGold = economy != null ? economy.getGoldBalance().longValue() : 0;
-            long goldDrain = (long) (currentGold * GOLD_DRAIN_PERCENTAGE);
-            economyService.deductGold(playerId, goldDrain, "Red Gate Failure Penalty");
-            log.info("Drained {} gold from player {} (10% penalty)", goldDrain, playerId);
-        }
+        // Transition to Penalty Zone
+        penaltyService.enterPenaltyZone(playerId, "Red Gate Override Failed");
 
+        // Clear Red Gate Active States
         identity.setRedGateActive(false);
         identity.setRedGateExpiresAt(null);
         identity.setRedGateQuestId(null);
@@ -272,7 +310,7 @@ public class RedGateService {
                 playerId,
                 null,
                 "Red Gate Failed",
-                "The Sealed Reality has broken you. Streak reset and -10% gold penalty applied.",
+                "The Sealed Reality has broken you. Streak reset, -40% gold penalty and Architect's Scorn applied.",
                 null
         );
 
@@ -280,24 +318,8 @@ public class RedGateService {
     }
 
     private void expireRedGate(UUID playerId) {
-        PlayerIdentity identity = identityRepository.findById(playerId).orElse(null);
-        if (identity == null) {
-            return;
-        }
-
-        Quest quest = questRepository.findById(identity.getRedGateQuestId()).orElse(null);
-        if (quest != null && quest.getState() == QuestState.ACTIVE) {
-            quest.setState(QuestState.EXPIRED);
-            questRepository.save(quest);
-        }
-
-        identity.setRedGateActive(false);
-        identity.setRedGateExpiresAt(null);
-        identity.setRedGateQuestId(null);
-        identity.setXpFrozen(false);
-        identityRepository.save(identity);
-
-        log.info("Red Gate expired for player {}", playerId);
+        log.info("Red Gate timer hit zero. Redirecting to failRedGate for player {}", playerId);
+        failRedGate(playerId);
     }
 
     public Quest getActiveRedGateQuest(UUID playerId) {

@@ -25,20 +25,33 @@ public class SystemVoiceService {
 
     @Transactional
     public void emitEvent(UUID playerId, SystemEventType eventType, String message) {
-        log.info("System Voice Output for {}: [{}] {}", playerId, eventType, message);
+        emitEvent(playerId, eventType, message, null);
+    }
+
+    @Transactional
+    public void emitEvent(UUID playerId, SystemEventType eventType, String message, String payloadJson) {
+        log.info("System Voice Output for {}: [{}] {} (payload={})", playerId, eventType, message, payloadJson);
         
         SystemEvent event = new SystemEvent();
         event.setPlayerId(playerId);
         event.setEventType(eventType);
         event.setMessage(message);
+        event.setPayloadJson(payloadJson);
         event.setConsumed(false);
         event.setCreatedAt(LocalDateTime.now());
         
         systemEventRepository.save(event);
     }
     
-    @Transactional(readOnly = true)
+    @Transactional
     public List<SystemEvent> getPlayerEvents(UUID playerId) {
-        return systemEventRepository.findByPlayerId(playerId);
+        List<SystemEvent> events = systemEventRepository.findByPlayerIdAndIsConsumedFalseOrderByCreatedAtAsc(playerId);
+        if (!events.isEmpty()) {
+            for (SystemEvent event : events) {
+                event.setConsumed(true);
+            }
+            systemEventRepository.saveAll(events);
+        }
+        return events;
     }
 }
