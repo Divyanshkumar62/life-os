@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("test-mysql")
 @Transactional
 public class DailyClearSystemTest {
 
@@ -42,7 +44,7 @@ public class DailyClearSystemTest {
 
     @BeforeEach
     public void setup() {
-        var response = playerStateService.initializePlayer("DailyClearTester_" + UUID.randomUUID());
+        var response = playerStateService.initializePlayer("DCTester_" + UUID.randomUUID().toString().substring(0, 8));
         playerId = response.getIdentity().getPlayerId();
         
         // Ensure player is onboarding completed so dailies evaluate and shop works

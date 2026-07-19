@@ -54,8 +54,8 @@ class StatGateTest {
         identity = PlayerIdentity.builder().playerId(playerId).build();
         progression = PlayerProgression.builder()
                 .player(identity)
-                // Set level to Cap to pass level gate (E cap is 10)
-                .level(10)
+                // Set level to Cap to pass level gate (E cap is 15)
+                .level(15)
                 .rank(PlayerRank.E) // Next is D
                 .build();
         
@@ -97,7 +97,7 @@ class StatGateTest {
                 .build();
                 
         var mockProgDto = com.lifeos.player.dto.PlayerProgressionDTO.builder()
-                .level(10)
+                .level(15)
                 .rank(PlayerRank.E)
                 .build();
                 
@@ -135,7 +135,7 @@ class StatGateTest {
                 .build();
                 
         var mockProgDto = com.lifeos.player.dto.PlayerProgressionDTO.builder()
-                .level(10)
+                .level(15)
                 .rank(PlayerRank.E)
                 .build();
                 

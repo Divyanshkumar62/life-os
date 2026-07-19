@@ -81,7 +81,7 @@ class RankExamSystemTest {
                  .identity(com.lifeos.player.dto.PlayerIdentityDTO.builder().playerId(playerId).build())
                  .progression(PlayerProgressionDTO.builder()
                          .rank(PlayerRank.E) // E -> D
-                         .level(10) // Cap is 10 for E
+                         .level(15) // Cap is 15 for E
                          .build())
                  .attributes(List.of(
                          PlayerAttributeDTO.builder().attributeType(AttributeType.STR).currentValue(10.0).build(),

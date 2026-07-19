@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Disabled;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("test-mysql")
 @Transactional
 public class QuestLifecycleServiceTest {
 
@@ -45,7 +47,7 @@ public class QuestLifecycleServiceTest {
     @BeforeEach
     public void setup() {
         // Create a player for testing
-        var response = playerStateService.initializePlayer("QuestTester_" + UUID.randomUUID());
+        var response = playerStateService.initializePlayer("QTester_" + UUID.randomUUID().toString().substring(0, 8));
         playerId = response.getIdentity().getPlayerId();
     }
 

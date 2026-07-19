@@ -308,8 +308,8 @@ public class QuestLifecycleServiceImpl implements QuestLifecycleService {
         quest.setState(QuestState.EXPIRED);
         questRepository.save(quest);
         
-        // Apply Penalties (Expiration) ONLY if not Architect's Trial
-        if (!"[HIDDEN] The Architect's Original Trial".equals(quest.getTitle())) {
+        // Apply Penalties (Expiration) ONLY if not INTEL_GATHERING and not Architect's Trial
+        if (quest.getQuestType() != QuestType.INTEL_GATHERING && !"[HIDDEN] The Architect's Original Trial".equals(quest.getTitle())) {
             penaltyService.applyPenalty(questId, quest.getPlayer().getPlayerId(), com.lifeos.penalty.domain.enums.FailureReason.EXPIRED);
         } else {
             log.info("Quest expired with no penalty: {}", quest.getTitle());

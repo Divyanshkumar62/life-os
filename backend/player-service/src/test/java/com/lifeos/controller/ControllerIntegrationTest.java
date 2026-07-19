@@ -20,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -57,6 +58,12 @@ public class ControllerIntegrationTest {
 
     @MockBean
     private UserBossKeyRepository bossKeyRepository;
+
+    @MockBean
+    private com.lifeos.core.repository.PlayerStateRepository corePlayerStateRepository;
+
+    @MockBean
+    private com.lifeos.core.repository.TemporalModifierRepository temporalModifierRepository;
 
     @Test
     void testQuestAssignment() throws Exception {
@@ -113,6 +120,8 @@ public class ControllerIntegrationTest {
     @Test
     void testAdminPenaltyEnter() throws Exception {
         UUID playerId = UUID.randomUUID();
+        when(corePlayerStateRepository.findById(any())).thenReturn(Optional.of(new com.lifeos.core.entity.PlayerState()));
+        
         mockMvc.perform(post("/api/admin/players/" + playerId + "/penalty/enter")
                 .param("reason", "Manual trigger"))
                 .andExpect(status().isOk());

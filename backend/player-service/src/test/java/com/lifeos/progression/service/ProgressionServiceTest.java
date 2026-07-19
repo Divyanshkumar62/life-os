@@ -75,7 +75,7 @@ public class ProgressionServiceTest {
         
         playerState = PlayerStateResponse.builder()
                 .progression(PlayerProgressionDTO.builder()
-                        .level(10) // At Cap
+                        .level(15) // At Cap
                         .rank(PlayerRank.E)
                         .xpFrozen(true)
                         .build())
