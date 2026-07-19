@@ -4,10 +4,11 @@ import { GlowButton } from '../../components/onboarding/GlowButton';
 
 interface TrialQuestScreenProps {
     onNext: () => void;
+    onFail: () => void;
     playerId: string | null;
 }
 
-export const TrialQuestScreen: React.FC<TrialQuestScreenProps> = ({ onNext, playerId }) => {
+export const TrialQuestScreen: React.FC<TrialQuestScreenProps> = ({ onNext, onFail, playerId }) => {
     // Mock data for now, ideally fetched from /api/onboarding/start
     const [timeLeft, setTimeLeft] = useState(24 * 60 * 60);
 
@@ -39,8 +40,25 @@ export const TrialQuestScreen: React.FC<TrialQuestScreenProps> = ({ onNext, play
             onNext();
         } catch (error) {
             console.error('Failed to complete trial quest:', error);
-            // Still proceed to avoid blocking user
             onNext();
+        }
+    };
+
+    const handleFail = async () => {
+        if (!playerId) {
+            console.error('No playerId available for trial failure');
+            return;
+        }
+
+        try {
+            await fetch(`http://localhost:8080/api/onboarding/${playerId}/trial/fail`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            onFail();
+        } catch (error) {
+            console.error('Failed to trigger trial failure:', error);
+            onFail();
         }
     };
 
@@ -89,8 +107,8 @@ export const TrialQuestScreen: React.FC<TrialQuestScreenProps> = ({ onNext, play
                         <div className="space-y-2">
                             <h3 className="text-red-500 font-mono text-xs uppercase">Failure</h3>
                             <div className="bg-slate-950/50 p-3 rounded border border-red-900/30 text-sm text-red-500 font-mono">
-                                <div>PENALTY ZONE</div>
-                                <div>(4 hours survival)</div>
+                                <div>AWAKENING PENALTY</div>
+                                <div>(1 hour physical task)</div>
                             </div>
                         </div>
                     </div>
@@ -101,9 +119,18 @@ export const TrialQuestScreen: React.FC<TrialQuestScreenProps> = ({ onNext, play
                             {formatTime(timeLeft)}
                         </div>
 
-                        <GlowButton onClick={handleComplete} fullWidth pulsating>
-                            CONFIRM COMPLETION
-                        </GlowButton>
+                        <div className="flex gap-4 w-full">
+                            <GlowButton onClick={handleComplete} fullWidth pulsating>
+                                CONFIRM COMPLETION
+                            </GlowButton>
+                            
+                            <button
+                                onClick={handleFail}
+                                className="px-4 py-2 border border-red-600/50 hover:bg-red-950/30 text-red-500 font-mono text-xs uppercase tracking-widest transition-all"
+                            >
+                                Fail Trial
+                            </button>
+                        </div>
                     </div>
                 </div>
             </SystemWindow>

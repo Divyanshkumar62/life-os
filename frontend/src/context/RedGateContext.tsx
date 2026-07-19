@@ -14,6 +14,7 @@ interface JobChangeState {
     xpFrozen: boolean;
     cooldownUntil: string | null;
     loading: boolean;
+    recommendedClass?: string;
 }
 
 interface RedGateContextType {
@@ -58,7 +59,8 @@ export const RedGateProvider: React.FC<{
         status: null,
         xpFrozen: false,
         cooldownUntil: null,
-        loading: true
+        loading: true,
+        recommendedClass: undefined
     });
 
     const checkRedGateStatus = useCallback(async () => {
@@ -90,7 +92,8 @@ export const RedGateProvider: React.FC<{
                 status: data.status,
                 xpFrozen: data.xpFrozen,
                 cooldownUntil: data.cooldownUntil,
-                loading: false
+                loading: false,
+                recommendedClass: data.recommendedClass
             });
         } catch (err) {
             console.error("Failed to check Job Change status:", err);

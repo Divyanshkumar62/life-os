@@ -8,6 +8,7 @@ import { PlayerProfileCard } from './PlayerProfileCard';
 import { CurrentStatusPanel } from './CurrentStatusPanel';
 import { AssetsPanel } from './AssetsPanel';
 import { DailyQuestsPanel } from './DailyQuestsPanel';
+import { IntelQuestSection } from './IntelQuestSection';
 import { SystemLogPanel } from './SystemLogPanel';
 import { CapacityPanel } from './CapacityPanel';
 import { QuestAPI, ProjectAPI } from '../../api/api';
@@ -293,22 +294,38 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
                             </p>
                         </div>
                     ) : (
-                        <DailyQuestsPanel
-                            quests={activeQuests.map(mapBackendQuest)}
-                            onQuestToggle={async (id, completed) => {
-                                if (!completed) {
+                        <>
+                            <DailyQuestsPanel
+                                quests={activeQuests.filter(q => q.questCategory !== 'INTEL' && q.questType !== 'INTEL_GATHERING').map(mapBackendQuest)}
+                                onQuestToggle={async (id, completed) => {
+                                    if (!completed) {
+                                        try {
+                                            await QuestAPI.completeQuest(id);
+                                            const updatedQuests = await QuestAPI.getActiveQuests(playerId || '');
+                                            setActiveQuests(updatedQuests);
+                                            await refreshSystem();
+                                        } catch (error) {
+                                            console.error("Failed to complete quest:", error);
+                                        }
+                                    }
+                                }}
+                                onClaimReward={(id) => console.log('Claim reward:', id)}
+                            />
+
+                            <IntelQuestSection
+                                quests={activeQuests.filter(q => q.questCategory === 'INTEL' || q.questType === 'INTEL_GATHERING')}
+                                onComplete={async (id) => {
                                     try {
                                         await QuestAPI.completeQuest(id);
                                         const updatedQuests = await QuestAPI.getActiveQuests(playerId || '');
                                         setActiveQuests(updatedQuests);
                                         await refreshSystem();
                                     } catch (error) {
-                                        console.error("Failed to complete quest:", error);
+                                        console.error("Failed to complete intel quest:", error);
                                     }
-                                }
-                            }}
-                            onClaimReward={(id) => console.log('Claim reward:', id)}
-                        />
+                                }}
+                            />
+                        </>
                     )}
                 </div>
 
@@ -366,7 +383,7 @@ export function DashboardView({ playerId, onViewSystemLog, onViewStore, onViewIn
             {/* Popups */}
             <PenaltyPopup
                 isOpen={isPenaltyActive}
-                onClose={() => setIsPenaltyActive(false)}
+                onAccept={() => setIsPenaltyActive(false)}
             />
             <PromotionPopup
                 isOpen={isPromotionActive}

@@ -7,6 +7,9 @@
 export { SystemPanel } from './SystemPanel';
 export type { SystemPanelProps } from './SystemPanel';
 
+export { TerminalCard } from './TerminalCard';
+export type { TerminalCardProps } from './TerminalCard';
+
 export { SystemProgressBar } from './SystemProgressBar';
 export type { SystemProgressBarProps } from './SystemProgressBar';
 

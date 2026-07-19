@@ -8,6 +8,8 @@ export interface SystemAlert {
     message: string;
     eventType: 'LEVEL_UP' | 'PENALTY_ALERT' | 'DUNGEON_BREAK' | 'PROMOTION_UPDATE' | 'GENERAL_NOTICE';
     createdAt: string;
+    payloadJson?: string;
+    payload?: any;
 }
 
 export function useSystemVoice(playerId: string | null | undefined) {
@@ -23,8 +25,20 @@ export function useSystemVoice(playerId: string | null | undefined) {
                 const newAlerts: SystemAlert[] = await api.get(`/system/alerts/${playerId}`);
 
                 if (newAlerts && newAlerts.length > 0) {
+                    const parsedAlerts = newAlerts.map(alert => {
+                        let parsed = null;
+                        if (alert.payloadJson) {
+                            try {
+                                parsed = JSON.parse(alert.payloadJson);
+                            } catch (e) {
+                                console.error("Failed to parse alert payloadJson", e);
+                            }
+                        }
+                        return { ...alert, payload: parsed };
+                    });
+
                     // Update state to render them
-                    setAlerts(prev => [...prev, ...newAlerts]);
+                    setAlerts(prev => [...prev, ...parsedAlerts]);
 
                     // Trigger Audio Feedback
                     newAlerts.forEach(alert => {

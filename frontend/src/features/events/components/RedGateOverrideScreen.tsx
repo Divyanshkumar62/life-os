@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRedGateContext } from "../../../context/RedGateContext";
 import { useSystemAudio } from "../../../hooks/useSystemAudio";
-import { ShieldAlert, Hourglass, Trophy } from "lucide-react";
+import { ShieldAlert, Hourglass, Trophy, Lock } from "lucide-react";
 
 export const RedGateOverrideScreen: React.FC = () => {
   const { redGate, completeRedGate, failRedGate } = useRedGateContext();
@@ -15,7 +15,6 @@ export const RedGateOverrideScreen: React.FC = () => {
   }
 
   useEffect(() => {
-    // Play warning sound automatically upon mount
     playRedGateAlarm();
   }, [playRedGateAlarm]);
 
@@ -25,6 +24,10 @@ export const RedGateOverrideScreen: React.FC = () => {
     const secs = Math.floor(seconds % 60);
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const remainingHours = redGate.remainingSeconds !== null ? redGate.remainingSeconds / 3600 : 0;
+  const shakeIntensity = Math.max(0, Math.min(10, (1 - remainingHours / 12) * 12));
+  const isUrgent = remainingHours < 2;
 
   const handleAction = async (action: 'complete' | 'fail') => {
     try {
@@ -41,31 +44,31 @@ export const RedGateOverrideScreen: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-[9999] overflow-hidden bg-[#040406] flex items-center justify-center font-sans select-none">
-      {/* Glitchy Static Red Particle Background */}
       <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.2)_0%,rgba(0,0,0,0)_100%)] pointer-events-none" />
       <div className="absolute inset-0 bg-cover bg-center mix-blend-color-dodge opacity-20 pointer-events-none" />
 
-      {/* Extreme Shaking Screen Container */}
       <motion.div
         animate={{
-          x: [-10, 10, -10, 10, -5, 5, -2, 2, 0],
-          y: [-5, 5, -5, 5, -2, 2, -1, 1, 0],
+          x: isUrgent
+            ? [-shakeIntensity, shakeIntensity, -shakeIntensity, shakeIntensity, -shakeIntensity/2, shakeIntensity/2, 0]
+            : [-4, 4, -3, 3, -1, 1, 0],
+          y: isUrgent
+            ? [-shakeIntensity/2, shakeIntensity/2, -shakeIntensity/2, shakeIntensity/2, -shakeIntensity/4, shakeIntensity/4, 0]
+            : [-2, 2, -1, 1, 0],
         }}
         transition={{
-          duration: 0.5,
+          duration: isUrgent ? 0.3 : 0.8,
           repeat: Infinity,
           repeatType: "mirror",
-          repeatDelay: 2,
+          repeatDelay: isUrgent ? 0.2 : 1.5,
         }}
         className="relative max-w-2xl w-full mx-4 px-6 py-10 bg-black/90 border-2 border-red-600/80 shadow-[0_0_50px_rgba(239,68,68,0.3)] backdrop-blur-md rounded-none text-white flex flex-col items-center"
       >
-        {/* Red Gate Corner Brackets for Runic Aesthetic */}
         <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-red-500" />
         <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-red-500" />
         <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-red-500" />
         <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-red-500" />
 
-        {/* Alarm Banner */}
         <div className="flex items-center gap-2 px-4 py-1.5 bg-red-950/60 border border-red-500/50 rounded-none mb-6 animate-pulse">
           <ShieldAlert className="text-red-500" size={18} />
           <span className="font-mono text-xs tracking-[0.25em] text-red-400 uppercase font-semibold">
@@ -73,7 +76,6 @@ export const RedGateOverrideScreen: React.FC = () => {
           </span>
         </div>
 
-        {/* Heading */}
         <motion.h1
           animate={{
             textShadow: [
@@ -82,7 +84,7 @@ export const RedGateOverrideScreen: React.FC = () => {
               "0 0 8px rgba(239,68,68,0.8)",
             ],
           }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
+          transition={{ repeat: Infinity, duration: isUrgent ? 0.5 : 1.5 }}
           className="text-5xl md:text-6xl font-black text-red-500 tracking-[0.2em] text-center mb-1 font-display"
         >
           RED GATE
@@ -91,24 +93,35 @@ export const RedGateOverrideScreen: React.FC = () => {
           Reality Interference Detected
         </p>
 
-        {/* Giant Countdown Grid */}
         <div className="w-full bg-[#0a0a0f] border border-red-900/50 p-6 mb-8 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-red-950/5 opacity-40 pointer-events-none" />
           <span className="text-red-400/80 font-mono text-xs tracking-widest uppercase flex items-center justify-center gap-1.5 mb-2">
-            <Hourglass size={12} className="animate-spin" />
+            <Hourglass size={12} className={isUrgent ? "animate-spin" : ""} />
             TEMPORAL EXILE COOLDOWN
           </span>
 
           <motion.div
-            animate={{ scale: [1, 1.02, 1] }}
-            transition={{ repeat: Infinity, duration: 1.2 }}
-            className="text-5xl md:text-6xl font-mono font-black text-red-500 tracking-wider filter drop-shadow-[0_0_10px_rgba(239,68,68,0.4)]"
+            animate={isUrgent ? { scale: [1, 1.03, 1] } : { scale: [1, 1.01, 1] }}
+            transition={{ repeat: Infinity, duration: isUrgent ? 0.4 : 1.5 }}
+            className={`text-5xl md:text-6xl font-mono font-black tracking-wider filter drop-shadow-[0_0_10px_rgba(239,68,68,0.4)] ${
+              isUrgent ? "text-red-400 animate-pulse" : "text-red-500"
+            }`}
           >
             {redGate.remainingSeconds !== null ? formatTime(redGate.remainingSeconds) : "00:00:00"}
           </motion.div>
+
+          {isUrgent && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ repeat: Infinity, duration: 0.8 }}
+              className="mt-2 text-[10px] text-red-400 font-bold uppercase tracking-widest"
+            >
+              ⚠ CRITICAL: Time nearly expired ⚠
+            </motion.div>
+          )}
         </div>
 
-        {/* Quest Directive Card */}
         {redGate.quest ? (
           <div className="w-full bg-red-950/10 border border-red-600/30 p-5 mb-8 text-left">
             <div className="flex justify-between items-start mb-3 border-b border-red-900/30 pb-2">
@@ -137,15 +150,14 @@ export const RedGateOverrideScreen: React.FC = () => {
           </div>
         )}
 
-        {/* Warning Callout */}
-        <div className="w-full bg-[#0a0a0f] border border-gray-900 p-4 mb-8 text-xs text-gray-400 font-mono leading-relaxed flex items-start gap-3">
-          <span className="text-red-500 font-bold shrink-0">⚠️ SYSTEM NOTE:</span>
+        <div className="w-full bg-[#0a0a0f] border-2 border-red-900/60 p-4 mb-8 text-xs text-gray-400 font-mono leading-relaxed flex items-start gap-3">
+          <Lock className="text-red-500 shrink-0 mt-0.5" size={14} />
           <div>
-            Time flow has frozen in the normal dimension. Standard dashboards, projects, shops, and inventories are locked. You must fulfill the directive or perish.
+            <span className="text-red-400 font-bold">SYSTEM LOCKOUT ACTIVE: </span>
+            Time flow has frozen in the normal dimension. Standard dashboards, projects, shops, inventory, and daily quests are completely offline. You must fulfill the directive or perish.
           </div>
         </div>
 
-        {/* Actions Button Stack */}
         <div className="w-full flex flex-col md:flex-row gap-4">
           <AnimatePresence mode="wait">
             {showConfirm === null ? (

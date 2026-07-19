@@ -5,13 +5,14 @@ import { TrialQuestScreen } from './TrialQuestScreen';
 import { SystemAnalysisScreen } from './SystemAnalysisScreen';
 import { AwakeningScreen } from './AwakeningScreen';
 import { LoadingScreen } from './LoadingScreen';
+import { AwakeningPenaltyScreen } from './AwakeningPenaltyScreen';
 
 interface OnboardingFlowProps {
     onComplete: (playerId: string) => void;
 }
 
 // narrative order: assessment -> awakening -> trial
-type Step = 'welcome' | 'analysis' | 'loading' | 'awakening' | 'trial';
+type Step = 'welcome' | 'analysis' | 'loading' | 'awakening' | 'trial' | 'trial-penalty';
 
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
     const [step, setStep] = useState<Step>('welcome');
@@ -33,9 +34,6 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     };
 
     const handleWelcomeNext = async () => {
-        // Start Onboarding (Create Player/Identity)
-        // In new flow, we just move to analysis. Player creation happens after basic agreement?
-        // Let's create the player here to have an ID for tracking answers.
         const username = "Hunter-" + Math.floor(Math.random() * 1000);
         const data = await apiCall(`/start?username=${username}`, 'POST');
         if (data && data.playerId) {
@@ -45,7 +43,6 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     };
 
     const handleAnalysisNext = async (data: Record<string, string>) => {
-        // Submit awakening questionnaire
         if (playerId) {
             const payload = {
                 biggestChallenge: data.biggestChallenge || '',
@@ -56,27 +53,35 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             };
             await apiCall(`/${playerId}/awakening`, 'POST', payload);
         }
-        // Move to Loading (Calculations)
         setStep('loading');
     };
 
     const handleLoadingComplete = () => {
-        // Transformation Complete -> Show Status
         setStep('awakening');
     };
 
     const handleAwakeningNext = async () => {
-        // Stats calibration is now handled within awakening in backend
-        // Just proceed to trial
         setStep('trial');
     };
 
     const handleTrialNext = async () => {
-        // Complete Trial
         if (playerId) {
             await apiCall(`/${playerId}/trial/complete`, 'POST');
             onComplete(playerId);
         }
+    };
+
+    const handleTrialFail = () => {
+        setStep('trial-penalty');
+    };
+
+    const handlePenaltyCleared = () => {
+        setStep('trial');
+    };
+
+    const handleResetOnboarding = () => {
+        setPlayerId(null);
+        setStep('welcome');
     };
 
     return (
@@ -88,7 +93,8 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
                     {step === 'welcome' && <WelcomeScreen onNext={handleWelcomeNext} />}
                     {step === 'analysis' && <SystemAnalysisScreen onNext={handleAnalysisNext} />}
                     {step === 'awakening' && <AwakeningScreen onNext={handleAwakeningNext} />}
-                    {step === 'trial' && <TrialQuestScreen onNext={handleTrialNext} playerId={playerId} />}
+                    {step === 'trial' && <TrialQuestScreen onNext={handleTrialNext} onFail={handleTrialFail} playerId={playerId} />}
+                    {step === 'trial-penalty' && <AwakeningPenaltyScreen playerId={playerId} onCleared={handlePenaltyCleared} onResetOnboarding={handleResetOnboarding} />}
                 </OnboardingLayout>
             )}
         </div>

@@ -1,92 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skull, RefreshCw, Star } from "lucide-react";
-import { api } from "../../../api/api";
-
-interface GraveyardDungeon {
-  dungeonId: string;
-  title: string;
-  description: string;
-  dungeonRank: string;
-  dungeonStatus: "COMPLETED" | "FAILED" | "SHADOW" | "PERMADEATH" | "ABANDONED";
-  totalFloors: number;
-  completedFloors: number;
-  failedAt?: string;
-  completedAt?: string;
-}
+import { AnalyticsAPI } from "../api/AnalyticsAPI";
+import type { DungeonGraveyardEntry } from "../api/AnalyticsAPI";
 
 export const DungeonGraveyard: React.FC<{ playerId: string }> = ({ playerId }) => {
-  const [dungeons, setDungeons] = useState<GraveyardDungeon[]>([]);
+  const [dungeons, setDungeons] = useState<DungeonGraveyardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [ariseAnimationId, setAriseAnimationId] = useState<string | null>(null);
 
-  const fetchGraveyard = async () => {
+  const fetchGraveyard = useCallback(async () => {
     if (!playerId) return;
     setLoading(true);
     setError(null);
     try {
-      const response = await api.get(`/analytics/graveyard?playerId=${playerId}`);
+      const response = await AnalyticsAPI.fetchDungeonGraveyard(playerId);
       setDungeons(response || []);
     } catch (err: any) {
-      console.error("Graveyard Fetch Error, using mock backup:", err);
-      // Fallback mocks
-      setDungeons([
-        {
-          dungeonId: "goblin-lair-failed",
-          title: "Goblin Lair Raid",
-          description: "Attempted cleanout of Goblin Cave. Interrupted by Vanguard Vanguard.",
-          dungeonRank: "C",
-          dungeonStatus: "FAILED",
-          totalFloors: 3,
-          completedFloors: 1,
-          failedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          dungeonId: "demon-castle-completed",
-          title: "Demon Castle Lower Floor",
-          description: "Defeated Hell's gatekeeper Cerberus.",
-          dungeonRank: "A",
-          dungeonStatus: "COMPLETED",
-          totalFloors: 5,
-          completedFloors: 5,
-          completedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-          dungeonId: "spider-nest-abandoned",
-          title: "Spider Nest Outpost",
-          description: "Arachnid infestation inside mines.",
-          dungeonRank: "D",
-          dungeonStatus: "ABANDONED",
-          totalFloors: 4,
-          completedFloors: 0,
-          failedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-      ]);
+      console.error("Dungeon Graveyard Fetch Error:", err);
+      setError(err.message || "Failed to load dungeon graveyard");
+      setDungeons([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [playerId]);
 
   useEffect(() => {
     fetchGraveyard();
-  }, [playerId]);
+  }, [fetchGraveyard]);
 
   const handleArise = async (dungeonId: string) => {
     setAriseAnimationId(dungeonId);
     try {
       // Execute the ARISE POST endpoint request
-      await api.post(`/dungeons/${dungeonId}/arise?playerId=${playerId}`);
+      await AnalyticsAPI.ariseDungeon(dungeonId, playerId);
 
-      // Small delay to let extraction animation play out
+      // Small delay to let extraction animation play out, then re-fetch
       setTimeout(() => {
-        setDungeons((prev) =>
-          prev.map((d) =>
-            d.dungeonId === dungeonId
-              ? { ...d, dungeonStatus: "SHADOW" as const }
-              : d
-          )
-        );
+        fetchGraveyard();
         setAriseAnimationId(null);
       }, 2000);
     } catch (err: any) {
@@ -96,7 +48,7 @@ export const DungeonGraveyard: React.FC<{ playerId: string }> = ({ playerId }) =
     }
   };
 
-  const getStatusColor = (status: GraveyardDungeon["dungeonStatus"]): string => {
+  const getStatusColor = (status: DungeonGraveyardEntry["dungeonStatus"]): string => {
     switch (status) {
       case "COMPLETED":
         return "text-green-400 border-green-950 bg-green-950/10";
@@ -112,7 +64,7 @@ export const DungeonGraveyard: React.FC<{ playerId: string }> = ({ playerId }) =
     }
   };
 
-  const getBorderColor = (dungeon: GraveyardDungeon): string => {
+  const getBorderColor = (dungeon: DungeonGraveyardEntry): string => {
     if (ariseAnimationId === dungeon.dungeonId) {
       return "border-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.6)] animate-pulse";
     }
@@ -128,10 +80,31 @@ export const DungeonGraveyard: React.FC<{ playerId: string }> = ({ playerId }) =
     return "border-zinc-900 hover:border-zinc-700";
   };
 
+  const formatDate = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleDateString();
+  };
+
   if (loading) {
     return (
       <div className="w-full h-48 bg-[#0a0a0f] border border-gray-900 flex items-center justify-center font-mono text-xs text-violet-400">
         <span className="animate-pulse tracking-widest uppercase">CONJURING SHADOW GRAVEYARD...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full bg-[#0a0a0f] border border-red-900 p-6 flex flex-col items-center justify-center font-mono text-xs text-red-400">
+        <Skull size={24} className="mb-2" />
+        <span className="tracking-widest uppercase">GRAVEYARD CORRUPTED</span>
+        <p className="text-gray-500 mt-1">{error}</p>
+        <button
+          onClick={fetchGraveyard}
+          className="mt-3 px-3 py-1 border border-red-900 text-red-400 hover:bg-red-950/30 transition-colors uppercase tracking-widest text-[10px]"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -217,12 +190,13 @@ export const DungeonGraveyard: React.FC<{ playerId: string }> = ({ playerId }) =
                   {d.description}
                 </p>
 
-                {/* Progress Stats */}
+                {/* Progress Stats — reflects actual floor progress ratios */}
                 <div className="flex justify-between items-center text-[10px] font-mono text-gray-500 mb-4">
                   <span>Clearence Floors: {d.completedFloors} / {d.totalFloors}</span>
                   <span>
-                    {d.failedAt && `FAILED: ${new Date(d.failedAt).toLocaleDateString()}`}
-                    {d.completedAt && `CLEARED: ${new Date(d.completedAt).toLocaleDateString()}`}
+                    {d.failedAt && `FAILED: ${formatDate(d.failedAt)}`}
+                    {d.completedAt && `CLEARED: ${formatDate(d.completedAt)}`}
+                    {d.abandonedAt && !d.failedAt && !d.completedAt && `ABANDONED: ${formatDate(d.abandonedAt)}`}
                   </span>
                 </div>
               </div>

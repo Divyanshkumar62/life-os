@@ -4,6 +4,7 @@ import { useRedGateContext } from '../../../context/RedGateContext';
 import { JobChangeAPI, systemMessageEmitter } from '../../../api/api';
 import { useSystemAudio } from '../../../hooks/useSystemAudio';
 import { useSystemContext } from '../../../context/SystemContext';
+import { Gauntlet3DayTracker } from './Gauntlet3DayTracker';
 
 interface JobChangePopupProps {
     isOpen: boolean;
@@ -63,10 +64,10 @@ export const JobChangePopup: React.FC<JobChangePopupProps> = ({ isOpen }) => {
             await loadQuests();
             await checkJobChangeStatus();
             await refreshSystem();
-            
+
             if (day === 3) {
                 const statusData = await JobChangeAPI.getStatus(playerId || '');
-                if (statusData.status === 'COMPLETED' && statusData.jobClass) {
+                if ((statusData.status === 'COMPLETED' || statusData.status === 'AWAITING_CLASS_SELECTION') && statusData.jobClass) {
                     systemMessageEmitter.emit([
                         `[SYSTEM] Evolution Complete. Class Acquired: ${statusData.jobClass}.`
                     ]);
@@ -85,6 +86,8 @@ export const JobChangePopup: React.FC<JobChangePopupProps> = ({ isOpen }) => {
                 return "The System demands your evolution. Do you accept the gauntlet?";
             case 'IN_PROGRESS':
                 return "You have accepted the Job Change Gauntlet. Complete all 3 days to evolve.";
+            case 'AWAITING_CLASS_SELECTION':
+                return "Gauntlet complete. Proceed to class selection to finalize your evolution.";
             case 'COOLDOWN':
                 return `The gauntlet has broken you. Cooldown active.`;
             case 'COMPLETED':
@@ -94,11 +97,9 @@ export const JobChangePopup: React.FC<JobChangePopupProps> = ({ isOpen }) => {
         }
     };
 
-
-
     return (
         <AnimatePresence>
-            {isOpen && jobChange.status && jobChange.status !== 'NOT_TRIGGERED' && jobChange.status !== 'COMPLETED' && (
+            {isOpen && jobChange.status && jobChange.status !== 'NOT_TRIGGERED' && jobChange.status !== 'COMPLETED' && jobChange.status !== 'AWAITING_CLASS_SELECTION' && (
                 <motion.div
                     initial={{ backdropFilter: "blur(0px)" }}
                     animate={{ backdropFilter: "blur(10px)" }}
@@ -110,7 +111,7 @@ export const JobChangePopup: React.FC<JobChangePopupProps> = ({ isOpen }) => {
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: "-100vh", opacity: 0 }}
                         transition={{ type: "spring", bounce: 0.4 }}
-                        className={`bg-black/95 border-2 border-solo-cyan p-8 rounded-none max-w-2xl w-full mx-4 shadow-glow-cyan`}
+                        className={`bg-black/95 border-2 border-solo-cyan p-8 rounded-none max-w-2xl w-full mx-4 shadow-glow-cyan ${jobChange.status === 'AWAITING_CLASS_SELECTION' ? 'border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.3)]' : ''}`}
                     >
                         <div className="text-center mb-6">
                             <motion.h2 
@@ -119,7 +120,9 @@ export const JobChangePopup: React.FC<JobChangePopupProps> = ({ isOpen }) => {
                                 JOB CHANGE
                             </motion.h2>
                             <h3 className="text-xl font-bold tracking-widest text-gray-300 uppercase">
-                                {jobChange.status === 'COOLDOWN' ? 'COOLDOWN ACTIVE' : 'QUEST AVAILABLE'}
+                                {jobChange.status === 'COOLDOWN' ? 'COOLDOWN ACTIVE' :
+                                 jobChange.status === 'AWAITING_CLASS_SELECTION' ? 'CLASS SELECTION PENDING' :
+                                 'QUEST AVAILABLE'}
                             </h3>
                         </div>
 
@@ -161,39 +164,18 @@ export const JobChangePopup: React.FC<JobChangePopupProps> = ({ isOpen }) => {
 
                         {jobChange.status === 'IN_PROGRESS' && (
                             <div className="space-y-4">
-                                <div className="p-4 bg-gray-950 border border-gray-900 rounded-none">
-                                    <h4 className="font-bold text-solo-cyan mb-3 font-mono tracking-widest uppercase text-xs">Gauntlet Progress</h4>
-                                    <div className="space-y-3">
-                                        {quests.map((quest: any, index: number) => (
-                                            <div key={quest.questId || index} className="flex justify-between items-center py-2 border-b border-gray-800 last:border-0">
-                                                <div className="flex flex-col gap-0.5 max-w-[70%]">
-                                                    <span className="text-gray-300 text-xs font-mono uppercase tracking-wide">Day {quest.day}: {quest.title}</span>
-                                                    <span className="text-[9px] text-gray-500 font-mono tracking-widest uppercase">{quest.questType} ({quest.difficulty})</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {(quest.state === 'PENDING' || !quest.state) && (
-                                                        <button
-                                                            onClick={() => handleCompleteQuest(quest.questId, quest.day)}
-                                                            disabled={loading}
-                                                            className="px-2.5 py-1 bg-green-900/30 hover:bg-green-700 border border-green-500 text-green-200 text-[10px] rounded-none transition-all font-bold tracking-widest uppercase disabled:opacity-50 font-mono"
-                                                        >
-                                                            Complete
-                                                        </button>
-                                                    )}
-                                                    <span className={`px-2 py-0.5 text-[10px] rounded-none font-bold font-mono tracking-widest ${
-                                                        quest.state === 'COMPLETED' ? 'bg-green-950/40 text-green-400 border border-green-900/60' :
-                                                        quest.state === 'FAILED' ? 'bg-red-900/30 text-red-500 border border-red-900/50' :
-                                                        'bg-yellow-950/40 text-yellow-400 border border-yellow-900/60'
-                                                    }`}>
-                                                        {quest.state || 'PENDING'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <p className="text-center text-gray-400 text-[10px] tracking-wider uppercase font-mono">
-                                    Complete all trials to achieve second awakening.
+                                <Gauntlet3DayTracker
+                                    quests={quests}
+                                    loading={loading}
+                                    onCompleteQuest={handleCompleteQuest}
+                                />
+                            </div>
+                        )}
+
+                        {jobChange.status === 'AWAITING_CLASS_SELECTION' && (
+                            <div className="text-center p-4">
+                                <p className="text-yellow-400 mb-4 font-mono text-xs tracking-widest uppercase">
+                                    All trials complete. Navigate to class selection to claim your evolution.
                                 </p>
                             </div>
                         )}

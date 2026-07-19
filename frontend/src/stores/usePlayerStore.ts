@@ -10,6 +10,22 @@ export interface PlayerAttributes {
   freePoints: number;
 }
 
+export interface DungeonBreakEventDTO {
+  projectId: string;
+  projectTitle: string;
+  dungeonRank: string;
+  goldBefore: number;
+  goldPenaltyAmount: number;
+  goldAfter: number;
+  vitMitigationPercent: number;
+  debuffsApplied: string[];
+  debuffDurationHours: number;
+  penaltyZoneTriggered: boolean;
+  doublePenaltyResolution: boolean;
+  triggeredAt: string;
+  acknowledged: boolean;
+}
+
 export interface PlayerState {
   playerId: string;
   username: string;
@@ -20,13 +36,15 @@ export interface PlayerState {
   debt: number;
   rank: string;
   jobClass: string | null;
-  jobChangeStatus: 'NOT_TRIGGERED' | 'AWAITING_ACCEPTANCE' | 'IN_PROGRESS' | 'COOLDOWN' | 'COMPLETED' | null;
+  jobChangeStatus: 'NOT_TRIGGERED' | 'AWAITING_ACCEPTANCE' | 'AWAITING_CLASS_SELECTION' | 'IN_PROGRESS' | 'COOLDOWN' | 'COMPLETED' | null;
   attributes: PlayerAttributes;
   penaltyActive: boolean;
   activeModifiers: string[];
   onboardingCompleted: boolean;
   loading: boolean;
   error: string | null;
+  dungeonBreakActive: boolean;
+  activeDungeonBreakEvent: DungeonBreakEventDTO | null;
 
   // Actions
   fetchPlayerState: (playerId: string) => Promise<void>;
@@ -35,6 +53,8 @@ export interface PlayerState {
   setModifiers: (modifiers: string[]) => void;
   setOnboardingCompleted: (completed: boolean) => void;
   resetError: () => void;
+  setDungeonBreakActive: (active: boolean) => void;
+  setActiveDungeonBreakEvent: (event: DungeonBreakEventDTO | null) => void;
 }
 
 const initialAttributes: PlayerAttributes = {
@@ -63,6 +83,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   onboardingCompleted: false,
   loading: false,
   error: null,
+  dungeonBreakActive: false,
+  activeDungeonBreakEvent: null,
 
   fetchPlayerState: async (playerId: string) => {
     if (!playerId) return;
@@ -90,6 +112,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
         },
         penaltyActive: data.systemState?.penaltyActive ?? false,
         activeModifiers: data.systemState?.activeBuffs ?? [],
+        dungeonBreakActive: data.systemState?.dungeonBreakActive ?? false,
+        activeDungeonBreakEvent: data.systemState?.activeDungeonBreakEvent ?? null,
         onboardingCompleted: true,
         loading: false,
       });
@@ -146,6 +170,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   setOnboardingCompleted: (completed: boolean) => {
     set({ onboardingCompleted: completed });
+  },
+
+  setDungeonBreakActive: (active: boolean) => {
+    set({ dungeonBreakActive: active });
+  },
+
+  setActiveDungeonBreakEvent: (event: DungeonBreakEventDTO | null) => {
+    set({ activeDungeonBreakEvent: event });
   },
 
   resetError: () => set({ error: null }),

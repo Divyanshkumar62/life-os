@@ -78,26 +78,112 @@ function getMockResponseForGet(endpoint: string, view: string): any {
         return mockData.graveyard || [];
     }
 
+    if (endpoint.includes("/penalty/active-task")) {
+        return {
+            questId: "mock-survival-task-001",
+            type: "PHYSICAL",
+            title: "The Architect's Crucible",
+            description: "The System demands penance through discipline. Complete 50 push-ups within the next 24 hours. Your body must learn to obey when the mind falters. Failure is not an option — the lockout will extend indefinitely.",
+            requiredCount: 50,
+            completedCount: 0,
+            progress: 0.0,
+            status: "ACTIVE",
+            createdAt: new Date().toISOString()
+        };
+    }
+
     return undefined;
 }
 
 function getMockResponseForPost(endpoint: string, _view: string, body?: any): any {
     if (endpoint.includes("/penalty/confess")) {
         const text = body?.text || "";
-        const isSincere = text.trim().split(/\s+/).length >= 10; // Simple check for visual QA
+        const isSincere = text.trim().split(/\s+/).length >= 10;
         if (isSincere) {
             return {
                 accepted: true,
-                feedback: "[SYSTEM] Sincerity confirmed. The Architect has lifted the lockdown."
+                feedback: "[SYSTEM] Sincerity confirmed. The Architect has lifted the lockdown.",
+                survivalTaskId: "mock-survival-task-001"
             };
         } else {
             return {
                 accepted: false,
                 feedback: "[SYSTEM] Insincere confession. Suffer the lockout extension.",
-                attemptsRemaining: 0,
+                attemptsRemaining: 2,
                 lockoutUntil: new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString()
             };
         }
+    }
+
+    if (endpoint.includes("/penalty/active-task")) {
+        return {
+            questId: "mock-survival-task-001",
+            type: "PHYSICAL",
+            title: "The Architect's Crucible",
+            description: "The System demands penance through discipline. Complete 50 push-ups within the next 24 hours. Your body must learn to obey when the mind falters. Failure is not an option — the lockout will extend indefinitely.",
+            requiredCount: 50,
+            completedCount: 0,
+            progress: 0.0,
+            status: "ACTIVE",
+            createdAt: new Date().toISOString()
+        };
+    }
+
+    if (endpoint.includes("/penalty/task/") && endpoint.includes("/progress")) {
+        const units = body?.unitsCompleted || 0;
+        const completedCount = units;
+        const requiredCount = 50;
+        const progress = Math.min(completedCount / requiredCount, 1.0);
+        return {
+            questId: "mock-survival-task-001",
+            type: "PHYSICAL",
+            title: "The Architect's Crucible",
+            description: "The System demands penance through discipline. Complete 50 push-ups within the next 24 hours.",
+            requiredCount,
+            completedCount,
+            progress,
+            status: progress >= 1.0 ? "COMPLETED" : "ACTIVE",
+            createdAt: new Date().toISOString()
+        };
+    }
+
+    if (endpoint.includes("/penalty/task/") && endpoint.includes("/complete")) {
+        return {
+            questId: "mock-survival-task-001",
+            type: "PHYSICAL",
+            title: "The Architect's Crucible",
+            description: "The System demands penance through discipline.",
+            requiredCount: 50,
+            completedCount: 50,
+            progress: 1.0,
+            status: "COMPLETED",
+            createdAt: new Date().toISOString(),
+            escaped: true
+        };
+    }
+
+    if (endpoint.includes("/penalty/task/") && endpoint.includes("/reroll")) {
+        return {
+            questId: "mock-survival-task-002",
+            type: "MENTAL",
+            title: "The Architect's Judgment: Reflection",
+            description: "Your physical form has failed. Now the mind must atone. Write a 500-word analysis of why your discipline collapsed. The Architect will judge your words.",
+            requiredCount: 500,
+            completedCount: 0,
+            progress: 0.0,
+            status: "ACTIVE",
+            createdAt: new Date().toISOString(),
+            goldDeducted: 100
+        };
+    }
+
+    if (endpoint.includes("/player/job-change/select-class")) {
+        const selectedClass = body?.selectedClass || "Vanguard";
+        return {
+            success: true,
+            jobClass: selectedClass,
+            status: "COMPLETED"
+        };
     }
 
     if (endpoint.includes("/quests/") && endpoint.endsWith("/complete")) {
@@ -213,6 +299,9 @@ export const ProjectAPI = {
     },
     getProjectQuests: async (projectId: string) => {
         return await api.get(`/projects/${projectId}/quests`);
+    },
+    completeProject: async (projectId: string) => {
+        return await api.post(`/projects/${projectId}/complete`);
     }
 };
 
@@ -252,6 +341,9 @@ export const JobChangeAPI = {
     },
     failQuest: async (questId: string) => {
         return await api.post(`/player/job-change/quest/${questId}/fail`);
+    },
+    selectClass: async (playerId: string, selectedClass: string) => {
+        return await api.post(`/player/job-change/select-class`, { playerId, selectedClass });
     }
 };
 
@@ -273,6 +365,22 @@ export const ProgressionAPI = {
 export const PenaltyAPI = {
     submitConfession: async (playerId: string, text: string) => {
         return await api.post(`/penalty/confess?playerId=${playerId}`, { text });
+    },
+
+    fetchActiveTask: async (playerId: string) => {
+        return await api.get(`/penalty/active-task?playerId=${playerId}`);
+    },
+
+    reportTaskProgress: async (questId: string, playerId: string, units: number) => {
+        return await api.post(`/penalty/task/${questId}/progress?playerId=${playerId}`, { unitsCompleted: units });
+    },
+
+    completeTask: async (questId: string, playerId: string) => {
+        return await api.post(`/penalty/task/${questId}/complete?playerId=${playerId}`);
+    },
+
+    rerollTask: async (questId: string, playerId: string) => {
+        return await api.post(`/penalty/task/${questId}/reroll?playerId=${playerId}`);
     }
 };
 
@@ -285,6 +393,12 @@ export const AnalyticsAPI = {
     },
     fetchGraveyard: async (playerId: string) => {
         return await api.get(`/analytics/graveyard?playerId=${playerId}`);
+    }
+};
+
+export const DungeonBreakAPI = {
+    acknowledge: async (projectId: string, playerId: string) => {
+        return await api.post(`/dungeons/break/${projectId}/acknowledge?playerId=${playerId}`);
     }
 };
 

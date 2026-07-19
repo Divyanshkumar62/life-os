@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 
 export interface SystemButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     children: ReactNode;
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
     size?: 'sm' | 'md' | 'lg';
     icon?: ReactNode;
     iconPosition?: 'left' | 'right';
@@ -12,12 +12,7 @@ export interface SystemButtonProps extends ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 /**
- * SystemButton - Interactive action button
- * 
- * Responsibilities:
- * - Trigger user actions
- * - Support multiple visual styles
- * - Handle loading and disabled states
+ * SystemButton - Action button implementing the approved style design tokens.
  */
 export function SystemButton({
     children,
@@ -32,10 +27,11 @@ export function SystemButton({
     ...props
 }: SystemButtonProps) {
     const variantClasses = {
-        primary: 'bg-solo-cyan hover:bg-solo-cyan/80 text-solo-bg border-solo-cyan system-glow',
+        primary: 'bg-transparent hover:bg-secondary/10 text-on-surface border-secondary shadow-[0_0_10px_rgba(37,99,235,0.1)] active:shadow-[0_0_15px_rgba(37,99,235,0.3)]',
         secondary: 'bg-gray-800 hover:bg-gray-700 text-white border-gray-600',
-        ghost: 'bg-transparent hover:bg-gray-800 text-solo-cyan border-solo-cyan',
-        danger: 'bg-solo-red/20 hover:bg-solo-red/30 text-solo-red border-solo-red',
+        ghost: 'bg-transparent hover:bg-gray-800 text-secondary border-secondary',
+        danger: 'bg-transparent hover:bg-error/10 text-error border-error shadow-[0_0_10px_rgba(239,68,68,0.1)] active:shadow-[0_0_15px_rgba(239,68,68,0.3)]',
+        success: 'bg-tertiary hover:bg-tertiary/90 text-background border-tertiary font-bold',
     };
 
     const sizeClasses = {
@@ -51,13 +47,13 @@ export function SystemButton({
             className={clsx(
                 'inline-flex items-center justify-center gap-2',
                 'rounded-none border font-semibold uppercase tracking-widest',
-                'transition-smooth',
-                'focus:outline-none focus:ring-2 focus:ring-solo-cyan focus:ring-offset-2 focus:ring-offset-black',
+                'transition-all duration-300',
+                'focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2 focus:ring-offset-black',
                 variantClasses[variant],
                 sizeClasses[size],
                 fullWidth && 'w-full',
                 isDisabled && 'opacity-50 cursor-not-allowed',
-                !isDisabled && 'hover:scale-105 active:scale-95',
+                !isDisabled && 'hover:scale-[1.02] active:scale-[0.98]',
                 className
             )}
             disabled={isDisabled}

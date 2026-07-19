@@ -7,6 +7,9 @@ export interface Quest {
     xpReward: number;
     projectId?: string;
     priority?: 'NORMAL' | 'HIGH' | 'CRITICAL';
+    questType?: string;
+    questCategory?: string;
+    attributeDeltas?: Record<string, number>;
 }
 
 export interface Project {
@@ -21,4 +24,5 @@ export interface Project {
     lastActivityAt?: string;
     floorsTotal?: number;
     floorsCompleted?: number;
+    hardDeadline?: string;
 }

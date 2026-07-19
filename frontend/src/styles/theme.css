@@ -1,5 +1,5 @@
 /* Import Google Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -7,6 +7,15 @@
 
 /* CSS Custom Properties - Design Tokens */
 :root {
+  /* Design System Tokens */
+  --color-abyss-black: #05050A;
+  --color-electric-blue: #2563EB;
+  --color-pale-silver: #E2E8F0;
+  --color-crimson-red: #EF4444;
+  --color-gold: #FBBF24;
+  --color-electric-cyan: #22D3EE;
+  --color-grass-green: #22C55E;
+
   /* Colors */
   --color-cyan-400: #22d3ee;
   --color-cyan-500: #06b6d4;
@@ -51,6 +60,7 @@
   body {
     @apply bg-black text-white;
     font-family:
+      "Space Grotesk",
       "Inter",
       -apple-system,
       BlinkMacSystemFont,
@@ -159,6 +169,67 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Design System Typography Utilities */
+  .text-headline-lg {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 40px;
+    letter-spacing: -0.02em;
+  }
+  .text-headline-md {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 32px;
+  }
+  .text-headline-sm {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 24px;
+  }
+  .text-body-lg {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+  }
+  .text-body-sm {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 20px;
+  }
+  .text-data-lg {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 20px;
+  }
+  .text-data-sm {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Striped Pattern Overlay */
+  .bg-striped {
+    background-image: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.15) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.15) 50%,
+      rgba(255, 255, 255, 0.15) 75%,
+      transparent 75%,
+      transparent
+    );
+    background-size: 1rem 1rem;
   }
 }
 

@@ -59,7 +59,7 @@ export interface JobChangeQuest {
 
 export interface JobChangeStatus {
   jobClass: string | null;
-  status: 'NOT_TRIGGERED' | 'AWAITING_ACCEPTANCE' | 'IN_PROGRESS' | 'COOLDOWN' | 'COMPLETED' | null;
+  status: 'NOT_TRIGGERED' | 'AWAITING_ACCEPTANCE' | 'IN_PROGRESS' | 'AWAITING_CLASS_SELECTION' | 'COOLDOWN' | 'COMPLETED' | null;
   xpFrozen: boolean;
   cooldownUntil: string | null;
   loading?: boolean;

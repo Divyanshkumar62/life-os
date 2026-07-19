@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface PenaltyPopupProps {
     isOpen: boolean;
-    onClose: () => void;
+    onAccept: () => void;
 }
 
-export const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ isOpen, onClose: _onClose }) => {
+export const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ isOpen, onAccept }) => {
     return (
         <AnimatePresence>
             {isOpen && (
@@ -34,7 +34,7 @@ export const PenaltyPopup: React.FC<PenaltyPopupProps> = ({ isOpen, onClose: _on
                         </p>
 
                         <button
-                            onClick={() => console.log('Initiating Survival Quest...')}
+                            onClick={onAccept}
                             className="w-full bg-solo-red-900/30 hover:bg-solo-red-600/50 border border-solo-red-500 text-solo-red-100 font-bold py-4 px-6 rounded transition-all tracking-widest uppercase hover:shadow-[0_0_15px_rgba(220,38,38,0.5)]"
                         >
                             Accept Survival Quest
