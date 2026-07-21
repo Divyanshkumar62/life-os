@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: player-service
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+  main:
+    allow-bean-definition-overriding: true
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      url: https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-8b:generateContent
+  datasource:
+    url: jdbc:postgresql://localhost:5432/life_os
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
